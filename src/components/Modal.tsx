@@ -1,8 +1,10 @@
-import React, { FC } from 'react'
+import React from 'react'
 import styled from 'styled-components'
 import { RootState, useAppDispatch } from '../redux'
 import { useSelector } from 'react-redux'
 import { changeLoginState, changeRegState } from '../redux/modalSlice'
+import LoginForm from './AuthForms/LoginForm'
+import RegistrationForm from './AuthForms/RegistrationForm'
 
 
 
@@ -21,34 +23,13 @@ const loginIsActive=useSelector((state:RootState)=>state.modalReducer.loginIsAct
     }
 
   return (
-    // regIsActive||loginIsActive
-    //     ?   <ModalContainer onClick={closeModal}>
-    //     <Content onClick={(e:React.MouseEvent)=>{e.stopPropagation()}}>   
-    //     {loginIsActive&&<div>
-    //         login
-    //     </div>
-        
-    //     }
-    //     {regIsActive&&<div>
-    //         registration
-    //     </div>
-
-    //     }
-    //     </Content>
-    // </ModalContainer>
-    //     :<></>
-
-        <ModalContainer active={(loginIsActive||regIsActive).toString()}  onClick={closeModal}>
-        <Content active={(loginIsActive||regIsActive).toString()} onClick={(e:React.MouseEvent)=>{e.stopPropagation()}}>   
-        {loginIsActive&&<div>
-            login
-        </div>
-        
+        <ModalContainer $active={(loginIsActive||regIsActive).toString()}  onClick={closeModal}>
+        <Content $active={(loginIsActive||regIsActive).toString()} onClick={(e:React.MouseEvent)=>{e.stopPropagation()}}>   
+        {loginIsActive&&
+        <LoginForm/>
         }
-        {regIsActive&&<div>
-            registration
-        </div>
-
+        {regIsActive&& 
+        <RegistrationForm/>
         }
         </Content>
     </ModalContainer>
@@ -56,7 +37,7 @@ const loginIsActive=useSelector((state:RootState)=>state.modalReducer.loginIsAct
 }
 
 interface ModalStatus{
-    active:string
+    $active:string
 }
 
 const ModalContainer=styled.div<ModalStatus>`
@@ -68,14 +49,14 @@ const ModalContainer=styled.div<ModalStatus>`
     left: 0;
     right: 0;
     bottom: 0;
-    opacity: ${p=>p.active=='false'
+    opacity: ${p=>p.$active=='false'
     ?0
     :1
     };
     display: flex;
     justify-content: center;
     align-items: center;
-    pointer-events: ${p=>p.active=='false'
+    pointer-events: ${p=>p.$active=='false'
     ?'none'
     :'all'
     };
@@ -88,15 +69,15 @@ const ModalContainer=styled.div<ModalStatus>`
 const Content=styled.div<ModalStatus>`
     padding: 20px;
     border-radius: 12px;
-    background-color: wheat;
-    width: 200px;
-    height: 200px;
-    transition: all .2s ease-in-out;
-    transform: ${p=>p.active=='true'
+    background-color: #cacaca;
+    min-width: 200px;
+    min-height: 200px;
+    transition: all .3s ease-in-out;
+    transform: ${p=>p.$active=='true'
     ?`translateY(0)`
-    :`translateY(-200%)`
+    :`translateY(-150%)`
     };
-    opacity: ${p=>p.active=='true'
+    opacity: ${p=>p.$active=='true'
     ?1
     :0
     };
