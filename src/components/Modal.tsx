@@ -31,7 +31,7 @@ const ModalContainer=styled.div<ModalStatus>`
     :'all'
     };
     transition: opacity 0.4s ease-in-out;
-   
+   z-index: 2;
     
     
 `
@@ -39,7 +39,7 @@ const ModalContainer=styled.div<ModalStatus>`
 const Content=styled.div<ModalStatus>`
     padding: 20px;
     border-radius: 12px;
-    background-color: #cacaca;
+    background-color: #e8e8e8;
     min-width: 200px;
     min-height: 200px;
     transition: all .3s ease-in-out;
@@ -67,6 +67,8 @@ useEffect(() => {
 
 
     const closeModal =() => {
+    document.body.style.overflow = 'visible'
+
       setIsActive('false')
       setTimeout(() => {
         if(regIsActive) dispatch(changeRegState())

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import styled from "styled-components";
 import {
-  Alert,
+  
   TextField,
   RadioGroup,
   Radio,
@@ -14,30 +14,34 @@ import { Dayjs } from "dayjs";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { useAppDispatch } from "../../redux";
 import { changeLoginState, changeRegState } from "../../redux/modalSlice";
+import { checkYears } from "../../util/checkYears";
 
 interface IFormInput {
   nickname: string;
   password: string;
   email: string;
-  birthday: string;
+  birthday: Dayjs;
   gender: string;
 }
 
 const RegistrationForm = () => {
-  const [birtday, setbirtday] = useState<Dayjs>(dayjs());
+  const [birthday, setBirthday] = useState<Dayjs | null>(null);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
+    setValue
   } = useForm<IFormInput>();
 
   const dispatch = useAppDispatch();
 
   const onSubmit: SubmitHandler<IFormInput> = (data) => {
-    if (data.password.length > 4) {
-      console.log(data);
-    }
+
+    if(data.birthday) if(!checkYears(data.birthday)) return
+    
+    
+    console.log(data)
   };
 
   const switchToLogin = () => {
@@ -51,20 +55,33 @@ const RegistrationForm = () => {
         <h3>Registration</h3>
         <TextField
           {...register("nickname", {
-            required: true,
-            maxLength: 15,
-            minLength: 3,
+            required: { value: true, message: "nickname is required" },
+            maxLength: { value: 10, message: "max length is 10" },
+            minLength: { value: 3, message: "min length is 3" },
           })}
           size="small"
           label="Nickname"
           color="secondary"
           variant="filled"
         ></TextField>
+        {errors.nickname?.type === "required" && (
+          <ErrorAlert role="alert">Nickname is required</ErrorAlert>
+        )}
+        {errors.nickname?.type === "maxLength" && (
+          <ErrorAlert role="alert">Max length is 10</ErrorAlert>
+        )}
+        {errors.nickname?.type === "minLength" && (
+          <ErrorAlert role="alert">Min length is 3</ErrorAlert>
+        )}
+
+
         <TextField
           {...register("email", {
             required: true,
-            pattern:
-              /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/,
+            pattern:{
+              value:/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/,
+              message:'Incorrect email'
+            }
               
           })}
           size="small"
@@ -72,38 +89,76 @@ const RegistrationForm = () => {
           color="secondary"
           variant="filled"
         ></TextField>
+        {errors.email?.type === "required" && (
+          <ErrorAlert role="alert">Email is required</ErrorAlert>
+          
+        )}
+        {errors.email?.type === "pattern" && (
+          <ErrorAlert role="alert">{errors.email.message}</ErrorAlert>
+          
+        )}
+
         <TextField
           type="password"
           {...register("password", {
             required: true,
             maxLength: 15,
-            minLength: 3,
+            minLength: 6,
           })}
           size="small"
           label="Password"
           color="secondary"
           variant="filled"
         ></TextField>
+        {errors.password?.type === "required" && (
+          <ErrorAlert role="alert">Password is required</ErrorAlert>
+        )}
+        {errors.password?.type === "maxLength" && (
+          <ErrorAlert role="alert">Max length is 15</ErrorAlert>
+        )}
+        {errors.password?.type === "minLength" && (
+          <ErrorAlert role="alert">Min length is 6</ErrorAlert>
+        )}
         <DatePicker
+        format="DD/MM/YYYY"
           label="Birthday"
-          {...register("birthday")}
-          value={birtday}
-          onChange={(newValue) => setbirtday(newValue as Dayjs)}
+          value={birthday}
+          onChange={(date) => {
+            setBirthday(date);
+            setValue('birthday',date as Dayjs)
+          }}
         />
+        {birthday && dayjs().year() - birthday.year() < 10 ? (
+          <ErrorAlert role="alert">Min age is 12</ErrorAlert>
+        ) : (
+          ""
+        )}
+        
         <RadioGroup row>
           <FormControlLabel
             value="female"
-            control={<Radio color="secondary" />}
+            control={
+              <Radio
+                color="secondary"
+                {...register("gender", { required: true })}
+              />
+            }
             label="Female"
-            {...register("gender")}
           />
           <FormControlLabel
             value="male"
-            control={<Radio color="secondary" />}
+            control={
+              <Radio
+                color="secondary"
+                {...register("gender", { required: true })}
+              />
+            }
             label="Male"
-            {...register("gender")}
           />
         </RadioGroup>
+        {errors.gender?.type === "required" && (
+            <ErrorAlert role="alert">Gender is required</ErrorAlert>
+          )}
         <FormButtons>
           <RegButton type="submit">Get started</RegButton>
           <LoginButton onClick={switchToLogin}>Have an account</LoginButton>
@@ -162,6 +217,12 @@ const LoginButton = styled.button`
     transform: scale(1.05);
     cursor: pointer;
   }
+`;
+
+export const ErrorAlert = styled.span`
+  margin: -10px;
+  font-size: 12px;
+  color: #d82f2f;
 `;
 
 export default RegistrationForm;

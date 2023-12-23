@@ -16,6 +16,7 @@ const StartPage = () => {
   const dispatch=useAppDispatch()
 
   const openRegModal=()=>{
+    document.body.style.overflow = 'hidden'
     dispatch(changeRegState())
   }
 
@@ -42,7 +43,7 @@ const StartPage = () => {
                 <ContentIcon src="/images/improve.png"></ContentIcon>
               </SubContent>
             </div>
-            <StartButton onClick={()=>openRegModal()}>Let's start</StartButton>
+            <StartButton onClick={openRegModal}>Let's start</StartButton>
           </Content>
         </ContentContainer>
       </Main>
