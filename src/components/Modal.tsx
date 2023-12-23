@@ -1,40 +1,10 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
 import { RootState, useAppDispatch } from '../redux'
 import { useSelector } from 'react-redux'
 import { changeLoginState, changeRegState } from '../redux/modalSlice'
 import LoginForm from './AuthForms/LoginForm'
 import RegistrationForm from './AuthForms/RegistrationForm'
-
-
-
-
-
-const Modal= () => {
-const dispatch=useAppDispatch()
-const regIsActive=useSelector((state:RootState)=>state.modalReducer.regIsActive)
-const loginIsActive=useSelector((state:RootState)=>state.modalReducer.loginIsActive)
-
-
-    const closeModal =() => {
-      if(regIsActive) dispatch(changeRegState())
-      if(loginIsActive) dispatch(changeLoginState())
-
-    }
-
-  return (
-        <ModalContainer $active={(loginIsActive||regIsActive).toString()}  onClick={closeModal}>
-        <Content $active={(loginIsActive||regIsActive).toString()} onClick={(e:React.MouseEvent)=>{e.stopPropagation()}}>   
-        {loginIsActive&&
-        <LoginForm/>
-        }
-        {regIsActive&& 
-        <RegistrationForm/>
-        }
-        </Content>
-    </ModalContainer>
-  )
-}
 
 interface ModalStatus{
     $active:string
@@ -82,5 +52,44 @@ const Content=styled.div<ModalStatus>`
     :0
     };
 `
+
+
+const Modal= () => {
+const dispatch=useAppDispatch()
+const regIsActive=useSelector((state:RootState)=>state.modalReducer.regIsActive)
+const loginIsActive=useSelector((state:RootState)=>state.modalReducer.loginIsActive)
+
+const [isActive, setIsActive] = useState<string>('false')
+
+useEffect(() => {
+  if(regIsActive||loginIsActive) setIsActive('true')
+}, [regIsActive,loginIsActive])
+
+
+    const closeModal =() => {
+      setIsActive('false')
+      setTimeout(() => {
+        if(regIsActive) dispatch(changeRegState())
+        if(loginIsActive) dispatch(changeLoginState())
+      }, 500);
+     
+
+    }
+
+  return (
+        <ModalContainer $active={isActive}  onClick={closeModal}>
+        <Content $active={isActive} onClick={(e:React.MouseEvent)=>{e.stopPropagation()}}>   
+        {loginIsActive&&
+        <LoginForm/>
+        }
+        {regIsActive&& 
+        <RegistrationForm/>
+        }
+        </Content>
+    </ModalContainer>
+  )
+}
+
+
 
 export default Modal

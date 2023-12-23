@@ -6,6 +6,8 @@ import styled from "styled-components";
 import Modal from "../components/Modal";
 import { useAppDispatch } from "../redux";
 import { changeRegState } from "../redux/modalSlice";
+import LoginForm from "../components/AuthForms/LoginForm";
+import RegistrationForm from "../components/AuthForms/RegistrationForm";
 
 
 
@@ -19,7 +21,7 @@ const StartPage = () => {
 
   return (
     <>
-    
+      <Modal/>
       <Main>
         <ContentContainer>
           <Content>
@@ -44,7 +46,6 @@ const StartPage = () => {
           </Content>
         </ContentContainer>
       </Main>
-      <Modal/>
       
     </>
   );
