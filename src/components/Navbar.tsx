@@ -16,13 +16,15 @@ const regIsActive=useSelector((state:RootState)=>state.modalReducer.regIsActive)
 const loginIsActive=useSelector((state:RootState)=>state.modalReducer.loginIsActive)
 
   const openRegModal=() => {
-    document.body.style.overflow = 'hidden'
+    document.documentElement.style.overflowY='hidden'
+
     dispatch(changeRegState())
   }
 
 
   const openLoginModal=() => {
-    document.body.style.overflow = 'hidden'
+    document.documentElement.style.overflowY='hidden'
+
 
     dispatch(changeLoginState())
   }

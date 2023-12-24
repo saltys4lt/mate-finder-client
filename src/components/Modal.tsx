@@ -67,7 +67,8 @@ useEffect(() => {
 
 
     const closeModal =() => {
-    document.body.style.overflow = 'visible'
+      document.documentElement.style.overflowY='visible'
+
 
       setIsActive('false')
       setTimeout(() => {
