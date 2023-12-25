@@ -15,6 +15,9 @@ import { useForm, SubmitHandler } from "react-hook-form";
 import { useAppDispatch } from "../../redux";
 import { changeLoginState, changeRegState } from "../../redux/modalSlice";
 import { checkYears } from "../../util/checkYears";
+import axios from "axios";
+import { createUser } from "../../redux/usersSlice";
+import User from "../../types/User";
 
 interface IFormInput {
   nickname: string;
@@ -40,8 +43,17 @@ const RegistrationForm = () => {
 
     if(data.birthday) if(!checkYears(data.birthday)) return
     
+    const newUser:User={
+      nickname:data.nickname,
+      password:data.password,
+      email:data.email,
+      gender:data.gender,
+      birthday:data.birthday.toString(),
+
+
+    }
+    dispatch(createUser(newUser))
     
-    console.log(data)
   };
 
   const switchToLogin = () => {
