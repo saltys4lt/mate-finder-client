@@ -5,6 +5,7 @@ import { useSelector } from 'react-redux'
 import { changeLoginState, changeRegState } from '../redux/modalSlice'
 import LoginForm from './AuthForms/LoginForm'
 import RegistrationForm from './AuthForms/RegistrationForm'
+import { LinearProgress } from '@mui/material'
 
 interface ModalStatus{
     $active:string
@@ -37,11 +38,14 @@ const ModalContainer=styled.div<ModalStatus>`
 `
 
 const Content=styled.div<ModalStatus>`
+  overflow: hidden;
     padding: 20px;
     border-radius: 12px;
     background-color: #e8e8e8;
     min-width: 200px;
     min-height: 200px;
+    max-width: 450px;
+    max-height: 600px;
     transition: all .3s ease-in-out;
     transform: ${p=>p.$active=='true'
     ?`translateY(0)`
@@ -51,8 +55,19 @@ const Content=styled.div<ModalStatus>`
     ?1
     :0
     };
+    position:relative;
 `
-
+const LoaderBackground=styled.div`
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-color: #bababa; 
+  opacity:0.7;
+  inset: 0;
+  margin: auto;
+  border-radius: 12px;
+  z-index: 2;
+`
 
 const Modal= () => {
 const dispatch=useAppDispatch()
@@ -79,15 +94,35 @@ useEffect(() => {
 
     }
 
+    const regStatus=useSelector((state:RootState)=>state.userReducer.createUserStatus)
+    const loginStatus=useSelector((state:RootState)=>state.userReducer.fetchUserStatus)
+
+    const regError=useSelector((state:RootState)=>state.userReducer.createUserError)
+    const loginError=useSelector((state:RootState)=>state.userReducer.fetchUserError)
+
+  
+    
+
   return (
         <ModalContainer $active={isActive}  onClick={closeModal}>
-        <Content $active={isActive} onClick={(e:React.MouseEvent)=>{e.stopPropagation()}}>   
+        <Content $active={isActive} onClick={(e:React.MouseEvent)=>{e.stopPropagation()}}>
+        {(regStatus==='pending'||loginStatus==='pending')
+        &&<>
+         <LinearProgress color='inherit'   sx={{zIndex:3,height:'7px',borderRadius:'10px', position:'absolute', top:'2px',left:'50%',width:'100%',transform:'translate(-50%,-50%)' }} /> 
+          <LoaderBackground/>
+        </>
+
+        }
+       
         {loginIsActive&&
         <LoginForm/>
         }
         {regIsActive&& 
         <RegistrationForm/>
         }
+       
+        
+        
         </Content>
     </ModalContainer>
   )

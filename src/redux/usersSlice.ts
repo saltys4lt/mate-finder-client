@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk, PayloadAction,AsyncThunkAction } from "@reduxjs/toolkit";
 import User from "../types/User";
 import axios from "axios";
 
@@ -28,8 +28,18 @@ export const createUser = createAsyncThunk(
             console.log(res.data)
             return res.data
         })
-        .catch(e=>{
-            return rejectWithValue(e)
+        .catch(error=>{
+            if (axios.isAxiosError(error)) {
+
+                return rejectWithValue(error.response?.data.message ?? 'Unknown error');
+
+              } else if (error instanceof Error) {
+
+                return rejectWithValue(error.message ?? 'Unknown error');
+
+              } else {
+                return rejectWithValue('Unknown error');
+              }
         })
         return response
     }
@@ -37,15 +47,22 @@ export const createUser = createAsyncThunk(
 
 interface UserState{
     user:User | null
-    status:'pending'|'fulfilled'|'error'|'idle'
-    error: string | null;
+    createUserStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
+    fetchUserStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
+
+    createUserError: string | null;
+    fetchUserError: string | null;
+
 }
 
 const initialState:UserState ={
     user:null,
-    status:'idle',
-    error:null
-    
+
+    createUserStatus:'idle',
+    createUserError:null,
+
+    fetchUserStatus:'idle',
+    fetchUserError:null,
 }
 
 const usersSlice= createSlice({
@@ -56,26 +73,29 @@ const usersSlice= createSlice({
     },
     extraReducers: (builder) => {
         builder.addCase(fetchUser.pending, (state, action) => {
-          state.status='pending'
+          state.fetchUserStatus='pending'
         })
         builder.addCase(fetchUser.fulfilled, (state, action:PayloadAction<User>) => {
             state.user=action.payload
-            state.status='fulfilled'
+            state.fetchUserStatus='fulfilled'
         })
         builder.addCase(fetchUser.rejected, (state, action) => {
-            state.status='error'
+            state.fetchUserStatus='rejected'
+            
         })
         
 
         builder.addCase(createUser.pending, (state, action) => {
-            state.status='pending'
+            state.createUserStatus='pending'
         })
-        builder.addCase(createUser.fulfilled, (state, action) => {
-            state.status='fulfilled'
+        builder.addCase(createUser.fulfilled, (state, action:PayloadAction) => {
+            state.createUserStatus='fulfilled'
         })
         builder.addCase(createUser.rejected, (state, action) => {
-            state.status='error'
-
+            state.createUserStatus='rejected'
+            state.createUserError=action.payload as string
+            console.log(action.payload)
+           
         })
       },
 })
