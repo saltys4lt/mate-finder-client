@@ -8,10 +8,11 @@ import { useAppDispatch } from "../../redux";
 import { changeLoginState, changeRegState } from "../../redux/modalSlice";
 import Modal from "../Modal";
 import { ErrorAlert } from "./RegistrationForm";
+import { fetchUser } from "../../redux/usersSlice";
 
 interface IFormInput {
   password: string;
-  email: string;
+  nickname: string;
 }
 
 const LoginForm = () => {
@@ -20,7 +21,7 @@ const LoginForm = () => {
   const dispatch = useAppDispatch();
 
   const onSubmit: SubmitHandler<IFormInput> = (data) => {
-    console.log(data);
+    dispatch(fetchUser({nickname:data.nickname,password:data.password}))
   };
 
   const switchToRegistration = () => {
@@ -33,21 +34,26 @@ const LoginForm = () => {
       <FormContainer>
         <h3>Login</h3>
         <TextField
-          {...register("email", {
-            required: true,
-            pattern: /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+          {...register("nickname", {
+            required: { value: true, message: "nickname is required" },
+            maxLength: { value: 10, message: "max length is 10" },
+            minLength: { value: 3, message: "min length is 3" },
           })}
           size="small"
-          label="Email"
+          label="Nickname"
           color="secondary"
           variant="filled"
         ></TextField>
-        {errors.email?.type === "required" && (
-          <ErrorAlert role="alert">Email is required</ErrorAlert>
+        {errors.nickname?.type === "required" && (
+          <ErrorAlert role="alert">Nickname is required</ErrorAlert>
         )}
-        {errors.email?.type === "pattern" && (
-          <ErrorAlert role="alert">Incorrect email</ErrorAlert>
+        {errors.nickname?.type === "maxLength" && (
+          <ErrorAlert role="alert">Max length is 10</ErrorAlert>
         )}
+        {errors.nickname?.type === "minLength" && (
+          <ErrorAlert role="alert">Min length is 3</ErrorAlert>
+        )}
+        
         <TextField
           type="password"
           {...register("password", {
@@ -59,7 +65,7 @@ const LoginForm = () => {
           variant="filled"
         ></TextField>
 
-          {errors.email?.type === "required" && (
+          {errors.password?.type === "required" && (
           <ErrorAlert role="alert">Password is required</ErrorAlert>
         )}
 

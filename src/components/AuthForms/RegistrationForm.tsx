@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import {
   
@@ -17,7 +17,7 @@ import { RootState, useAppDispatch } from "../../redux";
 import { changeLoginState, changeRegState } from "../../redux/modalSlice";
 import { checkYears } from "../../util/checkYears";
 import axios from "axios";
-import { createUser } from "../../redux/usersSlice";
+import { createUser, resetUserStatus } from "../../redux/usersSlice";
 import User from "../../types/User";
 import { useSelector } from "react-redux";
 import Swal from "sweetalert2";
@@ -46,6 +46,19 @@ const RegistrationForm = () => {
 
     const createUserError=useSelector((state:RootState)=>state.userReducer.createUserError)
 
+    
+    useEffect(() => {
+      if(createUserStatus==='fulfilled'){
+        dispatch(resetUserStatus())
+        switchToLogin()
+      }
+      if(createUserStatus==='rejected'){
+        dispatch(resetUserStatus())
+      }
+    }, [createUserStatus])
+    
+    
+
   const onSubmit: SubmitHandler<IFormInput> =  async (data) => {
 
     if(data.birthday) if(!checkYears(data.birthday)) return
@@ -56,32 +69,9 @@ const RegistrationForm = () => {
       email:data.email,
       gender:data.gender,
       birthday:data.birthday.toString(),
-
-
     }
   await dispatch(createUser(newUser))
-    console.log(createUserStatus)
-    if(createUserStatus==='fulfilled'){
-      console.log('прошел')
-      Swal.fire({
-        icon: "success",
-        title: `User ${newUser.nickname} was created`,
-        showConfirmButton: false,
-        timer: 1500
-      });
-    }
-
-    if(createUserError){
-      console.log('не прошел')
-
-      Swal.fire({
-        icon: "error",
-        title: createUserError,
-        showConfirmButton: true,
-        timer: 3000,
-        confirmButtonText:'Get It'
-      });
-    }
+  
   };
 
   const switchToLogin = () => {
