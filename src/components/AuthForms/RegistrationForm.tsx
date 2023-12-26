@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import {
   
@@ -6,15 +6,21 @@ import {
   RadioGroup,
   Radio,
   FormControlLabel,
+  LinearProgress,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers";
 import dayjs from "dayjs";
 import { Dayjs } from "dayjs";
 
 import { useForm, SubmitHandler } from "react-hook-form";
-import { useAppDispatch } from "../../redux";
+import { RootState, useAppDispatch } from "../../redux";
 import { changeLoginState, changeRegState } from "../../redux/modalSlice";
 import { checkYears } from "../../util/checkYears";
+import axios from "axios";
+import { createUser, resetUserStatus } from "../../redux/usersSlice";
+import User from "../../types/User";
+import { useSelector } from "react-redux";
+import Swal from "sweetalert2";
 
 interface IFormInput {
   nickname: string;
@@ -36,12 +42,36 @@ const RegistrationForm = () => {
 
   const dispatch = useAppDispatch();
 
-  const onSubmit: SubmitHandler<IFormInput> = (data) => {
+    const createUserStatus=useSelector((state:RootState)=>state.userReducer.createUserStatus)
+
+    const createUserError=useSelector((state:RootState)=>state.userReducer.createUserError)
+
+    
+    useEffect(() => {
+      if(createUserStatus==='fulfilled'){
+        dispatch(resetUserStatus())
+        switchToLogin()
+      }
+      if(createUserStatus==='rejected'){
+        dispatch(resetUserStatus())
+      }
+    }, [createUserStatus])
+    
+    
+
+  const onSubmit: SubmitHandler<IFormInput> =  async (data) => {
 
     if(data.birthday) if(!checkYears(data.birthday)) return
     
-    
-    console.log(data)
+    const newUser:User={
+      nickname:data.nickname,
+      password:data.password,
+      email:data.email,
+      gender:data.gender,
+      birthday:data.birthday.toString(),
+    }
+  await dispatch(createUser(newUser))
+  
   };
 
   const switchToLogin = () => {
@@ -49,7 +79,9 @@ const RegistrationForm = () => {
     dispatch(changeLoginState());
   };
 
+
   return (
+    
     <form onSubmit={handleSubmit(onSubmit)}>
       <FormContainer>
         <h3>Registration</h3>
@@ -134,7 +166,17 @@ const RegistrationForm = () => {
           ""
         )}
         
-        <RadioGroup row>
+        <RadioGroup row defaultValue={'male'}>
+        <FormControlLabel
+            value="male"
+            control={
+              <Radio
+                color="secondary"
+                {...register("gender", { required: true })}
+              />
+            }
+            label="Male"
+          />
           <FormControlLabel
             value="female"
             control={
@@ -145,16 +187,7 @@ const RegistrationForm = () => {
             }
             label="Female"
           />
-          <FormControlLabel
-            value="male"
-            control={
-              <Radio
-                color="secondary"
-                {...register("gender", { required: true })}
-              />
-            }
-            label="Male"
-          />
+         
         </RadioGroup>
         {errors.gender?.type === "required" && (
             <ErrorAlert role="alert">Gender is required</ErrorAlert>
@@ -219,10 +252,17 @@ const LoginButton = styled.button`
   }
 `;
 
+const AuthLoader=styled.img`
+width: 100%;
+
+`
+
 export const ErrorAlert = styled.span`
   margin: -10px;
   font-size: 12px;
   color: #d82f2f;
 `;
+
+
 
 export default RegistrationForm;

@@ -16,7 +16,7 @@ const StartPage = () => {
   const dispatch=useAppDispatch()
 
   const openRegModal=()=>{
-    document.body.style.overflow = 'hidden'
+    document.documentElement.style.overflowY='hidden'
     dispatch(changeRegState())
   }
 
