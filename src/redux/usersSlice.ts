@@ -7,7 +7,7 @@ interface IFormInput {
     password: string;
     nickname: string;
   }
-  const baseUrl=import.meta.env.VITE_BASE_URL
+const baseUrl=import.meta.env.VITE_BASE_URL
 
   export const checkUserIsAuth=createAsyncThunk(
     'usersReducer/checkUserIsAuth',
@@ -121,13 +121,23 @@ const usersSlice= createSlice({
         })
         builder.addCase(fetchUser.fulfilled, (state,action:PayloadAction<string>) => {
             state.fetchUserStatus='fulfilled'
-            Swal.fire({
-                icon: "success",
-                title: `Successful Login!`,
-                text:`Welcome, ${action.payload}`,
+              const Toast = Swal.mixin({
+                toast: true,
+                position: "top-end",
                 showConfirmButton: false,
-                timer: 2000
-              })
+                timer: 3000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                  toast.onmouseenter = Swal.stopTimer;
+                  toast.onmouseleave = Swal.resumeTimer;
+                }
+              });
+              Toast.fire({
+                icon: "success",
+                title: "Signed in successfully",
+                text:`Welcome, ${action.payload}`
+              });
+              state.isAuth=true
         })
         builder.addCase(fetchUser.rejected, (state, action) => {
             state.fetchUserStatus='rejected'
@@ -160,6 +170,7 @@ const usersSlice= createSlice({
         builder.addCase(createUser.rejected, (state, action) => {
             state.createUserStatus='rejected'
             state.createUserError=action.payload as string
+            
             Swal.fire({
                 icon: "error",
                 title: 'Registration Failure',

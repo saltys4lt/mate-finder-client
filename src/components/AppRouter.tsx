@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { publicRoutes, privateRoutes } from "../routes/routes";
 import Header from "./Header";
 import Footer from "./Footer";
@@ -19,16 +19,24 @@ const AppRouter = () => {
       <Header />
       <Routes>
       {isAuth
-      ?privateRoutes.map(r=>
-        <Route key={r.path} path={r.path} element={r.element} />
+      ?privateRoutes.map(r=><>
+      <Route key={r.path} path={r.path} element={r.element} />
+      <Route path='*' element={<Navigate to='/home'/>} />
+
+      </>
+        
 
         )
-      :publicRoutes.map(r => 
+      :publicRoutes.map(r => <>
         <Route key={r.path} path={r.path} element={r.element} />
+
+        <Route path='*' element={<Navigate to='/'/>} />
+
+      </>
       )
 
       }
-        
+      
       </Routes>
       <Footer />
     </>
