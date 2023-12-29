@@ -5,7 +5,6 @@ import { Provider } from 'react-redux'
 import { store } from './redux/index.ts'
 import { LocalizationProvider } from '@mui/x-date-pickers'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'    
-import GlobalStyle from './GlobalStyles'
 
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
