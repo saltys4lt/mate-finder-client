@@ -10,7 +10,7 @@ const MainContainer=styled.div`
     width: 100%;
     max-width: 1440px;
     margin: 0 auto;
-    padding: 0 10px;
+    padding: 0 20px;
 `
 
 const Container:FC<ContainerProps> = ({children}) => {

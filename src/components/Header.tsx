@@ -1,6 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
 import Navbar from './Navbar'
+import Container from './Container'
 
 const HeaderContainer=styled.header`
   
@@ -17,7 +18,10 @@ const HeaderContainer=styled.header`
 const Header = () => {
   return (
     <HeaderContainer>
+      <Container>
       <Navbar/>
+      </Container>
+      
     </HeaderContainer>
   )
 }

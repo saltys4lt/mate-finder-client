@@ -6,6 +6,8 @@ import styled from "styled-components";
 import Modal from "../components/Modal";
 import { useAppDispatch } from "../redux";
 import { changeRegState } from "../redux/modalSlice";
+import LoginForm from "../components/AuthForms/LoginForm";
+import RegistrationForm from "../components/AuthForms/RegistrationForm";
 
 
 
@@ -14,12 +16,13 @@ const StartPage = () => {
   const dispatch=useAppDispatch()
 
   const openRegModal=()=>{
+    document.documentElement.style.overflowY='hidden'
     dispatch(changeRegState())
   }
 
   return (
     <>
-    
+      <Modal/>
       <Main>
         <ContentContainer>
           <Content>
@@ -40,11 +43,10 @@ const StartPage = () => {
                 <ContentIcon src="/images/improve.png"></ContentIcon>
               </SubContent>
             </div>
-            <StartButton onClick={()=>openRegModal()}>Let's start</StartButton>
+            <StartButton onClick={openRegModal}>Let's start</StartButton>
           </Content>
         </ContentContainer>
       </Main>
-      <Modal/>
       
     </>
   );
