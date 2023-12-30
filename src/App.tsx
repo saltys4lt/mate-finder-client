@@ -1,31 +1,66 @@
-import './App.css'
 import { BrowserRouter } from 'react-router-dom'
 import AppRouter from './components/AppRouter'
 import GlobalStyle from './GlobalStyles'
 import Cookies from 'js-cookie'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useAppDispatch } from './redux'
-import {  checkUserIsAuth } from './redux/usersSlice'
+import {  checkUserIsAuth, setPendingForCheck } from './redux/usersSlice'
 import { useSelector } from 'react-redux'
 import { RootState } from './redux'
+import Loader from './components/Loader'
 
 function App() {
   
   const token=Cookies.get('token')
   const dispatch=useAppDispatch()
-  const isAuth=useSelector((state:RootState)=>state.userReducer.isAuth)
+  const checkUserStatus=useSelector((state:RootState)=>state.userReducer.checkUserStatus)
+  
   useEffect(() => {
     if(token){
+      dispatch(setPendingForCheck())
       dispatch(checkUserIsAuth())
-
     }
   }, [])
-  console.log(isAuth)
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    const handleLoad = () => {
+      const fontRegular = new FontFace('montserrat', 'url(/fonts/Montserrat-Regular.ttf)',{ weight: '400' });
+      const fontBold = new FontFace('montserrat', 'url(/fonts/Montserrat-Bold.ttf)', { weight: '700' });
+      const fontLight = new FontFace('montserrat', 'url(/fonts/Montserrat-Light.ttf)', { weight:'300' });
+  
+      Promise.all([
+        fontRegular.load(),
+        fontBold.load(),
+        fontLight.load(),
+      ])
+        .then(() => {
+          document.fonts.add(fontRegular);
+          document.fonts.add(fontBold);
+          document.fonts.add(fontLight);
+          setLoaded(true);
+        })
+        
+    };    
+    
+    window.addEventListener('load', handleLoad);
+
+    return () => {
+      window.removeEventListener('load', handleLoad);
+    };
+  }, []);
+
+  
+
   return (
     
     <BrowserRouter>
+    
     <GlobalStyle/>
-      <AppRouter/>
+    {!loaded
+    ?     <Loader/>
+    :    <AppRouter/>
+    }
     </BrowserRouter>
   )
 }

@@ -12,22 +12,21 @@ import { changeLoginState, changeRegState } from '../redux/modalSlice'
 
 const Navbar = () => {
   const dispatch=useAppDispatch()
-const regIsActive=useSelector((state:RootState)=>state.modalReducer.regIsActive)
-const loginIsActive=useSelector((state:RootState)=>state.modalReducer.loginIsActive)
+
+    const user=useSelector((state:RootState)=>state.userReducer.user)
+    const isAuth=useSelector((state:RootState)=>state.userReducer.isAuth)
 
   const openRegModal=() => {
     document.documentElement.style.overflowY='hidden'
-
     dispatch(changeRegState())
   }
 
-
   const openLoginModal=() => {
     document.documentElement.style.overflowY='hidden'
-
-
     dispatch(changeLoginState())
   }
+
+
 
   return (
     <NavbarContainer>
@@ -39,11 +38,28 @@ const loginIsActive=useSelector((state:RootState)=>state.modalReducer.loginIsAct
                </LogoTextSpan>
             </LogoText>
         </LogoWrapper>
-        <AuthButtons>
-      <LoginButton onClick={openLoginModal}>login</LoginButton>
-      <RegistrationButton onClick={openRegModal}>sign up</RegistrationButton>
-      
-        </AuthButtons>
+        {isAuth
+          ?
+          <AuthedNavbar>
+          <NavLinks>
+            <NavLink>Home</NavLink>
+            <NavLink>Players</NavLink>
+            <NavLink>Teams</NavLink>
+            <NavLink>Other</NavLink>
+            </NavLinks>
+            <NavProfile>
+            <NavNickname>{user?.nickname}</NavNickname>
+            <NavAvatar src={user?.user_avatar}/>
+            
+          </NavProfile>
+          <Exit src='/images/logout.png'/>  
+            </AuthedNavbar>
+          :<AuthButtons>
+          <LoginButton onClick={openLoginModal}>login</LoginButton>
+          <RegistrationButton onClick={openRegModal}>sign up</RegistrationButton>
+          </AuthButtons>
+        }
+        
     </NavbarContainer>
   )
 }
@@ -56,7 +72,6 @@ const NavbarContainer = styled.nav`
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 60px;
 `
 
 const AuthButtons = styled.div`
@@ -118,13 +133,82 @@ const LogoImage=styled.img`
 `
 const LogoText=styled.h1`
 margin-left: 20px;
-  font-size: 28px; /* Размер текста */
+  font-size: 28px; 
   background: linear-gradient(45deg, #f33e3e, #949494);
-  -webkit-background-clip: text; /* Применение градиента к тексту */
+  -webkit-background-clip: text; 
   color: transparent; 
 `
 
+
+
 const LogoTextSpan=styled.span`
   color: #fff;
+`
+
+const AuthedNavbar=styled.div`
+  width: 70%;
+
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+
+`
+
+const NavLinks=styled.div`
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 15%;
+`
+
+const NavLink=styled.div`
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+    transition: all .3s ease-in-out;
+  &:after{
+    content: ' ';
+    display: block;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(45deg, #f33e3e, #d84e17);
+    opacity: 0;
+    transition: opacity .2s ease-in-out;
+  }
+  &:hover{
+    transform: scale(1.1);
+    color: #ffdede;
+  }
+  &:hover::after{
+    opacity: 1;
+  }
+`
+
+const NavProfile=styled.div`
+
+  display: flex;
+  gap: 10px;
+  align-items: center;
+`
+
+const NavNickname=styled.span`
+  color: #fff;
+`
+
+const NavAvatar=styled.img`
+width: 50px;
+height: 50px;
+background-color: #fff;
+  border-radius: 50%;
+`
+
+const Exit=styled.img`
+  height:40px;
+  margin-left: 20px;
+  cursor: pointer;
+  transition: transform .2s ease-in-out;
+  &:hover{
+    transform: scale(1.1);
+  }
 `
 export default Navbar

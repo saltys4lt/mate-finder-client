@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import User from "../types/User";
 import axios from "axios";
 import Swal from "sweetalert2";
+import ClientUser from "../types/ClientUser";
 
 interface IFormInput {
     password: string;
@@ -12,7 +13,7 @@ const baseUrl=import.meta.env.VITE_BASE_URL
   export const checkUserIsAuth=createAsyncThunk(
     'usersReducer/checkUserIsAuth',
     async(_,{rejectWithValue}) => {
-        const response = await axios.get(`${baseUrl}/check`,{withCredentials:true})
+        const response = await axios.get<ClientUser>(`${baseUrl}/check`,{withCredentials:true})
                           .then(res=>{
                               return res.data
                               
@@ -22,7 +23,7 @@ const baseUrl=import.meta.env.VITE_BASE_URL
                                   return rejectWithValue( error.response?.data.message ?? 'Unknown error');
                                 } 
                           })
-              return response            
+              return response
               
       }
   )
@@ -30,7 +31,7 @@ const baseUrl=import.meta.env.VITE_BASE_URL
 export const fetchUser = createAsyncThunk(
     'usersReducer/fetchUser',
     async (data:IFormInput,{rejectWithValue}) => {
-        const response =axios.post<string>(`${baseUrl}/login`,data,{
+        const response =axios.post<ClientUser>(`${baseUrl}/login`,data,{
             withCredentials:true
         })
         .then(res=>{
@@ -82,10 +83,12 @@ export const createUser = createAsyncThunk(
 )
 
 interface UserState{
-    user:User | null
+    user:ClientUser | null
     isAuth:boolean
     createUserStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
     fetchUserStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
+    checkUserStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
+
 
     createUserError: string | null;
     fetchUserError: string | null;
@@ -101,6 +104,9 @@ const initialState:UserState ={
 
     fetchUserStatus:'idle',
     fetchUserError:null,
+
+    checkUserStatus:'idle',
+    
 }
 
 const usersSlice= createSlice({
@@ -113,13 +119,18 @@ const usersSlice= createSlice({
         },
         changeIsAuth(state){
             state.isAuth=!state.isAuth
+        },
+        setPendingForCheck(state){
+          state.checkUserStatus='pending'
         }
+        
     },
     extraReducers: (builder) => {
         builder.addCase(fetchUser.pending, (state) => {
           state.fetchUserStatus='pending'
         })
-        builder.addCase(fetchUser.fulfilled, (state,action:PayloadAction<string>) => {
+        builder.addCase(fetchUser.fulfilled, (state,action:PayloadAction<ClientUser>) => {
+          console.log(action.payload)
             state.fetchUserStatus='fulfilled'
               const Toast = Swal.mixin({
                 toast: true,
@@ -135,8 +146,9 @@ const usersSlice= createSlice({
               Toast.fire({
                 icon: "success",
                 title: "Signed in successfully",
-                text:`Welcome, ${action.payload}`
+                text:`Welcome, ${action.payload.nickname}`
               });
+              state.user=action.payload
               state.isAuth=true
         })
         builder.addCase(fetchUser.rejected, (state, action) => {
@@ -184,21 +196,26 @@ const usersSlice= createSlice({
 
 
         builder.addCase(checkUserIsAuth.pending, (state) => {
-            state.fetchUserStatus='pending'
+            state.checkUserStatus='pending'
             
         })
-        builder.addCase(checkUserIsAuth.fulfilled, (state) => {
-            state.fetchUserStatus='fulfilled'
+        builder.addCase(checkUserIsAuth.fulfilled, (state,action:PayloadAction<ClientUser | undefined>) => {
+          console.log(action.payload)
+          if(action.payload){
+            state.checkUserStatus='fulfilled'
+            state.user=action.payload
             state.isAuth=true
+          }
+            
         })
         builder.addCase(checkUserIsAuth.rejected, (state) => {
-            state.fetchUserStatus='rejected'
+            state.checkUserStatus='rejected'
             
         })
       },
 })
 
 
-export const {resetUserStatus, changeIsAuth} =usersSlice.actions
+export const {resetUserStatus, changeIsAuth,setPendingForCheck} =usersSlice.actions
 
 export default usersSlice.reducer

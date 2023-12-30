@@ -3,14 +3,21 @@ import Container from './Container'
 import styled from 'styled-components'
 
 
+const MainFooter=styled.footer`
+  background-color: #202020;
+  padding: 30px 0;
+`
+
 const FooterContainer=styled.div`
  
 
 width: 100%;
 height: 140px;
-margin: 50px 0 30px;
+    
+
 display: flex;
 justify-content: space-between;
+align-items: center;
 `
 const FooterColumn=styled.div`
 
@@ -50,7 +57,7 @@ const Logo=styled.img`
 
 const Footer = () => {
   return (
-    <footer>
+    <MainFooter>
       <Container>
       <FooterContainer>
         
@@ -83,7 +90,7 @@ const Footer = () => {
         <Logo src='/images/footer-logo.jpg'/>
       </FooterContainer>
       </Container>
-    </footer>
+    </MainFooter>
   )
 }
 
