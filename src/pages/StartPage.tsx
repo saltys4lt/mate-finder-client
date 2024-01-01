@@ -1,13 +1,7 @@
-import React, { useState } from "react";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
-import Container from "../components/Container";
 import styled from "styled-components";
 import Modal from "../components/Modal";
 import { useAppDispatch } from "../redux";
 import { changeRegState } from "../redux/modalSlice";
-import LoginForm from "../components/AuthForms/LoginForm";
-import RegistrationForm from "../components/AuthForms/RegistrationForm";
 
 
 

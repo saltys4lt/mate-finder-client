@@ -1,6 +1,47 @@
-import React from 'react'
 import Container from './Container'
 import styled from 'styled-components'
+
+
+
+
+const Footer = () => {
+  return (
+    <MainFooter>
+      <Container>
+      <FooterContainer>
+        
+        <FooterColumn>
+        <FooterTitle>Contact Me</FooterTitle>
+
+          <ContactsItem href='https://t.me/ahrisai' target='_blank'>
+            <ContactsLink >@ahrisai</ContactsLink>
+            <ContactsIcon src='/images/telegram.png'/>
+          </ContactsItem>
+
+          <ContactsItem  href='https://github.com/ahrisai' target='_blank'> 
+            <ContactsLink>ahrisai</ContactsLink>
+            <ContactsIcon src='/images/github.png'/>
+          </ContactsItem>
+
+           <ContactsItem href='https://www.linkedin.com/in/ilia-shpak-8b1524298/' target='_blank'>
+            <ContactsLink>Ilia Shpak</ContactsLink>
+            <ContactsIcon src='/images/linkedin.png'/>
+          </ContactsItem>
+        </FooterColumn>
+        <FooterColumn>
+          <FooterTitle>If you don't need money lend me a cup of coffee plz :3 </FooterTitle>
+          <ContactsItem href='https://www.buymeacoffee.com/ahrisai' target='_blank'>
+            <ContactsLink >buymeacoffee.com/ahrisai</ContactsLink>
+            <ContactsIcon src='/images/coffee-cup.png'/>
+
+          </ContactsItem>
+        </FooterColumn>
+        <Logo src='/images/footer-logo.jpg'/>
+      </FooterContainer>
+      </Container>
+    </MainFooter>
+  )
+}
 
 
 const MainFooter=styled.footer`
@@ -54,48 +95,6 @@ const Logo=styled.img`
   height: 100px;
   border-radius: 5px;
 `
-
-const Footer = () => {
-  return (
-    <MainFooter>
-      <Container>
-      <FooterContainer>
-        
-        <FooterColumn>
-        <FooterTitle>Contact Me</FooterTitle>
-
-          <ContactsItem href='https://t.me/ahrisai' target='_blank'>
-            <ContactsLink >@ahrisai</ContactsLink>
-            <ContactsIcon src='/images/telegram.png'/>
-          </ContactsItem>
-
-          <ContactsItem  href='https://github.com/ahrisai' target='_blank'> 
-            <ContactsLink>ahrisai</ContactsLink>
-            <ContactsIcon src='/images/github.png'/>
-          </ContactsItem>
-
-           <ContactsItem href='https://www.linkedin.com/in/ilia-shpak-8b1524298/' target='_blank'>
-            <ContactsLink>Ilia Shpak</ContactsLink>
-            <ContactsIcon src='/images/linkedin.png'/>
-          </ContactsItem>
-        </FooterColumn>
-        <FooterColumn>
-          <FooterTitle>If you don't need money lend me a cup of coffee plz :3 </FooterTitle>
-          <ContactsItem href='https://www.buymeacoffee.com/ahrisai' target='_blank'>
-            <ContactsLink >buymeacoffee.com/ahrisai</ContactsLink>
-            <ContactsIcon src='/images/coffee-cup.png'/>
-
-          </ContactsItem>
-        </FooterColumn>
-        <Logo src='/images/footer-logo.jpg'/>
-      </FooterContainer>
-      </Container>
-    </MainFooter>
-  )
-}
-
-
-
 
 
 export default Footer

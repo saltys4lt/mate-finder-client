@@ -1,4 +1,3 @@
-import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { publicRoutes, privateRoutes } from "../routes/routes";
 import Header from "./Header";

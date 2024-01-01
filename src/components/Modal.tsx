@@ -11,6 +11,66 @@ interface ModalStatus{
     $active:string
 }
 
+
+
+const Modal= () => {
+const dispatch=useAppDispatch()
+const regIsActive=useSelector((state:RootState)=>state.modalReducer.regIsActive)
+const loginIsActive=useSelector((state:RootState)=>state.modalReducer.loginIsActive)
+
+const [isActive, setIsActive] = useState<string>('false')
+
+useEffect(() => {
+  if(regIsActive||loginIsActive) setIsActive('true')
+}, [regIsActive,loginIsActive])
+
+
+    const closeModal =() => {
+      document.documentElement.style.overflowY='visible'
+
+
+      setIsActive('false')
+      setTimeout(() => {
+        if(regIsActive) dispatch(changeRegState())
+        if(loginIsActive) dispatch(changeLoginState())
+      }, 500);
+     
+
+    }
+
+    const regStatus=useSelector((state:RootState)=>state.userReducer.createUserStatus)
+    const loginStatus=useSelector((state:RootState)=>state.userReducer.fetchUserStatus)
+
+    
+
+  
+    
+
+  return (
+        <ModalContainer $active={isActive}  onClick={closeModal}>
+        <Content $active={isActive} onClick={(e:React.MouseEvent)=>{e.stopPropagation()}}>
+        {(regStatus==='pending'||loginStatus==='pending')
+        &&<>
+         <LinearProgress color='inherit'   sx={{zIndex:3,height:'7px',borderRadius:'10px', position:'absolute', top:'2px',left:'50%',width:'100%',transform:'translate(-50%,-50%)' }} /> 
+          <LoaderBackground/>
+        </>
+
+        }
+       
+        {loginIsActive&&
+        <LoginForm/>
+        }
+        {regIsActive&& 
+        <RegistrationForm/>
+        }
+       
+        
+        
+        </Content>
+    </ModalContainer>
+  )
+}
+
 const ModalContainer=styled.div<ModalStatus>`
     height: 100vh;
     width: 100vw;
@@ -68,66 +128,5 @@ const LoaderBackground=styled.div`
   border-radius: 12px;
   z-index: 2;
 `
-
-const Modal= () => {
-const dispatch=useAppDispatch()
-const regIsActive=useSelector((state:RootState)=>state.modalReducer.regIsActive)
-const loginIsActive=useSelector((state:RootState)=>state.modalReducer.loginIsActive)
-
-const [isActive, setIsActive] = useState<string>('false')
-
-useEffect(() => {
-  if(regIsActive||loginIsActive) setIsActive('true')
-}, [regIsActive,loginIsActive])
-
-
-    const closeModal =() => {
-      document.documentElement.style.overflowY='visible'
-
-
-      setIsActive('false')
-      setTimeout(() => {
-        if(regIsActive) dispatch(changeRegState())
-        if(loginIsActive) dispatch(changeLoginState())
-      }, 500);
-     
-
-    }
-
-    const regStatus=useSelector((state:RootState)=>state.userReducer.createUserStatus)
-    const loginStatus=useSelector((state:RootState)=>state.userReducer.fetchUserStatus)
-
-    const regError=useSelector((state:RootState)=>state.userReducer.createUserError)
-    const loginError=useSelector((state:RootState)=>state.userReducer.fetchUserError)
-
-  
-    
-
-  return (
-        <ModalContainer $active={isActive}  onClick={closeModal}>
-        <Content $active={isActive} onClick={(e:React.MouseEvent)=>{e.stopPropagation()}}>
-        {(regStatus==='pending'||loginStatus==='pending')
-        &&<>
-         <LinearProgress color='inherit'   sx={{zIndex:3,height:'7px',borderRadius:'10px', position:'absolute', top:'2px',left:'50%',width:'100%',transform:'translate(-50%,-50%)' }} /> 
-          <LoaderBackground/>
-        </>
-
-        }
-       
-        {loginIsActive&&
-        <LoginForm/>
-        }
-        {regIsActive&& 
-        <RegistrationForm/>
-        }
-       
-        
-        
-        </Content>
-    </ModalContainer>
-  )
-}
-
-
 
 export default Modal
