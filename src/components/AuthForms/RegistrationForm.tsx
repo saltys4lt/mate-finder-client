@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import styled from "styled-components";
 import {
   
@@ -6,7 +6,6 @@ import {
   RadioGroup,
   Radio,
   FormControlLabel,
-  LinearProgress,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers";
 import dayjs from "dayjs";
@@ -16,11 +15,9 @@ import { useForm, SubmitHandler } from "react-hook-form";
 import { RootState, useAppDispatch } from "../../redux";
 import { changeLoginState, changeRegState } from "../../redux/modalSlice";
 import { checkYears } from "../../util/checkYears";
-import axios from "axios";
 import { createUser, resetUserStatus } from "../../redux/usersSlice";
 import User from "../../types/User";
 import { useSelector } from "react-redux";
-import Swal from "sweetalert2";
 
 interface IFormInput {
   nickname: string;
@@ -44,7 +41,6 @@ const RegistrationForm = () => {
 
     const createUserStatus=useSelector((state:RootState)=>state.userReducer.createUserStatus)
 
-    const createUserError=useSelector((state:RootState)=>state.userReducer.createUserError)
 
     
     useEffect(() => {
@@ -252,10 +248,6 @@ const LoginButton = styled.button`
   }
 `;
 
-const AuthLoader=styled.img`
-width: 100%;
-
-`
 
 export const ErrorAlert = styled.span`
   margin: -10px;

@@ -1,12 +1,8 @@
-import { TextField, RadioGroup, FormControlLabel, Radio } from "@mui/material";
-import { DatePicker } from "@mui/x-date-pickers";
-import { Dayjs } from "dayjs";
-import React from "react";
+import { TextField } from "@mui/material";
 import { useForm, SubmitHandler } from "react-hook-form";
 import styled from "styled-components";
 import { useAppDispatch } from "../../redux";
 import { changeLoginState, changeRegState } from "../../redux/modalSlice";
-import Modal from "../Modal";
 import { ErrorAlert } from "./RegistrationForm";
 import { fetchUser } from "../../redux/usersSlice";
 

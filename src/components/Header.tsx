@@ -1,7 +1,19 @@
-import React from 'react'
 import styled from 'styled-components'
 import Navbar from './Navbar'
 import Container from './Container'
+
+
+
+
+const Header = () => {
+  return (
+    <HeaderContainer>
+      <Container>
+      <Navbar/>
+      </Container>
+    </HeaderContainer>
+  )
+}
 
 const HeaderContainer=styled.header`
   
@@ -13,17 +25,5 @@ const HeaderContainer=styled.header`
   display: flex;
   align-items: center;
 `
-
-
-const Header = () => {
-  return (
-    <HeaderContainer>
-      <Container>
-      <Navbar/>
-      </Container>
-      
-    </HeaderContainer>
-  )
-}
 
 export default Header

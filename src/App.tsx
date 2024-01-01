@@ -5,15 +5,12 @@ import Cookies from 'js-cookie'
 import { useEffect, useState } from 'react'
 import { useAppDispatch } from './redux'
 import {  checkUserIsAuth, setPendingForCheck } from './redux/usersSlice'
-import { useSelector } from 'react-redux'
-import { RootState } from './redux'
 import Loader from './components/Loader'
 
 function App() {
   
   const token=Cookies.get('token')
   const dispatch=useAppDispatch()
-  const checkUserStatus=useSelector((state:RootState)=>state.userReducer.checkUserStatus)
   
   useEffect(() => {
     if(token){
