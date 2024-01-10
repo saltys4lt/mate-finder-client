@@ -1,10 +1,11 @@
 import { TextField } from "@mui/material";
 import { useForm, SubmitHandler } from "react-hook-form";
 import styled from "styled-components";
-import { useAppDispatch } from "../../redux";
+import { RootState, useAppDispatch } from "../../redux";
 import { changeLoginState, changeRegState } from "../../redux/modalSlice";
 import { ErrorAlert } from "./RegistrationForm";
 import { fetchUser } from "../../redux/usersSlice";
+import { useSelector } from "react-redux";
 
 interface IFormInput {
   password: string;
@@ -12,12 +13,17 @@ interface IFormInput {
 }
 
 const LoginForm = () => {
+  
   const { register, handleSubmit,formState:{errors} } = useForm<IFormInput>();
+const loginStatus=useSelector((root:RootState)=>root.userReducer.fetchUserStatus)
 
   const dispatch = useAppDispatch();
 
-  const onSubmit: SubmitHandler<IFormInput> = (data) => {
-    dispatch(fetchUser({nickname:data.nickname,password:data.password}))
+  const onSubmit: SubmitHandler<IFormInput> = async(data) => {
+    await dispatch(fetchUser({nickname:data.nickname,password:data.password}))
+    if(loginStatus){
+      dispatch(changeLoginState())
+    }
   };
 
   const switchToRegistration = () => {
