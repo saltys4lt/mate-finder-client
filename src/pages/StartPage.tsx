@@ -1,8 +1,8 @@
 import styled from "styled-components";
 import Modal from "../components/Modal";
 import { useAppDispatch } from "../redux";
-import { changeRegState } from "../redux/modalSlice";
-
+import { changeLoginState, changeRegState } from "../redux/modalSlice";
+import { useEffect } from "react";
 
 
 const StartPage = () => {
@@ -13,6 +13,7 @@ const StartPage = () => {
     document.documentElement.style.overflowY='hidden'
     dispatch(changeRegState())
   }
+
 
   return (
     <>
