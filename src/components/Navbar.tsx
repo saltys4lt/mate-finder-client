@@ -45,7 +45,7 @@ const Navbar = () => {
   const navigate = useNavigate()
   return (
     <NavbarContainer>
-      <LogoWrapper>
+      <LogoWrapper onClick={()=>{navigate('/home')}}>
         <LogoImage src="/images/header1-logo.jpeg" />
         <LogoText>
           Squad
@@ -73,6 +73,7 @@ const Navbar = () => {
             <DropDown>
               <NavLink>Other</NavLink>
               <DropDownContent>
+                
                 <DropDownLink to={`/profile/${user?.nickname}`}>Profile</DropDownLink>
                 <DropDownLink to={'/matches'}>Matches</DropDownLink>
                 <DropDownLink to={'/news'}>News</DropDownLink>
@@ -162,6 +163,7 @@ const RegistrationButton = styled.button`
 const LogoWrapper = styled.div`
   display: flex;
   align-items: center;
+  cursor: pointer;
 `;
 
 const LogoImage = styled.img`

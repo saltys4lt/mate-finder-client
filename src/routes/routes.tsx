@@ -19,9 +19,6 @@ export const privateRoutes=[
     {path:'/matches', element:<Suspense fallback={<Loader/>}><MatchesPage/></Suspense> },
     {path:'/news', element:<Suspense fallback={<Loader/>}><NewsPage/></Suspense> },
     {path:'/profile/:nickname', element:<Suspense fallback={<Loader/>}><ProfilePage/></Suspense> },
-
-
-    
 ]
 
 export const publicRoutes=[

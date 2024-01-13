@@ -2,30 +2,39 @@ import React, { useEffect } from 'react'
 import Container from '../components/Container'
 import styled from 'styled-components'
 import { useAppDispatch } from '../redux'
-import { changeLoginState } from '../redux/modalSlice'
+import { changeGameProfileState} from '../redux/modalSlice'
+import Modal from '../components/Modal'
 
 const HomePage = () => {
   document.documentElement.style.overflowY='visible'
-  
+  const dispatch = useAppDispatch()
+  const openGameProfileModal=() => {
+    dispatch(changeGameProfileState())
+  }
 
   
   
 
   return (
+    <>
+    
     <main>
       <MatchesBar/>
       <Container>
         <MainContent>
+        <Modal/>
           <ContentButtons>
             <ContentLink>Find Players </ContentLink>
             <ContentLink>Find Your Team</ContentLink>
-            <GameProfileButton>Create Game Profile</GameProfileButton>
+            <GameProfileButton onClick={openGameProfileModal}>Create Game Profile</GameProfileButton>
           </ContentButtons>
           <ContentNews>
           </ContentNews>
         </MainContent>
       </Container>
     </main>
+    </>
+    
   )
 }
 
