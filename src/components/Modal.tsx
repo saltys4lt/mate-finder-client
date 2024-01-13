@@ -2,10 +2,11 @@ import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
 import { RootState, useAppDispatch } from '../redux'
 import { useSelector } from 'react-redux'
-import { changeLoginState, changeRegState } from '../redux/modalSlice'
+import { changeGameProfileState, changeLoginState, changeRegState } from '../redux/modalSlice'
 import LoginForm from './AuthForms/LoginForm'
 import RegistrationForm from './AuthForms/RegistrationForm'
 import { LinearProgress } from '@mui/material'
+import GameChoiceForm from './GameChoiceForm'
 
 interface ModalStatus{
     $active:string
@@ -17,22 +18,23 @@ const Modal= () => {
 const dispatch=useAppDispatch()
 const regIsActive=useSelector((state:RootState)=>state.modalReducer.regIsActive)
 const loginIsActive=useSelector((state:RootState)=>state.modalReducer.loginIsActive)
+const gameChoiceIsActive=useSelector((state:RootState)=>state.modalReducer.gameChoiceIsActive)
 
 const [isActive, setIsActive] = useState<string>('false')
 
 useEffect(() => {
-  if(regIsActive||loginIsActive) setIsActive('true')
-}, [regIsActive,loginIsActive])
+  if(regIsActive||loginIsActive||gameChoiceIsActive) setIsActive('true')
+}, [regIsActive,loginIsActive,gameChoiceIsActive])
 
 
     const closeModal =() => {
       document.documentElement.style.overflowY='visible'
-
-
       setIsActive('false')
       setTimeout(() => {
         if(regIsActive) dispatch(changeRegState())
         if(loginIsActive) dispatch(changeLoginState())
+        if(gameChoiceIsActive) dispatch(changeGameProfileState())
+
       }, 500);
      
 
@@ -42,16 +44,17 @@ useEffect(() => {
     const loginStatus=useSelector((state:RootState)=>state.userReducer.fetchUserStatus)
 
     
-
+    console.log(gameChoiceIsActive)
   
     
 
   return (
         <ModalContainer $active={isActive}  onClick={closeModal}>
         <Content $active={isActive} onClick={(e:React.MouseEvent)=>{e.stopPropagation()}}>
+        <CloseCross src='/images/close-cross.png' onClick={closeModal}/>
         {(regStatus==='pending'||loginStatus==='pending')
         &&<>
-         <LinearProgress color='inherit'   sx={{zIndex:3,height:'7px',borderRadius:'10px', position:'absolute', top:'2px',left:'50%',width:'100%',transform:'translate(-50%,-50%)' }} /> 
+         <LinearProgress color='inherit'  sx={{zIndex:3,height:'7px',borderRadius:'10px', position:'absolute', top:'2px',left:'50%',width:'100%',transform:'translate(-50%,-50%)' }} /> 
           <LoaderBackground/>
         </>
 
@@ -62,6 +65,9 @@ useEffect(() => {
         }
         {regIsActive&& 
         <RegistrationForm/>
+        }
+        {gameChoiceIsActive&& 
+        <GameChoiceForm/>
         }
        
         
@@ -99,6 +105,7 @@ const ModalContainer=styled.div<ModalStatus>`
 
 const Content=styled.div<ModalStatus>`
   overflow: hidden;
+  position: relative;
     padding: 20px;
     border-radius: 12px;
     background-color: #e8e8e8;
@@ -116,6 +123,21 @@ const Content=styled.div<ModalStatus>`
     :0
     };
     position:relative;
+`
+const CloseCross=styled.img`
+  padding-right: 10px;
+  padding-top: 10px;
+  display: block;
+  width: 25px;
+  height: 25px;
+  position: absolute;
+  right: 0;
+  top: 0;
+  cursor: pointer;
+  transition: transform .2s ease-in-out ;
+  &:hover{
+    transform: scale(1.3);
+  }
 `
 const LoaderBackground=styled.div`
   position: absolute;
