@@ -1,9 +1,8 @@
-import React, { useEffect } from 'react'
-import Container from '../components/Container'
 import styled from 'styled-components'
-import { useAppDispatch } from '../redux'
-import { changeGameProfileState} from '../redux/modalSlice'
+import Container from '../components/Container'
 import Modal from '../components/Modal'
+import { useAppDispatch } from '../redux'
+import { changeGameProfileState } from '../redux/modalSlice'
 
 const HomePage = () => {
   document.documentElement.style.overflowY='visible'

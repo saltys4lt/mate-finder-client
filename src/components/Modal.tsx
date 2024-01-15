@@ -1,11 +1,11 @@
+import { LinearProgress } from '@mui/material'
 import React, { useEffect, useState } from 'react'
+import { useSelector } from 'react-redux'
 import styled from 'styled-components'
 import { RootState, useAppDispatch } from '../redux'
-import { useSelector } from 'react-redux'
 import { changeGameProfileState, changeLoginState, changeRegState } from '../redux/modalSlice'
 import LoginForm from './AuthForms/LoginForm'
 import RegistrationForm from './AuthForms/RegistrationForm'
-import { LinearProgress } from '@mui/material'
 import GameChoiceForm from './GameChoiceForm'
 
 interface ModalStatus{

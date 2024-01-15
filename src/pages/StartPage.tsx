@@ -1,8 +1,7 @@
 import styled from "styled-components";
 import Modal from "../components/Modal";
 import { useAppDispatch } from "../redux";
-import { changeLoginState, changeRegState } from "../redux/modalSlice";
-import { useEffect } from "react";
+import { changeRegState } from "../redux/modalSlice";
 
 
 const StartPage = () => {

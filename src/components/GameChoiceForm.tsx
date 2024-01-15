@@ -1,6 +1,5 @@
-import React from 'react'
-import styled from 'styled-components'
 import { useState } from 'react'
+import styled from 'styled-components'
 
 const GameChoiceForm = () => {
     const [game, setGame] = useState<{cs2:boolean,valorant:boolean}>({cs2:false,valorant:false})

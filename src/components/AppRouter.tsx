@@ -1,9 +1,9 @@
-import { Routes, Route, Navigate } from "react-router-dom";
-import { publicRoutes, privateRoutes } from "../routes/routes";
-import Header from "./Header";
-import Footer from "./Footer";
 import { useSelector } from "react-redux";
+import { Navigate, Route, Routes } from "react-router-dom";
 import { RootState } from "../redux";
+import { privateRoutes, publicRoutes } from "../routes/routes";
+import Footer from "./Footer";
+import Header from "./Header";
 
 
 
