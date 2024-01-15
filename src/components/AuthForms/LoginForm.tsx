@@ -1,11 +1,11 @@
 import { TextField } from "@mui/material";
-import { useForm, SubmitHandler } from "react-hook-form";
+import { SubmitHandler, useForm } from "react-hook-form";
+import { useSelector } from "react-redux";
 import styled from "styled-components";
 import { RootState, useAppDispatch } from "../../redux";
 import { changeLoginState, changeRegState } from "../../redux/modalSlice";
-import { ErrorAlert } from "./RegistrationForm";
 import { fetchUser } from "../../redux/usersSlice";
-import { useSelector } from "react-redux";
+import { ErrorAlert } from "./RegistrationForm";
 
 interface IFormInput {
   password: string;

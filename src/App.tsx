@@ -1,11 +1,11 @@
-import { BrowserRouter } from 'react-router-dom'
-import AppRouter from './components/AppRouter'
-import GlobalStyle from './GlobalStyles'
 import Cookies from 'js-cookie'
 import { useEffect, useState } from 'react'
-import { useAppDispatch } from './redux'
-import {  checkUserIsAuth, setPendingForCheck } from './redux/usersSlice'
+import { BrowserRouter } from 'react-router-dom'
+import GlobalStyle from './GlobalStyles'
+import AppRouter from './components/AppRouter'
 import Loader from './components/Loader'
+import { useAppDispatch } from './redux'
+import { checkUserIsAuth, setPendingForCheck } from './redux/usersSlice'
 
 function App() {
   

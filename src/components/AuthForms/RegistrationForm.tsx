@@ -1,23 +1,21 @@
-import { useEffect, useState } from "react";
-import styled from "styled-components";
 import {
-  
-  TextField,
-  RadioGroup,
-  Radio,
   FormControlLabel,
+  Radio,
+  RadioGroup,
+  TextField,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers";
-import dayjs from "dayjs";
-import { Dayjs } from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
+import { useEffect, useState } from "react";
+import styled from "styled-components";
 
-import { useForm, SubmitHandler } from "react-hook-form";
+import { SubmitHandler, useForm } from "react-hook-form";
+import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../../redux";
 import { changeLoginState, changeRegState } from "../../redux/modalSlice";
-import { checkYears } from "../../util/checkYears";
 import { createUser, resetUserStatus } from "../../redux/usersSlice";
 import User from "../../types/User";
-import { useSelector } from "react-redux";
+import { checkYears } from "../../util/checkYears";
 
 interface IFormInput {
   nickname: string;

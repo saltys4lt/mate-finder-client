@@ -1,11 +1,11 @@
+import Cookies from 'js-cookie';
 import { useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import styled from "styled-components";
-import { useAppDispatch, RootState } from "../redux";
+import Swal from "sweetalert2";
+import { RootState, useAppDispatch } from "../redux";
 import { changeLoginState, changeRegState } from "../redux/modalSlice";
 import { changeIsAuth } from "../redux/usersSlice";
-import Cookies from 'js-cookie'
-import Swal from "sweetalert2";
 
 
 const Navbar = () => {
