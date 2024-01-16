@@ -17,12 +17,12 @@ const Navbar = () => {
   
   const openRegModal = () => {
     document.documentElement.style.overflowY = "hidden";
-    dispatch(changeRegState());
+    dispatch(changeRegState(true));
   };
 
   const openLoginModal = () => {
     document.documentElement.style.overflowY = "hidden";
-    dispatch(changeLoginState());
+    dispatch(changeLoginState(true));
     
   };
   const handleExit = () => {

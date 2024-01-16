@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import styled from 'styled-components'
+import { SteamAuth } from '../util/steamAuth'
 
 const GameChoiceForm = () => {
     const [game, setGame] = useState<{cs2:boolean,valorant:boolean}>({cs2:false,valorant:false})
@@ -7,6 +8,12 @@ const GameChoiceForm = () => {
     const pickGame = (selectedGame:'cs2' | 'valorant') => {        
             if(selectedGame==='cs2') setGame({valorant:false,cs2:true})
             else setGame({valorant:true,cs2:false})
+    }
+
+    const handleConfirm =() => {
+      if(game.cs2){
+        SteamAuth()
+      }
     }
     
   return (
@@ -23,7 +30,7 @@ const GameChoiceForm = () => {
         </GameItem>
     </GamesContainer>
     
-    <ConfirmButton>Confirm</ConfirmButton>
+    <ConfirmButton onClick={handleConfirm}>Confirm</ConfirmButton>
     
     
     
