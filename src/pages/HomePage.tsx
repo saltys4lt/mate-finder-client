@@ -8,7 +8,7 @@ const HomePage = () => {
   document.documentElement.style.overflowY='visible'
   const dispatch = useAppDispatch()
   const openGameProfileModal=() => {
-    dispatch(changeGameProfileState())
+    dispatch(changeGameProfileState(true))
   }
 
   

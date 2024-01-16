@@ -117,8 +117,10 @@ const usersSlice= createSlice({
             state.createUserStatus='idle'
             state.createUserError=null
         },
+        
         changeIsAuth(state){
             state.isAuth=!state.isAuth
+            state.fetchUserStatus='idle'
         },
         setPendingForCheck(state){
           state.checkUserStatus='pending'
