@@ -1,7 +1,7 @@
 import { useSelector } from "react-redux";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { RootState } from "../redux";
-import { privateRoutes, publicRoutes } from "../routes/routes";
+import {  authorizedGameProfileRoutes, privateRoutes, publicRoutes } from "../routes/routes";
 import Footer from "./Footer";
 import Header from "./Header";
 
@@ -10,6 +10,9 @@ import Header from "./Header";
 const AppRouter = () => {
  
   const isAuth=useSelector((state:RootState)=>state.userReducer.isAuth)
+  const csgoData=useSelector((state:RootState)=>state.userReducer.user?.csgo_data)
+  const valorantData=useSelector((state:RootState)=>state.userReducer.user?.valorant_data)
+
   return (
     <>
       <Header />
@@ -23,11 +26,10 @@ const AppRouter = () => {
         <Route key={r.path} path={r.path} element={r.element} />
       )
       }
-
-      {isAuth
-      ?<Route  path='*' element={<Navigate to='/home'/>} />
-      :<Route  path='*' element={<Navigate to='/'/>} />
+      {(csgoData||valorantData)&& 
+        authorizedGameProfileRoutes.map(r=><Route key={r.path} path={r.path} element={r.element}/>)
       }
+     
       </Routes>
       <Footer />
     </>

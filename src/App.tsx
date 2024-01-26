@@ -4,14 +4,15 @@ import { BrowserRouter } from 'react-router-dom'
 import GlobalStyle from './GlobalStyles'
 import AppRouter from './components/AppRouter'
 import Loader from './components/Loader'
-import { useAppDispatch } from './redux'
+import { RootState, useAppDispatch } from './redux'
 import { checkUserIsAuth, setPendingForCheck } from './redux/usersSlice'
+import { useSelector } from 'react-redux'
 
 function App() {
   
   const token=Cookies.get('token')
   const dispatch=useAppDispatch()
-  
+  const check=useSelector((state:RootState)=>state.userReducer.checkUserStatus)
   useEffect(() => {
     if(token){
       dispatch(setPendingForCheck())
@@ -54,7 +55,7 @@ function App() {
     <BrowserRouter>
     
     <GlobalStyle/>
-    {!loaded
+    {!loaded||check!=='fulfilled'
     ?     <Loader/>
     :    <AppRouter/>
     }

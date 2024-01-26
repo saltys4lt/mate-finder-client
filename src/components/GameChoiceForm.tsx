@@ -1,16 +1,31 @@
 import { useState } from 'react'
 import styled from 'styled-components'
 import { SteamAuth } from '../util/steamAuth'
-
+import { RootState, useAppDispatch } from '../redux'
+import { useSelector } from 'react-redux'
+import Swal from 'sweetalert2'
 const GameChoiceForm = () => {
     const [game, setGame] = useState<{cs2:boolean,valorant:boolean}>({cs2:false,valorant:false})
-
+    
+    const csData=useSelector((state:RootState)=>state.userReducer.user?.csgo_data)
     const pickGame = (selectedGame:'cs2' | 'valorant') => {        
             if(selectedGame==='cs2') setGame({valorant:false,cs2:true})
             else setGame({valorant:true,cs2:false})
+
+
     }
 
     const handleConfirm =() => {
+        if(csData){
+            Swal.fire({
+                icon: "question",
+                title: `Что-то пошло не так`,
+                text:`Похоже вы уже подключили свой faceit аккаунт`,
+                showConfirmButton: false,
+                timer: 3000
+              })
+              return ;
+        }
       if(game.cs2){
         SteamAuth()
       }

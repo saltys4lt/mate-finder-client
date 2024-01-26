@@ -10,7 +10,8 @@ export default interface User{
     description?:string,
     gender:string,
     birthday:string,
-    valorant_data?:ValorantData | null,
-    csgo_data?:CsGoData | null,
+    valorant_data?:ValorantData,
+    csgo_data?:CsGoData,
     teams?:Team[]
+    steamId?:string
 }
