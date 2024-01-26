@@ -1,71 +1,106 @@
-import styled from 'styled-components'
-import Container from '../components/Container'
-import Modal from '../components/Modal'
-import { useAppDispatch } from '../redux'
-import { changeGameProfileState } from '../redux/modalSlice'
+import styled from "styled-components";
+import Container from "../components/Container";
+import Modal from "../components/Modal";
+import { useAppDispatch } from "../redux";
+import { changeGameProfileState } from "../redux/modalSlice";
+import { useEffect } from "react";
+import Cookies from "js-cookie";
+import CsGoData from "../types/CsgoData";
+import Swal from "sweetalert2";
 
 const HomePage = () => {
-  document.documentElement.style.overflowY='visible'
-  const dispatch = useAppDispatch()
-  const openGameProfileModal=() => {
-    dispatch(changeGameProfileState())
-  }
+  document.documentElement.style.overflowY = "visible";
+  const dispatch = useAppDispatch();
+  const openGameProfileModal = () => {
+    dispatch(changeGameProfileState(true));
+  };
 
-  
-  
+  useEffect(() => {
+    if (Cookies.get("_csData")) {
+      if (Cookies.get("_csData") === "exist") {
+        Swal.fire({
+          icon: "warning",
+          title: `Ошибочка`,
+          text: `Такой аккаунт уже привязан`,
+          showConfirmButton: false,
+          timer: 3000,
+        });
+      } else {
+
+        const csData: CsGoData = JSON.parse(Cookies.get("_csData") as string);
+        if (csData.elo) {
+          Swal.fire({
+            icon: "success",
+            title: `Успешный вход`,
+            text: `Ваш faceit успешно подключен`,
+            showConfirmButton: false,
+            timer: 3000,
+          });
+        } else
+          Swal.fire({
+            icon: "question",
+            title: `Что-то не так`,
+            text: `Похоже ваш steam аккаунт не привязан к faceit`,
+            showConfirmButton: false,
+            timer: 1500,
+          });
+      }
+    }
+
+    Cookies.remove("_csData");
+  }, []);
 
   return (
     <>
-    
-    <main>
-      <MatchesBar/>
-      <Container>
-        <MainContent>
-        <Modal/>
-          <ContentButtons>
-            <ContentLink>Find Players </ContentLink>
-            <ContentLink>Find Your Team</ContentLink>
-            <GameProfileButton onClick={openGameProfileModal}>Create Game Profile</GameProfileButton>
-          </ContentButtons>
-          <ContentNews>
-          </ContentNews>
-        </MainContent>
-      </Container>
-    </main>
+      <main>
+        <MatchesBar />
+        <Container>
+          <MainContent>
+            <Modal />
+            <ContentButtons>
+              <ContentLink>Find Players </ContentLink>
+              <ContentLink>Find Your Team</ContentLink>
+              <GameProfileButton onClick={openGameProfileModal}>
+                Create Game Profile
+              </GameProfileButton>
+            </ContentButtons>
+            <ContentNews></ContentNews>
+          </MainContent>
+        </Container>
+      </main>
     </>
-    
-  )
-}
+  );
+};
 
-const MatchesBar=styled.div`
+const MatchesBar = styled.div`
   width: 100%;
   height: 100px;
   background-color: #333;
-`
+`;
 
-const MainContent=styled.section`
+const MainContent = styled.section`
   width: 100%;
   height: 70vh;
   display: flex;
   justify-content: space-between;
   padding: 40px 0;
-`
+`;
 
-const ContentButtons=styled.div`
-width: 48%;
+const ContentButtons = styled.div`
+  width: 48%;
 
   display: flex;
   flex-direction: column;
   justify-content: space-around;
-`
-const ContentNews=styled.div`
+`;
+const ContentNews = styled.div`
   width: 48%;
   background-color: #575757;
-`
-const ContentLink=styled.div`
-display: flex;
-justify-content: center;
-align-items: center;
+`;
+const ContentLink = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
 
   height: 70px;
   font-weight: 400;
@@ -93,11 +128,11 @@ align-items: center;
     transform: scale(1.03);
     background-size: 150%;
   }
-`
-const GameProfileButton=styled.div`
-display: flex;
-justify-content: center;
-align-items: center;
+`;
+const GameProfileButton = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
 
   height: 70px;
   font-weight: 400;
@@ -109,7 +144,7 @@ align-items: center;
   border-radius: 4px;
   background: radial-gradient(
     circle at 10% 100%,
-    rgb(177, 139, 16)30%,
+    rgb(177, 139, 16) 30%,
     rgb(0, 0, 0) 200%
   );
 
@@ -125,9 +160,6 @@ align-items: center;
     transform: scale(1.03);
     background-size: 150%;
   }
-`
+`;
 
-
-
-
-export default HomePage
+export default HomePage;

@@ -1,4 +1,4 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice,PayloadAction } from "@reduxjs/toolkit";
 
 interface ModalInitialState{
     regIsActive:boolean,
@@ -19,14 +19,14 @@ const modalSlice= createSlice({
     initialState,
 
     reducers:{
-        changeLoginState(state){
-            state.loginIsActive=!state.loginIsActive
+        changeLoginState(state, action:PayloadAction<boolean>){
+            state.loginIsActive=action.payload
         },
-        changeRegState(state){
-            state.regIsActive=!state.regIsActive
+        changeRegState(state,action:PayloadAction<boolean>){
+            state.regIsActive=action.payload
         },
-        changeGameProfileState(state){
-            state.gameChoiceIsActive=!state.gameChoiceIsActive
+        changeGameProfileState(state,action:PayloadAction<boolean>){
+            state.gameChoiceIsActive=action.payload
         }
         
     }
