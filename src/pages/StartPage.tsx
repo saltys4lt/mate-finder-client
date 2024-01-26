@@ -5,7 +5,6 @@ import { changeRegState } from "../redux/modalSlice";
 
 
 const StartPage = () => {
-
   const dispatch=useAppDispatch()
 
   const openRegModal=()=>{

@@ -10,8 +10,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 ReactDOM.createRoot(document.getElementById('root')!).render(
 <Provider store={store}>
     <LocalizationProvider dateAdapter={AdapterDayjs}>
-        
-    <App />
+         <App />
     </LocalizationProvider>
 </Provider>
   

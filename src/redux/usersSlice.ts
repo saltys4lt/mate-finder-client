@@ -118,10 +118,15 @@ const usersSlice= createSlice({
             state.createUserError=null
         },
         
-        changeIsAuth(state){
-            state.isAuth=!state.isAuth
+        changeIsAuth(state,action:PayloadAction<boolean>){
+            state.isAuth=action.payload
+            
             state.fetchUserStatus='idle'
+            if(!action.payload){
+              state.user=null
+            }
         },
+        
         setPendingForCheck(state){
           state.checkUserStatus='pending'
         }
@@ -136,13 +141,14 @@ const usersSlice= createSlice({
             state.fetchUserStatus='fulfilled'
               const Toast = Swal.mixin({
                 toast: true,
-                position: "top-end",
+                position: "bottom-end",
                 showConfirmButton: false,
                 timer: 3000,
                 timerProgressBar: true,
                 didOpen: (toast) => {
                   toast.onmouseenter = Swal.stopTimer;
                   toast.onmouseleave = Swal.resumeTimer;
+                  
                 }
               });
               Toast.fire({
@@ -179,7 +185,7 @@ const usersSlice= createSlice({
                 showConfirmButton: false,
                 timer: 1500
               })
-              
+        
         })
         builder.addCase(createUser.rejected, (state, action) => {
             state.createUserStatus='rejected'
@@ -202,7 +208,7 @@ const usersSlice= createSlice({
             
         })
         builder.addCase(checkUserIsAuth.fulfilled, (state,action:PayloadAction<ClientUser | undefined>) => {
-          console.log(action.payload)
+          
           if(action.payload){
             state.checkUserStatus='fulfilled'
             state.user=action.payload

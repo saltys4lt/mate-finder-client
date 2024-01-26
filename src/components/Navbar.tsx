@@ -37,7 +37,7 @@ const Navbar = () => {
     }).then((result) => {
       if (result.isConfirmed) {
         Cookies.remove('token')
-        dispatch(changeIsAuth())
+        dispatch(changeIsAuth(false))
        
       }
     });
