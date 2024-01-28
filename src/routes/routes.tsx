@@ -16,15 +16,15 @@ export const authorizedGameProfileRoutes=[
     {path:'/friends', element:<Suspense fallback={<Loader/>}><FriendsPage/></Suspense> },
     {path:'/team-creator', element:<Suspense fallback={<Loader/>}><TeamCreatorPage/></Suspense> },
     {path:'/teams', element:<Suspense fallback={<Loader/>}><TeamsPage/></Suspense> },
-    {path:'*',element:<Navigate to='/home' replace={true}/>}
+    {path:'*',element:<Navigate to='/' replace={true}/>}
 ]
-{/* <Route  path='*' element={<Navigate to='/' replace={true}/>} /> */}
+
 export const privateRoutes=[
-    {path:'/home', element:<Suspense fallback={<Loader/>}><HomePage/></Suspense> },
+    {path:'/', element:<Suspense fallback={<Loader/>}><HomePage/></Suspense> },
     {path:'/matches', element:<Suspense fallback={<Loader/>}><MatchesPage/></Suspense> },
     {path:'/news', element:<Suspense fallback={<Loader/>}><NewsPage/></Suspense> },
     {path:'/profile/:nickname', element:<Suspense fallback={<Loader/>}><ProfilePage/></Suspense> },
-    {path:'*',element:<Navigate to='/home' replace={true}/>}
+    {path:'*',element:<Navigate to='/' replace={true}/>}
 
 ]
 

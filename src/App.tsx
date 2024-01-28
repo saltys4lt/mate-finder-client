@@ -18,6 +18,7 @@ function App() {
       dispatch(setPendingForCheck())
       dispatch(checkUserIsAuth())
     }
+    dispatch(checkUserIsAuth())
   }, [])
   const [loaded, setLoaded] = useState(false);
 
@@ -55,7 +56,7 @@ function App() {
     <BrowserRouter>
     
     <GlobalStyle/>
-    {!loaded||check!=='fulfilled'
+    {!loaded||(check!=='fulfilled'&&check!=='rejected')
     ?     <Loader/>
     :    <AppRouter/>
     }

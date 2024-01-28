@@ -6,6 +6,7 @@ import Swal from "sweetalert2";
 import { RootState, useAppDispatch } from "../redux";
 import { changeLoginState, changeRegState } from "../redux/modalSlice";
 import { changeIsAuth } from "../redux/usersSlice";
+import { useEffect, useState } from 'react';
 
 
 const Navbar = () => {
@@ -13,7 +14,10 @@ const Navbar = () => {
 
   const user = useSelector((state: RootState) => state.userReducer.user);
   const isAuth = useSelector((state: RootState) => state.userReducer.isAuth);
-  
+  const [isGameProfileExist, setIsGameProfileExist] = useState<boolean>(false)
+  useEffect(() => {
+   if(user?.csgo_data||user?.valorant_data) setIsGameProfileExist(true)
+  }, [user])
   
   const openRegModal = () => {
     document.documentElement.style.overflowY = "hidden";
@@ -45,7 +49,7 @@ const Navbar = () => {
   const navigate = useNavigate()
   return (
     <NavbarContainer>
-      <LogoWrapper onClick={()=>{navigate('/home')}}>
+      <LogoWrapper onClick={()=>{navigate('/')}}>
         <LogoImage src="/images/header1-logo.jpeg" />
         <LogoText>
           Squad
@@ -55,19 +59,19 @@ const Navbar = () => {
       {isAuth ? (
         <AuthedNavbar>
           <NavLinks>
-            <NavLink onClick={()=>{navigate('/home')}}>Home</NavLink>
+            <NavLink onClick={()=>{navigate('/')}}>Home</NavLink>
             <DropDown>
               <NavLink>Players</NavLink>
               <DropDownContent>
-                <DropDownLink to={'/players'}>Find players</DropDownLink>
-                <DropDownLink to={'/friends'}>Friend list</DropDownLink>
+                <DropDownLink to={isGameProfileExist?'/players':'/'}>Find players</DropDownLink>
+                <DropDownLink to={isGameProfileExist?'/friends':'/'}>Friend list</DropDownLink>
               </DropDownContent>
             </DropDown>
             <DropDown>
               <NavLink>Teams</NavLink>
               <DropDownContent>
-                <DropDownLink to={'/team-creator'}>Create a Team</DropDownLink>
-                <DropDownLink to={'/teams'}>Teams list</DropDownLink>
+                <DropDownLink to={isGameProfileExist?'/team-creator':'/'}>Create a Team</DropDownLink>
+                <DropDownLink to={isGameProfileExist?'/teams':'/'}>Teams list</DropDownLink>
               </DropDownContent>
             </DropDown>
             <DropDown>

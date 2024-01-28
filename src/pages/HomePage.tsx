@@ -1,21 +1,29 @@
 import styled from "styled-components";
 import Container from "../components/Container";
 import Modal from "../components/Modal";
-import { useAppDispatch } from "../redux";
+import { RootState, useAppDispatch } from "../redux";
 import { changeGameProfileState } from "../redux/modalSlice";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Cookies from "js-cookie";
 import CsGoData from "../types/CsgoData";
 import Swal from "sweetalert2";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 
 const HomePage = () => {
-  document.documentElement.style.overflowY = "visible";
+  const user=useSelector((state:RootState)=>state.userReducer.user)
+  const navigate = useNavigate()
   const dispatch = useAppDispatch();
   const openGameProfileModal = () => {
+    document.documentElement.style.overflowY='hidden'
     dispatch(changeGameProfileState(true));
   };
-
+  const [isGameProfileExist, setIsGameProfileExist] = useState<boolean>(false)
+  
   useEffect(() => {
+   if(user?.csgo_data||user?.valorant_data) setIsGameProfileExist(true)
+
+  document.documentElement.style.overflowY = "visible";
     if (Cookies.get("_csData")) {
       if (Cookies.get("_csData") === "exist") {
         Swal.fire({
@@ -58,8 +66,8 @@ const HomePage = () => {
           <MainContent>
             <Modal />
             <ContentButtons>
-              <ContentLink>Find Players </ContentLink>
-              <ContentLink>Find Your Team</ContentLink>
+              <ContentLink onClick={()=>{navigate(isGameProfileExist?'/players':'/')}}>Find Players </ContentLink>
+              <ContentLink onClick={()=>{navigate(isGameProfileExist?'/teams':'/')}}>Find Your Team</ContentLink>
               <GameProfileButton onClick={openGameProfileModal}>
                 Create Game Profile
               </GameProfileButton>

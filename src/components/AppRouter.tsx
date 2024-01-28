@@ -1,5 +1,5 @@
 import { useSelector } from "react-redux";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import { RootState } from "../redux";
 import {  authorizedGameProfileRoutes, privateRoutes, publicRoutes } from "../routes/routes";
 import Footer from "./Footer";
