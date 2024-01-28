@@ -46,7 +46,7 @@ const GameChoiceForm = () => {
     </GamesContainer>
     
     <ConfirmButton onClick={handleConfirm}>Confirm</ConfirmButton>
-    
+    <AttentionText><span>Важно!</span> Ваш steam обязательно должен быть привязан к faceit, а также на этом аккаунте должно быть сыграно миннимум 3 игры</AttentionText>
     
     
     </ModalContainer>
@@ -64,8 +64,6 @@ const GamesContainer=styled.div`
     
     
     padding: 20px 30px;
-    width: 100%;
-    min-width: 350px;
     display: flex;
     column-gap: 20px;
     align-items: center;
@@ -137,7 +135,17 @@ const ConfirmButton=styled.button`
         color: #fff;
     }
 `
-
+const AttentionText=styled.p`
+margin-top: 20px;
+max-width: 90%;
+text-align: center;
+    font-size: 12px;
+    span{
+        color: #b92727;
+        font-size: 14px;
+        font-weight: bold;
+    }
+`
 
 
 

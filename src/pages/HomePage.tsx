@@ -39,11 +39,30 @@ const HomePage = () => {
         if (csData.elo) {
           Swal.fire({
             icon: "success",
-            title: `Успешный вход`,
-            text: `Ваш faceit успешно подключен`,
-            showConfirmButton: false,
-            timer: 3000,
+            title: `faceit успешно подключен`,
+            text: `Осталось лишь дополнить ваши данные по команде, приступим?`,
+            showDenyButton:true,
+            confirmButtonText: 'Да',
+            denyButtonText:'Нет'
+          }).then((result) => {
+            if (result.isConfirmed) {
+              navigate('/creation/csgo')
+            }
+            if (result.isDenied) {
+              Swal.fire({
+                text: `Теперь статистика отображается в вашем профиле. Хотите посмотреть?`,
+                showCancelButton: true,
+                showConfirmButton:true,
+                confirmButtonText: 'Перейти в профиль',
+                cancelButtonText: 'Остаться тут',
+              }).then(result=>{
+                if(result.isConfirmed){
+                  navigate(`/profile/${user?.nickname}`)
+                }
+              })
+            }
           });
+         
         } else
           Swal.fire({
             icon: "question",
