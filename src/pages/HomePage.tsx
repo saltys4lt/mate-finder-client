@@ -33,7 +33,17 @@ const HomePage = () => {
           showConfirmButton: false,
           timer: 3000,
         });
-      } else {
+      }
+      if (Cookies.get("_csData") === "noFaceit") {
+        Swal.fire({
+          icon: "question",
+          title: `Что-то не так`,
+          text: `Похоже ваш steam аккаунт не привязан к faceit`,
+          showConfirmButton: false,
+          timer: 3000,
+        });
+      }
+      else {
 
         const csData: CsGoData = JSON.parse(Cookies.get("_csData") as string);
         if (csData.elo) {
@@ -63,14 +73,7 @@ const HomePage = () => {
             }
           });
          
-        } else
-          Swal.fire({
-            icon: "question",
-            title: `Что-то не так`,
-            text: `Похоже ваш steam аккаунт не привязан к faceit`,
-            showConfirmButton: false,
-            timer: 1500,
-          });
+        } 
       }
     }
 
