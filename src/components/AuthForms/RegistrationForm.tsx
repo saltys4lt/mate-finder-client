@@ -69,8 +69,8 @@ const RegistrationForm = () => {
   };
 
   const switchToLogin = () => {
-    dispatch(changeRegState());
-    dispatch(changeLoginState());
+    dispatch(changeRegState(false));
+    dispatch(changeLoginState(true));
   };
 
 

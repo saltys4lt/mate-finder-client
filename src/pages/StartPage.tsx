@@ -5,12 +5,11 @@ import { changeRegState } from "../redux/modalSlice";
 
 
 const StartPage = () => {
-
   const dispatch=useAppDispatch()
 
   const openRegModal=()=>{
     document.documentElement.style.overflowY='hidden'
-    dispatch(changeRegState())
+    dispatch(changeRegState(true))
   }
 
 

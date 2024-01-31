@@ -1,12 +1,34 @@
 import { useState } from 'react'
 import styled from 'styled-components'
-
+import { SteamAuth } from '../util/steamAuth'
+import { RootState, useAppDispatch } from '../redux'
+import { useSelector } from 'react-redux'
+import Swal from 'sweetalert2'
 const GameChoiceForm = () => {
     const [game, setGame] = useState<{cs2:boolean,valorant:boolean}>({cs2:false,valorant:false})
-
+    
+    const csData=useSelector((state:RootState)=>state.userReducer.user?.csgo_data)
     const pickGame = (selectedGame:'cs2' | 'valorant') => {        
             if(selectedGame==='cs2') setGame({valorant:false,cs2:true})
             else setGame({valorant:true,cs2:false})
+
+
+    }
+
+    const handleConfirm =() => {
+        if(csData){
+            Swal.fire({
+                icon: "question",
+                title: `Что-то пошло не так`,
+                text:`Похоже вы уже подключили свой faceit аккаунт`,
+                showConfirmButton: false,
+                timer: 3000
+              })
+              return ;
+        }
+      if(game.cs2){
+        SteamAuth()
+      }
     }
     
   return (
@@ -23,8 +45,8 @@ const GameChoiceForm = () => {
         </GameItem>
     </GamesContainer>
     
-    <ConfirmButton>Confirm</ConfirmButton>
-    
+    <ConfirmButton onClick={handleConfirm}>Confirm</ConfirmButton>
+    <AttentionText><span>Важно!</span> Ваш steam обязательно должен быть привязан к faceit, а также на этом аккаунте должно быть сыграно миннимум 3 игры</AttentionText>
     
     
     </ModalContainer>
@@ -42,8 +64,6 @@ const GamesContainer=styled.div`
     
     
     padding: 20px 30px;
-    width: 100%;
-    min-width: 350px;
     display: flex;
     column-gap: 20px;
     align-items: center;
@@ -115,7 +135,17 @@ const ConfirmButton=styled.button`
         color: #fff;
     }
 `
-
+const AttentionText=styled.p`
+margin-top: 20px;
+max-width: 90%;
+text-align: center;
+    font-size: 12px;
+    span{
+        color: #b92727;
+        font-size: 14px;
+        font-weight: bold;
+    }
+`
 
 
 

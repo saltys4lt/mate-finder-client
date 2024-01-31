@@ -24,6 +24,7 @@ const [isActive, setIsActive] = useState<string>('false')
 
 useEffect(() => {
   if(regIsActive||loginIsActive||gameChoiceIsActive) setIsActive('true')
+  else setIsActive('false')
 }, [regIsActive,loginIsActive,gameChoiceIsActive])
 
 
@@ -31,10 +32,9 @@ useEffect(() => {
       document.documentElement.style.overflowY='visible'
       setIsActive('false')
       setTimeout(() => {
-        if(regIsActive) dispatch(changeRegState())
-        if(loginIsActive) dispatch(changeLoginState())
-        if(gameChoiceIsActive) dispatch(changeGameProfileState())
-
+        if(regIsActive) dispatch(changeRegState(false))
+        if(loginIsActive) dispatch(changeLoginState(false))
+        if(gameChoiceIsActive) dispatch(changeGameProfileState(false))
       }, 500);
      
 
@@ -44,10 +44,6 @@ useEffect(() => {
     const loginStatus=useSelector((state:RootState)=>state.userReducer.fetchUserStatus)
 
     
-    console.log(gameChoiceIsActive)
-  
-    
-
   return (
         <ModalContainer $active={isActive}  onClick={closeModal}>
         <Content $active={isActive} onClick={(e:React.MouseEvent)=>{e.stopPropagation()}}>

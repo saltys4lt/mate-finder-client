@@ -6,6 +6,7 @@ import { RootState, useAppDispatch } from "../../redux";
 import { changeLoginState, changeRegState } from "../../redux/modalSlice";
 import { fetchUser } from "../../redux/usersSlice";
 import { ErrorAlert } from "./RegistrationForm";
+import { useEffect } from "react";
 
 interface IFormInput {
   password: string;
@@ -15,20 +16,23 @@ interface IFormInput {
 const LoginForm = () => {
   
   const { register, handleSubmit,formState:{errors} } = useForm<IFormInput>();
-const loginStatus=useSelector((root:RootState)=>root.userReducer.fetchUserStatus)
+  const loginStatus=useSelector((root:RootState)=>root.userReducer.fetchUserStatus)
 
   const dispatch = useAppDispatch();
 
   const onSubmit: SubmitHandler<IFormInput> = async(data) => {
     await dispatch(fetchUser({nickname:data.nickname,password:data.password}))
-    if(loginStatus){
-      dispatch(changeLoginState())
-    }
+   
   };
+useEffect(() => {
+  if(loginStatus==='fulfilled'){
+    dispatch(changeLoginState(false))
+  }
+}, [loginStatus])
 
   const switchToRegistration = () => {
-    dispatch(changeLoginState());
-    dispatch(changeRegState());
+    dispatch(changeLoginState(false));
+    dispatch(changeRegState(true));
   };
 
   return (
