@@ -4,17 +4,40 @@ import { useSelector } from "react-redux";
 import styled from "styled-components";
 import { useRef } from "react";
 import { useEffect } from "react";
+import Select, { MultiValue } from 'react-select';
+import Option from "../types/Option";
+import Cs2PlayerRoles from "../consts/Cs2PlayerRoles";
+import Cs2Maps from "../consts/Cs2Maps";
+import { ConfirmButton } from "../components/UI/ConfirmButton";
+
+
+
+const CustomOption: React.FC<any> = ({ innerProps, label, data }) => (
+  <SelectOption {...innerProps} >
+    <img src={data.image} alt={label} style={{ marginRight: '8px', width: '100px', height: '40px' }} />
+    {label}
+  </SelectOption>
+);
+
+const CustomSingleValue: React.FC<any> = ({ innerProps, label, data }) => (
+  <SelectOption {...innerProps}>
+    <img src={data.image} alt={label} style={{ marginRight: '8px', width: '100px', height: '45px' }} />
+    {label}
+  </SelectOption>
+);
 
 const CreationPage = () => {
   const [roles, setRoles] = useState<string[]>([])
-  const rolesArray=['Рифлер','Снайпер','Люркер','Саппорт','Энтри','Капитан']
+  const [selectedOptions, setSelectedOptions] = useState<MultiValue<Option>>([])
+  
+
   const changeRole = (e:React.ChangeEvent<HTMLInputElement>) => {
     
     if(!roles.includes(e.target.value)) setRoles([...roles,e.target.value] )
     else setRoles( roles.filter(role=>role!==e.target.value))
 
   }
- console.log(roles)
+ 
   const csgo_data = useSelector(
     (state: RootState) => state.userReducer.user?.csgo_data
   );
@@ -32,6 +55,53 @@ const CreationPage = () => {
     if(roles.length===3&&!roles.includes(role)) return 'focus'
     else return ''
   }
+
+  const handleSelectChange = (option:MultiValue<Option>) => {
+    setSelectedOptions(option)
+  }
+
+  
+
+  const customStyles = {
+    control: (baseStyles:any) => ({
+      ...baseStyles,
+      marginTop:'40px',
+      background:'#373737',
+      boxShadow:'0',
+      borderColor:'#484848',
+      cursor:'pointer',
+      "&:hover": {
+        borderColor: "#808080"
+      },
+
+     
+      
+    }),
+    menu: (baseStyles:any) => ({
+      ...baseStyles,
+      background: '#373737',
+      color:'#fff',
+      display:'flex',
+      flexDirection:'column',
+      
+      '& img':{
+        borderRadius:'3px'
+      }
+    }),
+    singleValue:(baseStyles:any) => ({
+      ...baseStyles,
+      background: '#fbfbfb',
+      color:'#fff',
+      display:'flex',
+    
+    }),
+};
+
+
+
+  
+
+  
   return (
     <CreationPageContainer ref={creationContent}>
       <ContentBackground>
@@ -60,13 +130,14 @@ const CreationPage = () => {
           </LeftContent>
 
           <RightContent>
-            <ContentTitle>На какой роли/ролях вы обычно играете ?</ContentTitle>
+            <div>
+            <ContentTitle>На какой роли/ролях вы предпочитаете играть ?</ContentTitle>
             <ContentSubtitle>
-              Выберите 1-3 роли. Они будут отображены в вашем игровом профиле
+              Выберите 1-3 роли. Они будут отображены в вашем профиле
             </ContentSubtitle>
             
             <RolesContainer>
-            {rolesArray.map((role,index)=>
+            {Cs2PlayerRoles.map((role,index)=>
            <RoleCard key={role}>
             <RoleCheckbox
                   id={(index+1).toString()}
@@ -80,7 +151,27 @@ const CreationPage = () => {
 
            }
             </RolesContainer>
+            </div>
+            <div>
+            <MapContentTitle>На каких картах вы предпочитаете играть ?</MapContentTitle>
+            <ContentSubtitle>
+              Выберите 3 карты. Они будут отображены в вашем профиле
+            </ContentSubtitle>
+          <Select
+          styles={customStyles}
+          options={Cs2Maps}
+          isMulti
+          value={selectedOptions}
+          onChange={handleSelectChange}
+          components={{
+            Option: CustomOption,
+            SingleValue: CustomSingleValue,
+          }}
           
+          placeholder='Выбор карт...'
+          ></Select>
+          </div>
+          <ConfirmButton>Подтвердить</ConfirmButton>
           </RightContent>
         </CreationPageContent>
       </ContentBackground>
@@ -167,10 +258,12 @@ const StatsText = styled.p`
 `;
 
 const RightContent = styled.div`
-  width: 77%;
+  
   padding: 20px;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
   border-left: 1px solid #fff;
 `;
 
@@ -179,7 +272,9 @@ const ContentTitle = styled.h2`
   font-size: 20px;
   text-align: center;
 `;
-
+const MapContentTitle=styled(ContentTitle)`
+  margin-top: 30px;
+`
 const ContentSubtitle = styled.p`
   color: #9e9e9e;
   font-size: 13px;
@@ -242,5 +337,21 @@ user-select: none;
     cursor: pointer;
   }
 `;
+
+const SelectOption=styled.div`
+
+border-bottom: 1px solid #808080;
+display: flex;
+align-items: center;
+gap: 10px;
+cursor: pointer;
+&:hover{
+  background-color: #808080;
+}
+&:last-child{
+  border-bottom: transparent;
+}
+`
+
 
 export default CreationPage;

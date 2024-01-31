@@ -4,6 +4,7 @@ import { SteamAuth } from '../util/steamAuth'
 import { RootState, useAppDispatch } from '../redux'
 import { useSelector } from 'react-redux'
 import Swal from 'sweetalert2'
+import { ConfirmButton } from './UI/ConfirmButton'
 const GameChoiceForm = () => {
     const [game, setGame] = useState<{cs2:boolean,valorant:boolean}>({cs2:false,valorant:false})
     
@@ -115,26 +116,7 @@ padding: 20px;
 `
 
 
-const ConfirmButton=styled.button`
-    
-    color: #c4c4c4;
-    border: 0;
-    width: 130px;
-    
-    padding: 7px 12px;
-    background-color: #000000;
-    cursor: pointer;
-    font-size: 20px;
-    text-transform: uppercase;
-    font-family: 'montserrat';
-    border-radius: 5px;
-    transition: all .3s ease-in-out;
-    &:hover{
-        transform: scale(1.03);
-    background-color: #b92727;
-        color: #fff;
-    }
-`
+
 const AttentionText=styled.p`
 margin-top: 20px;
 max-width: 90%;
