@@ -1,53 +1,50 @@
-import styled from "styled-components";
-import Modal from "../components/Modal";
-import { useAppDispatch } from "../redux";
-import { changeRegState } from "../redux/modalSlice";
-
+import styled from 'styled-components';
+import Modal from '../components/Modal';
+import { useAppDispatch } from '../redux';
+import { changeRegState } from '../redux/modalSlice';
 
 const StartPage = () => {
-  const dispatch=useAppDispatch()
+  const dispatch = useAppDispatch();
 
-  const openRegModal=()=>{
-    document.documentElement.style.overflowY='hidden'
-    dispatch(changeRegState(true))
-  }
-
+  const openRegModal = () => {
+    document.documentElement.style.overflowY = 'hidden';
+    dispatch(changeRegState(true));
+  };
 
   return (
     <>
-      <Modal/>
+      <Modal />
       <Main>
         <ContentContainer>
           <Content>
             <ContentTitle>your new gameplay begins here</ContentTitle>
-            <div style={{ marginTop: "80px" }}>
+            <div style={{ marginTop: '80px' }}>
               <SubContent>
                 <SubContentRed>Discover</SubContentRed> your gaming companions
-                <ContentIcon src="/images/mates.png"></ContentIcon>
+                <ContentIcon src='/images/mates.png'></ContentIcon>
               </SubContent>
               <SubContent>
                 <SubContentRed>Unite</SubContentRed> with a team
-                <ContentIcon src="/images/unite.png"></ContentIcon>
+                <ContentIcon src='/images/unite.png'></ContentIcon>
               </SubContent>
 
               <SubContent>
-                {" "}
+                {' '}
                 <SubContentRed>Improve</SubContentRed> your game skills!
-                <ContentIcon src="/images/improve.png"></ContentIcon>
+                <ContentIcon src='/images/improve.png'></ContentIcon>
               </SubContent>
             </div>
             <StartButton onClick={openRegModal}>Let's start</StartButton>
           </Content>
         </ContentContainer>
       </Main>
-      
     </>
   );
 };
 
 const Main = styled.main`
   height: 80vh;
-  background-image: url("/images/start-page-bg.jpg");
+  background-image: url('/images/start-page-bg.jpg');
   background-size: 100%;
   background-repeat: no-repeat;
 `;

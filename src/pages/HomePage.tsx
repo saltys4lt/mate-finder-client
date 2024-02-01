@@ -1,83 +1,80 @@
-import styled from "styled-components";
-import Container from "../components/Container";
-import Modal from "../components/Modal";
-import { RootState, useAppDispatch } from "../redux";
-import { changeGameProfileState } from "../redux/modalSlice";
-import { useEffect, useState } from "react";
-import Cookies from "js-cookie";
-import CsGoData from "../types/CsgoData";
-import Swal from "sweetalert2";
-import { useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import styled from 'styled-components';
+import Container from '../components/Container';
+import Modal from '../components/Modal';
+import { RootState, useAppDispatch } from '../redux';
+import { changeGameProfileState } from '../redux/modalSlice';
+import { useEffect, useState } from 'react';
+import Cookies from 'js-cookie';
+import CsGoData from '../types/CsgoData';
+import Swal from 'sweetalert2';
+import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 
 const HomePage = () => {
-  const user=useSelector((state:RootState)=>state.userReducer.user)
-  const navigate = useNavigate()
+  const user = useSelector((state: RootState) => state.userReducer.user);
+  const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const openGameProfileModal = () => {
-    document.documentElement.style.overflowY='hidden'
+    document.documentElement.style.overflowY = 'hidden';
     dispatch(changeGameProfileState(true));
   };
-  const [isGameProfileExist, setIsGameProfileExist] = useState<boolean>(false)
-  
-  useEffect(() => {
-   if(user?.csgo_data||user?.valorant_data) setIsGameProfileExist(true)
+  const [isGameProfileExist, setIsGameProfileExist] = useState<boolean>(false);
 
-  document.documentElement.style.overflowY = "visible";
-    if (Cookies.get("_csData")) {
-      if (Cookies.get("_csData") === "exist") {
+  useEffect(() => {
+    if (user?.csgo_data || user?.valorant_data) setIsGameProfileExist(true);
+
+    document.documentElement.style.overflowY = 'visible';
+    if (Cookies.get('_csData')) {
+      if (Cookies.get('_csData') === 'exist') {
         Swal.fire({
-          icon: "warning",
+          icon: 'warning',
           title: `Ошибочка`,
           text: `Такой аккаунт уже привязан`,
           showConfirmButton: false,
           timer: 3000,
         });
       }
-      if (Cookies.get("_csData") === "noFaceit") {
+      if (Cookies.get('_csData') === 'noFaceit') {
         Swal.fire({
-          icon: "question",
+          icon: 'question',
           title: `Что-то не так`,
           text: `Похоже ваш steam аккаунт не привязан к faceit`,
           showConfirmButton: false,
           timer: 3000,
         });
-      }
-      else {
-
-        const csData: CsGoData = JSON.parse(Cookies.get("_csData") as string);
+      } else {
+        const csData: CsGoData = JSON.parse(Cookies.get('_csData') as string);
         if (csData.elo) {
           Swal.fire({
-            icon: "success",
+            icon: 'success',
             title: `faceit успешно подключен`,
             text: `Осталось лишь дополнить ваши данные по команде, приступим?`,
-            showDenyButton:true,
+            showDenyButton: true,
             confirmButtonText: 'Да',
-            denyButtonText:'Нет'
+            denyButtonText: 'Нет',
           }).then((result) => {
             if (result.isConfirmed) {
-              navigate('/creation/csgo')
+              navigate('/creation/csgo');
             }
             if (result.isDenied) {
               Swal.fire({
                 text: `Теперь статистика отображается в вашем профиле. Хотите посмотреть?`,
                 showCancelButton: true,
-                showConfirmButton:true,
+                showConfirmButton: true,
                 confirmButtonText: 'Перейти в профиль',
                 cancelButtonText: 'Остаться тут',
-              }).then(result=>{
-                if(result.isConfirmed){
-                  navigate(`/profile/${user?.nickname}`)
+              }).then((result) => {
+                if (result.isConfirmed) {
+                  navigate(`/profile/${user?.nickname}`);
                 }
-              })
+              });
             }
           });
-         
-        } 
+        }
       }
     }
 
-    Cookies.remove("_csData");
+    Cookies.remove('_csData');
   }, []);
 
   return (
@@ -88,8 +85,20 @@ const HomePage = () => {
           <MainContent>
             <Modal />
             <ContentButtons>
-              <ContentLink onClick={()=>{navigate(isGameProfileExist?'/players':'/')}}>Find Players </ContentLink>
-              <ContentLink onClick={()=>{navigate(isGameProfileExist?'/teams':'/')}}>Find Your Team</ContentLink>
+              <ContentLink
+                onClick={() => {
+                  navigate(isGameProfileExist ? '/players' : '/');
+                }}
+              >
+                Find Players{' '}
+              </ContentLink>
+              <ContentLink
+                onClick={() => {
+                  navigate(isGameProfileExist ? '/teams' : '/');
+                }}
+              >
+                Find Your Team
+              </ContentLink>
               <GameProfileButton onClick={openGameProfileModal}>
                 Create Game Profile
               </GameProfileButton>

@@ -1,8 +1,5 @@
-
 const TeamsPage = () => {
-  return (
-    <div>TeamsPage</div>
-  )
-}
+  return <div>TeamsPage</div>;
+};
 
-export default TeamsPage
+export default TeamsPage;

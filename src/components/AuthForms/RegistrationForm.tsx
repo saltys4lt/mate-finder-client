@@ -1,21 +1,16 @@
-import {
-  FormControlLabel,
-  Radio,
-  RadioGroup,
-  TextField,
-} from "@mui/material";
-import { DatePicker } from "@mui/x-date-pickers";
-import dayjs, { Dayjs } from "dayjs";
-import { useEffect, useState } from "react";
-import styled from "styled-components";
+import { FormControlLabel, Radio, RadioGroup, TextField } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers';
+import dayjs, { Dayjs } from 'dayjs';
+import { useEffect, useState } from 'react';
+import styled from 'styled-components';
 
-import { SubmitHandler, useForm } from "react-hook-form";
-import { useSelector } from "react-redux";
-import { RootState, useAppDispatch } from "../../redux";
-import { changeLoginState, changeRegState } from "../../redux/modalSlice";
-import { createUser, resetUserStatus } from "../../redux/usersSlice";
-import User from "../../types/User";
-import { checkYears } from "../../util/checkYears";
+import { SubmitHandler, useForm } from 'react-hook-form';
+import { useSelector } from 'react-redux';
+import { RootState, useAppDispatch } from '../../redux';
+import { changeLoginState, changeRegState } from '../../redux/modalSlice';
+import { createUser, resetUserStatus } from '../../redux/usersSlice';
+import User from '../../types/User';
+import { checkYears } from '../../util/checkYears';
 
 interface IFormInput {
   nickname: string;
@@ -32,40 +27,36 @@ const RegistrationForm = () => {
     register,
     handleSubmit,
     formState: { errors },
-    setValue
+    setValue,
   } = useForm<IFormInput>();
 
   const dispatch = useAppDispatch();
 
-    const createUserStatus=useSelector((state:RootState)=>state.userReducer.createUserStatus)
+  const createUserStatus = useSelector(
+    (state: RootState) => state.userReducer.createUserStatus,
+  );
 
-
-    
-    useEffect(() => {
-      if(createUserStatus==='fulfilled'){
-        dispatch(resetUserStatus())
-        switchToLogin()
-      }
-      if(createUserStatus==='rejected'){
-        dispatch(resetUserStatus())
-      }
-    }, [createUserStatus])
-    
-    
-
-  const onSubmit: SubmitHandler<IFormInput> =  async (data) => {
-
-    if(data.birthday) if(!checkYears(data.birthday)) return
-    
-    const newUser:User={
-      nickname:data.nickname,
-      password:data.password,
-      email:data.email,
-      gender:data.gender,
-      birthday:data.birthday.toString(),
+  useEffect(() => {
+    if (createUserStatus === 'fulfilled') {
+      dispatch(resetUserStatus());
+      switchToLogin();
     }
-  await dispatch(createUser(newUser))
-  
+    if (createUserStatus === 'rejected') {
+      dispatch(resetUserStatus());
+    }
+  }, [createUserStatus]);
+
+  const onSubmit: SubmitHandler<IFormInput> = async (data) => {
+    if (data.birthday) if (!checkYears(data.birthday)) return;
+
+    const newUser: User = {
+      nickname: data.nickname,
+      password: data.password,
+      email: data.email,
+      gender: data.gender,
+      birthday: data.birthday.toString(),
+    };
+    await dispatch(createUser(newUser));
   };
 
   const switchToLogin = () => {
@@ -73,121 +64,115 @@ const RegistrationForm = () => {
     dispatch(changeLoginState(true));
   };
 
-
   return (
-    
     <form onSubmit={handleSubmit(onSubmit)}>
       <FormContainer>
         <h3>Registration</h3>
         <TextField
-          {...register("nickname", {
-            required: { value: true, message: "nickname is required" },
-            maxLength: { value: 10, message: "max length is 10" },
-            minLength: { value: 3, message: "min length is 3" },
+          {...register('nickname', {
+            required: { value: true, message: 'nickname is required' },
+            maxLength: { value: 10, message: 'max length is 10' },
+            minLength: { value: 3, message: 'min length is 3' },
           })}
-          size="small"
-          label="Nickname"
-          color="secondary"
-          variant="filled"
+          size='small'
+          label='Nickname'
+          color='secondary'
+          variant='filled'
         ></TextField>
-        {errors.nickname?.type === "required" && (
-          <ErrorAlert role="alert">Nickname is required</ErrorAlert>
+        {errors.nickname?.type === 'required' && (
+          <ErrorAlert role='alert'>Nickname is required</ErrorAlert>
         )}
-        {errors.nickname?.type === "maxLength" && (
-          <ErrorAlert role="alert">Max length is 10</ErrorAlert>
+        {errors.nickname?.type === 'maxLength' && (
+          <ErrorAlert role='alert'>Max length is 10</ErrorAlert>
         )}
-        {errors.nickname?.type === "minLength" && (
-          <ErrorAlert role="alert">Min length is 3</ErrorAlert>
+        {errors.nickname?.type === 'minLength' && (
+          <ErrorAlert role='alert'>Min length is 3</ErrorAlert>
         )}
-
 
         <TextField
-          {...register("email", {
+          {...register('email', {
             required: true,
-            pattern:{
-              value:/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/,
-              message:'Incorrect email'
-            }
-              
+            pattern: {
+              value:
+                /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/,
+              message: 'Incorrect email',
+            },
           })}
-          size="small"
-          label="Email"
-          color="secondary"
-          variant="filled"
+          size='small'
+          label='Email'
+          color='secondary'
+          variant='filled'
         ></TextField>
-        {errors.email?.type === "required" && (
-          <ErrorAlert role="alert">Email is required</ErrorAlert>
-          
+        {errors.email?.type === 'required' && (
+          <ErrorAlert role='alert'>Email is required</ErrorAlert>
         )}
-        {errors.email?.type === "pattern" && (
-          <ErrorAlert role="alert">{errors.email.message}</ErrorAlert>
-          
+        {errors.email?.type === 'pattern' && (
+          <ErrorAlert role='alert'>{errors.email.message}</ErrorAlert>
         )}
 
         <TextField
-          type="password"
-          {...register("password", {
+          type='password'
+          {...register('password', {
             required: true,
             maxLength: 15,
             minLength: 6,
           })}
-          size="small"
-          label="Password"
-          color="secondary"
-          variant="filled"
+          size='small'
+          label='Password'
+          color='secondary'
+          variant='filled'
         ></TextField>
-        {errors.password?.type === "required" && (
-          <ErrorAlert role="alert">Password is required</ErrorAlert>
+        {errors.password?.type === 'required' && (
+          <ErrorAlert role='alert'>Password is required</ErrorAlert>
         )}
-        {errors.password?.type === "maxLength" && (
-          <ErrorAlert role="alert">Max length is 15</ErrorAlert>
+        {errors.password?.type === 'maxLength' && (
+          <ErrorAlert role='alert'>Max length is 15</ErrorAlert>
         )}
-        {errors.password?.type === "minLength" && (
-          <ErrorAlert role="alert">Min length is 6</ErrorAlert>
+        {errors.password?.type === 'minLength' && (
+          <ErrorAlert role='alert'>Min length is 6</ErrorAlert>
         )}
         <DatePicker
-        format="DD/MM/YYYY"
-          label="Birthday"
+          format='DD/MM/YYYY'
+          label='Birthday'
           value={birthday}
           onChange={(date) => {
             setBirthday(date);
-            setValue('birthday',date as Dayjs)
+            setValue('birthday', date as Dayjs);
           }}
         />
         {birthday && dayjs().year() - birthday.year() < 10 ? (
-          <ErrorAlert role="alert">Min age is 12</ErrorAlert>
+          <ErrorAlert role='alert'>Min age is 12</ErrorAlert>
         ) : (
-          ""
+          ''
         )}
-        
+
         <RadioGroup row defaultValue={'male'}>
-        <FormControlLabel
-            value="male"
+          <FormControlLabel
+            value='male'
             control={
               <Radio
-                color="secondary"
-                {...register("gender", { required: true })}
+                color='secondary'
+                {...register('gender', { required: true })}
               />
             }
-            label="Male"
+            label='Male'
           />
           <FormControlLabel
-            value="female"
+            value='female'
             control={
               <Radio
-                color="secondary"
-                {...register("gender", { required: true })}
+                color='secondary'
+                {...register('gender', { required: true })}
               />
             }
-            label="Female"
+            label='Female'
           />
-         
         </RadioGroup>
-        {errors.gender?.type === "required" && (
-            <ErrorAlert role="alert">Gender is required</ErrorAlert>
-          )}
+        {errors.gender?.type === 'required' && (
+          <ErrorAlert role='alert'>Gender is required</ErrorAlert>
+        )}
         <FormButtons>
-          <RegButton type="submit">Get started</RegButton>
+          <RegButton type='submit'>Get started</RegButton>
           <LoginButton onClick={switchToLogin}>Have an account</LoginButton>
         </FormButtons>
       </FormContainer>
@@ -246,13 +231,10 @@ const LoginButton = styled.button`
   }
 `;
 
-
 export const ErrorAlert = styled.span`
   margin: -10px;
   font-size: 12px;
   color: #d82f2f;
 `;
-
-
 
 export default RegistrationForm;

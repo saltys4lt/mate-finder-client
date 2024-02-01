@@ -2,12 +2,17 @@ import styled, { keyframes } from 'styled-components';
 const Loader = () => {
   return (
     <LdsRoller>
-        <div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
     </LdsRoller>
-  )
-}
-
-
+  );
+};
 
 const ldsRollerAnimation = keyframes`
   0% {
@@ -19,7 +24,6 @@ const ldsRollerAnimation = keyframes`
 `;
 
 const LdsRoller = styled.div`
-  
   position: relative;
   display: flex;
   justify-content: center;
@@ -30,12 +34,12 @@ const LdsRoller = styled.div`
   div {
     animation: ${ldsRollerAnimation} 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
     transform-origin: 40px 40px;
-  
+
     &:after {
-      content: " ";
+      content: ' ';
       display: block;
       position: absolute;
-      
+
       width: 10px;
       height: 10px;
       border-radius: 50%;
@@ -117,8 +121,4 @@ const LdsRoller = styled.div`
   }
 `;
 
-
-
-
-
-export default Loader
+export default Loader;

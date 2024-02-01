@@ -1,10 +1,5 @@
-
 const FriendsPage = () => {
+  return <div>FriendsPage</div>;
+};
 
-
-  return (
-    <div>FriendsPage</div>
-  )
-}
-
-export default FriendsPage
+export default FriendsPage;
