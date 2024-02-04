@@ -2,11 +2,8 @@ import styled from 'styled-components';
 
 export const ConfirmButton = styled.button`
   display: inline;
-
   color: #c4c4c4;
-
   border: 0;
-
   padding: 7px 12px;
   background-color: #000000;
   cursor: pointer;

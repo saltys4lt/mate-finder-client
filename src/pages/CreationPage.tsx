@@ -1,4 +1,4 @@
-import { RootState } from '../redux';
+import { RootState, useAppDispatch } from '../redux';
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import styled from 'styled-components';
@@ -9,6 +9,14 @@ import Option from '../types/Option';
 import Cs2PlayerRoles from '../consts/Cs2PlayerRoles';
 import Cs2Maps from '../consts/Cs2Maps';
 import { ConfirmButton } from '../components/UI/ConfirmButton';
+import { refillCs2Data, setGameCreationActive } from '../redux/usersSlice';
+import { LinearProgress } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import Cookies from 'js-cookie';
+interface CreationDataValidation {
+  isRolesValid: boolean;
+  isMapsValid: boolean;
+}
 
 const CustomOption: React.FC<any> = ({ innerProps, label, data }) => (
   <SelectOption {...innerProps}>
@@ -39,30 +47,63 @@ const CustomSingleValue: React.FC<any> = ({ innerProps, label, data }) => (
     {label}
   </SelectOption>
 );
+const customStyles = {
+  control: (baseStyles: any) => ({
+    ...baseStyles,
+    marginTop: '40px',
+    background: '#373737',
+    boxShadow: '0',
+    borderColor: '#484848',
+    cursor: 'pointer',
+    '&:hover': {
+      borderColor: '#808080',
+    },
+  }),
+  menu: (baseStyles: any) => ({
+    ...baseStyles,
+    background: '#373737',
+    color: '#fff',
+    display: 'flex',
+    flexDirection: 'column',
+
+    '& img': {
+      borderRadius: '3px',
+    },
+  }),
+  singleValue: (baseStyles: any) => ({
+    ...baseStyles,
+    background: '#fbfbfb',
+    color: '#fff',
+    display: 'flex',
+  }),
+};
 
 const CreationPage = () => {
   const [roles, setRoles] = useState<string[]>([]);
-  const [selectedOptions, setSelectedOptions] = useState<MultiValue<Option>>(
-    [],
-  );
+  const [selectedOptions, setSelectedOptions] = useState<MultiValue<Option>>([]);
+  const [dataValidation, setDataValidation] = useState<CreationDataValidation>({
+    isRolesValid: true,
+    isMapsValid: true,
+  });
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+  const cs2_data = useSelector((state: RootState) => state.userReducer.user?.cs2_data);
 
-  const changeRole = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!roles.includes(e.target.value)) setRoles([...roles, e.target.value]);
-    else setRoles(roles.filter((role) => role !== e.target.value));
-  };
-
-  const csgo_data = useSelector(
-    (state: RootState) => state.userReducer.user?.csgo_data,
-  );
+  const refillCs2DataStatus = useSelector((state: RootState) => state.userReducer.refillCs2DataStatus);
   const creationContent = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (creationContent.current) {
+    if (creationContent.current && refillCs2DataStatus === 'idle') {
       creationContent.current.scrollIntoView({
         behavior: 'smooth',
       });
     }
-  }, []);
+    if (refillCs2DataStatus === 'fulfilled') {
+      Cookies.remove('_gc');
+      dispatch(setGameCreationActive(null));
+      navigate('/');
+    }
+  }, [refillCs2DataStatus]);
 
   const roleState = (role: string) => {
     if (roles.includes(role)) return 'active';
@@ -71,104 +112,123 @@ const CreationPage = () => {
   };
 
   const handleSelectChange = (option: MultiValue<Option>) => {
+    if (!dataValidation.isMapsValid) {
+      setDataValidation({ ...dataValidation, isMapsValid: true });
+    }
     setSelectedOptions(option);
   };
 
-  const customStyles = {
-    control: (baseStyles: any) => ({
-      ...baseStyles,
-      marginTop: '40px',
-      background: '#373737',
-      boxShadow: '0',
-      borderColor: '#484848',
-      cursor: 'pointer',
-      '&:hover': {
-        borderColor: '#808080',
-      },
-    }),
-    menu: (baseStyles: any) => ({
-      ...baseStyles,
-      background: '#373737',
-      color: '#fff',
-      display: 'flex',
-      flexDirection: 'column',
+  const isOptionDisabled = (option: Option) => {
+    if (selectedOptions.some((o) => o.value === option.value)) {
+      return false;
+    }
 
-      '& img': {
-        borderRadius: '3px',
-      },
-    }),
-    singleValue: (baseStyles: any) => ({
-      ...baseStyles,
-      background: '#fbfbfb',
-      color: '#fff',
-      display: 'flex',
-    }),
+    if (selectedOptions.length === 3) {
+      return true;
+    }
+
+    return false;
+  };
+  const changeRole = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!dataValidation.isRolesValid) {
+      setDataValidation({ ...dataValidation, isRolesValid: true });
+    }
+    if (!roles.includes(e.target.value)) setRoles([...roles, e.target.value]);
+    else setRoles(roles.filter((role) => role !== e.target.value));
+  };
+  const confirm = () => {
+    const tempValidation: CreationDataValidation = {
+      isRolesValid: true,
+      isMapsValid: true,
+    };
+
+    if (roles.length < 1) tempValidation.isRolesValid = false;
+
+    if (selectedOptions.length !== 3) tempValidation.isMapsValid = false;
+
+    setDataValidation(tempValidation);
+
+    if (tempValidation.isMapsValid && tempValidation.isRolesValid) {
+      const reqMaps = selectedOptions.map((selected) => selected.id);
+      const reqRoles = Cs2PlayerRoles.filter((role) => roles.includes(role.name)).map((role) => role.id);
+
+      dispatch(refillCs2Data({ reqMaps, reqRoles }));
+    }
   };
 
   return (
     <CreationPageContainer ref={creationContent}>
       <ContentBackground>
         <CreationPageContent>
+          {refillCs2DataStatus === 'pending' && (
+            <>
+              <LinearProgress
+                color='inherit'
+                sx={{
+                  zIndex: 3,
+                  height: '7px',
+                  borderRadius: '10px',
+                  position: 'absolute',
+                  top: '2px',
+                  left: '50%',
+                  width: '100%',
+                  transform: 'translate(-50%,-50%)',
+                }}
+              />
+              <LoaderBackground />
+            </>
+          )}
           <LeftContent>
             <ContentTitle>Ваша статистика</ContentTitle>
-            <LvlImg src={csgo_data?.lvlImg} alt='' />
+            <LvlImg src={cs2_data?.lvlImg} alt='' />
             <StatsText>
-              ЕLO: <span>{csgo_data?.elo}</span>
+              ЕLO: <span>{cs2_data?.elo}</span>
             </StatsText>
             <StatsText>
-              Матчи: <span>{csgo_data?.matches}</span>
+              Матчи: <span>{cs2_data?.matches}</span>
             </StatsText>
             <StatsText>
-              Победы: <span>{csgo_data?.wins}</span>
+              Победы: <span>{cs2_data?.wins}</span>
             </StatsText>
             <StatsText>
-              Винрейт: <span>{csgo_data?.winrate}</span>%
+              Винрейт: <span>{cs2_data?.winrate}</span>%
             </StatsText>
             <StatsText>
-              Кд: <span>{csgo_data?.kd}</span>
+              Кд: <span>{cs2_data?.kd}</span>
             </StatsText>
             <StatsText>
-              Хс: <span>{csgo_data?.hs}</span>%
+              Хс: <span>{cs2_data?.hs}</span>%
             </StatsText>
           </LeftContent>
 
           <RightContent>
             <div>
-              <ContentTitle>
-                На какой роли/ролях вы предпочитаете играть ?
-              </ContentTitle>
-              <ContentSubtitle>
-                Выберите 1-3 роли. Они будут отображены в вашем профиле
-              </ContentSubtitle>
+              <ContentTitle>На какой роли/ролях вы предпочитаете играть ?</ContentTitle>
+              <ContentSubtitle>Выберите 1-3 роли. Они будут отображены в вашем профиле</ContentSubtitle>
 
               <RolesContainer>
                 {Cs2PlayerRoles.map((role, index) => (
-                  <RoleCard key={role}>
+                  <RoleCard key={role.id}>
                     <RoleCheckbox
                       id={(index + 1).toString()}
                       type='checkbox'
                       onChange={(e) => changeRole(e)}
-                      value={role}
-                      disabled={roleState(role) === 'focus'}
+                      value={role.name}
+                      disabled={roleState(role.name) === 'focus'}
                     />
-                    <RoleLabel
-                      className={roleState(role)}
-                      htmlFor={(index + 1).toString()}
-                    >
-                      {role}
+                    <RoleLabel className={roleState(role.name)} htmlFor={(index + 1).toString()}>
+                      {role.name}
                     </RoleLabel>
                   </RoleCard>
                 ))}
               </RolesContainer>
+              {!dataValidation.isRolesValid && <NotValidText>Проверьте корректность выбранных данных</NotValidText>}
             </div>
             <div>
-              <MapContentTitle>
-                На каких картах вы предпочитаете играть ?
-              </MapContentTitle>
-              <ContentSubtitle>
-                Выберите 3 карты. Они будут отображены в вашем профиле
-              </ContentSubtitle>
+              <MapContentTitle>На каких картах вы предпочитаете играть ?</MapContentTitle>
+              <ContentSubtitle>Выберите 3 карты. Они будут отображены в вашем профиле</ContentSubtitle>
               <Select
+                maxMenuHeight={200}
                 styles={customStyles}
                 options={Cs2Maps}
                 isMulti
@@ -179,9 +239,12 @@ const CreationPage = () => {
                   SingleValue: CustomSingleValue,
                 }}
                 placeholder='Выбор карт...'
+                isOptionDisabled={isOptionDisabled}
               ></Select>
+              {!dataValidation.isMapsValid && <NotValidText>Проверьте корректность выбранных данных</NotValidText>}
             </div>
-            <ConfirmButton>Подтвердить</ConfirmButton>
+
+            <ConfirmButton onClick={confirm}>Подтвердить</ConfirmButton>
           </RightContent>
         </CreationPageContent>
       </ContentBackground>
@@ -235,6 +298,8 @@ const ContentBackground = styled.div`
 `;
 const CreationPageContent = styled.div`
   z-index: 1;
+  position: relative;
+
   display: flex;
   justify-content: space-between;
   width: 100%;
@@ -357,4 +422,22 @@ const SelectOption = styled.div`
   }
 `;
 
+const NotValidText = styled.span`
+  padding-top: 5px;
+  font-size: 15px;
+  color: #d82f2f;
+  display: flex;
+  justify-content: center;
+`;
+const LoaderBackground = styled.div`
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-color: #bababa;
+  opacity: 0.7;
+  inset: 0;
+  margin: auto;
+  border-radius: 12px;
+  z-index: 2;
+`;
 export default CreationPage;

@@ -9,7 +9,6 @@ import MatchesPage from '../pages/MatchesPage';
 import NewsPage from '../pages/NewsPage';
 import ProfilePage from '../pages/ProfilePage';
 import { Navigate } from 'react-router-dom';
-import CreationPage from '../pages/CreationPage';
 const HomePage = lazy(() => import('../pages/HomePage'));
 
 export const authorizedGameProfileRoutes = [
@@ -71,14 +70,6 @@ export const privateRoutes = [
     element: (
       <Suspense fallback={<Loader />}>
         <ProfilePage />
-      </Suspense>
-    ),
-  },
-  {
-    path: '/creation/:game',
-    element: (
-      <Suspense fallback={<Loader />}>
-        <CreationPage />
       </Suspense>
     ),
   },

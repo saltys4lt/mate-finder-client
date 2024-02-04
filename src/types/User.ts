@@ -1,4 +1,4 @@
-import CsGoData from './CsgoData';
+import Cs2Data from './Cs2Data';
 import Team from './Team';
 import ValorantData from './ValorantData';
 
@@ -11,7 +11,7 @@ export default interface User {
   gender: string;
   birthday: string;
   valorant_data?: ValorantData;
-  csgo_data?: CsGoData;
+  cs2_data?: Cs2Data;
   teams?: Team[];
   steamId?: string;
 }

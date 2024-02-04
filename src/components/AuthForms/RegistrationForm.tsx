@@ -8,7 +8,8 @@ import { SubmitHandler, useForm } from 'react-hook-form';
 import { useSelector } from 'react-redux';
 import { RootState, useAppDispatch } from '../../redux';
 import { changeLoginState, changeRegState } from '../../redux/modalSlice';
-import { createUser, resetUserStatus } from '../../redux/usersSlice';
+import { resetUserStatus } from '../../redux/usersSlice';
+import createUser from '../../redux/userThunks/createUser';
 import User from '../../types/User';
 import { checkYears } from '../../util/checkYears';
 
@@ -32,9 +33,7 @@ const RegistrationForm = () => {
 
   const dispatch = useAppDispatch();
 
-  const createUserStatus = useSelector(
-    (state: RootState) => state.userReducer.createUserStatus,
-  );
+  const createUserStatus = useSelector((state: RootState) => state.userReducer.createUserStatus);
 
   useEffect(() => {
     if (createUserStatus === 'fulfilled') {
@@ -79,22 +78,15 @@ const RegistrationForm = () => {
           color='secondary'
           variant='filled'
         ></TextField>
-        {errors.nickname?.type === 'required' && (
-          <ErrorAlert role='alert'>Nickname is required</ErrorAlert>
-        )}
-        {errors.nickname?.type === 'maxLength' && (
-          <ErrorAlert role='alert'>Max length is 10</ErrorAlert>
-        )}
-        {errors.nickname?.type === 'minLength' && (
-          <ErrorAlert role='alert'>Min length is 3</ErrorAlert>
-        )}
+        {errors.nickname?.type === 'required' && <ErrorAlert role='alert'>Nickname is required</ErrorAlert>}
+        {errors.nickname?.type === 'maxLength' && <ErrorAlert role='alert'>Max length is 10</ErrorAlert>}
+        {errors.nickname?.type === 'minLength' && <ErrorAlert role='alert'>Min length is 3</ErrorAlert>}
 
         <TextField
           {...register('email', {
             required: true,
             pattern: {
-              value:
-                /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/,
+              value: /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/,
               message: 'Incorrect email',
             },
           })}
@@ -103,12 +95,8 @@ const RegistrationForm = () => {
           color='secondary'
           variant='filled'
         ></TextField>
-        {errors.email?.type === 'required' && (
-          <ErrorAlert role='alert'>Email is required</ErrorAlert>
-        )}
-        {errors.email?.type === 'pattern' && (
-          <ErrorAlert role='alert'>{errors.email.message}</ErrorAlert>
-        )}
+        {errors.email?.type === 'required' && <ErrorAlert role='alert'>Email is required</ErrorAlert>}
+        {errors.email?.type === 'pattern' && <ErrorAlert role='alert'>{errors.email.message}</ErrorAlert>}
 
         <TextField
           type='password'
@@ -122,15 +110,9 @@ const RegistrationForm = () => {
           color='secondary'
           variant='filled'
         ></TextField>
-        {errors.password?.type === 'required' && (
-          <ErrorAlert role='alert'>Password is required</ErrorAlert>
-        )}
-        {errors.password?.type === 'maxLength' && (
-          <ErrorAlert role='alert'>Max length is 15</ErrorAlert>
-        )}
-        {errors.password?.type === 'minLength' && (
-          <ErrorAlert role='alert'>Min length is 6</ErrorAlert>
-        )}
+        {errors.password?.type === 'required' && <ErrorAlert role='alert'>Password is required</ErrorAlert>}
+        {errors.password?.type === 'maxLength' && <ErrorAlert role='alert'>Max length is 15</ErrorAlert>}
+        {errors.password?.type === 'minLength' && <ErrorAlert role='alert'>Min length is 6</ErrorAlert>}
         <DatePicker
           format='DD/MM/YYYY'
           label='Birthday'
@@ -140,37 +122,17 @@ const RegistrationForm = () => {
             setValue('birthday', date as Dayjs);
           }}
         />
-        {birthday && dayjs().year() - birthday.year() < 10 ? (
-          <ErrorAlert role='alert'>Min age is 12</ErrorAlert>
-        ) : (
-          ''
-        )}
+        {birthday && dayjs().year() - birthday.year() < 10 ? <ErrorAlert role='alert'>Min age is 12</ErrorAlert> : ''}
 
         <RadioGroup row defaultValue={'male'}>
-          <FormControlLabel
-            value='male'
-            control={
-              <Radio
-                color='secondary'
-                {...register('gender', { required: true })}
-              />
-            }
-            label='Male'
-          />
+          <FormControlLabel value='male' control={<Radio color='secondary' {...register('gender', { required: true })} />} label='Male' />
           <FormControlLabel
             value='female'
-            control={
-              <Radio
-                color='secondary'
-                {...register('gender', { required: true })}
-              />
-            }
+            control={<Radio color='secondary' {...register('gender', { required: true })} />}
             label='Female'
           />
         </RadioGroup>
-        {errors.gender?.type === 'required' && (
-          <ErrorAlert role='alert'>Gender is required</ErrorAlert>
-        )}
+        {errors.gender?.type === 'required' && <ErrorAlert role='alert'>Gender is required</ErrorAlert>}
         <FormButtons>
           <RegButton type='submit'>Get started</RegButton>
           <LoginButton onClick={switchToLogin}>Have an account</LoginButton>

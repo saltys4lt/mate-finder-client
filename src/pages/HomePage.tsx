@@ -5,10 +5,11 @@ import { RootState, useAppDispatch } from '../redux';
 import { changeGameProfileState } from '../redux/modalSlice';
 import { useEffect, useState } from 'react';
 import Cookies from 'js-cookie';
-import CsGoData from '../types/CsgoData';
+import Cs2Data from '../types/Cs2Data';
 import Swal from 'sweetalert2';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { setGameCreationActive } from '../redux/usersSlice';
 
 const HomePage = () => {
   const user = useSelector((state: RootState) => state.userReducer.user);
@@ -21,11 +22,12 @@ const HomePage = () => {
   const [isGameProfileExist, setIsGameProfileExist] = useState<boolean>(false);
 
   useEffect(() => {
-    if (user?.csgo_data || user?.valorant_data) setIsGameProfileExist(true);
+    if (user?.cs2_data || user?.valorant_data) setIsGameProfileExist(true);
 
     document.documentElement.style.overflowY = 'visible';
     if (Cookies.get('_csData')) {
-      if (Cookies.get('_csData') === 'exist') {
+      const _csData = Cookies.get('_csData');
+      if (_csData === 'exist') {
         Swal.fire({
           icon: 'warning',
           title: `Ошибочка`,
@@ -34,7 +36,7 @@ const HomePage = () => {
           timer: 3000,
         });
       }
-      if (Cookies.get('_csData') === 'noFaceit') {
+      if (_csData === 'noFaceit') {
         Swal.fire({
           icon: 'question',
           title: `Что-то не так`,
@@ -42,9 +44,11 @@ const HomePage = () => {
           showConfirmButton: false,
           timer: 3000,
         });
-      } else {
-        const csData: CsGoData = JSON.parse(Cookies.get('_csData') as string);
+      } else if (_csData !== 'noFaceit' && _csData !== 'exist') {
+        const csData: Cs2Data = JSON.parse(_csData as string);
         if (csData.elo) {
+          Cookies.set('_gc', 'cs2');
+          dispatch(setGameCreationActive('cs2'));
           Swal.fire({
             icon: 'success',
             title: `faceit успешно подключен`,
@@ -54,7 +58,7 @@ const HomePage = () => {
             denyButtonText: 'Нет',
           }).then((result) => {
             if (result.isConfirmed) {
-              navigate('/creation/csgo');
+              navigate('/creation/cs2');
             }
             if (result.isDenied) {
               Swal.fire({
@@ -65,6 +69,7 @@ const HomePage = () => {
                 cancelButtonText: 'Остаться тут',
               }).then((result) => {
                 if (result.isConfirmed) {
+                  Cookies.remove('_gc');
                   navigate(`/profile/${user?.nickname}`);
                 }
               });
@@ -99,9 +104,7 @@ const HomePage = () => {
               >
                 Find Your Team
               </ContentLink>
-              <GameProfileButton onClick={openGameProfileModal}>
-                Create Game Profile
-              </GameProfileButton>
+              <GameProfileButton onClick={openGameProfileModal}>Create Game Profile</GameProfileButton>
             </ContentButtons>
             <ContentNews></ContentNews>
           </MainContent>
@@ -149,11 +152,7 @@ const ContentLink = styled.div`
   color: #fff;
   padding: 5px 16px;
   border-radius: 4px;
-  background: radial-gradient(
-    circle at 20% 100%,
-    rgb(145, 43, 36) 30%,
-    rgb(224, 6, 6) 200%
-  );
+  background: radial-gradient(circle at 20% 100%, rgb(145, 43, 36) 30%, rgb(224, 6, 6) 200%);
 
   background-size: 100%;
   text-align: center;
@@ -181,11 +180,7 @@ const GameProfileButton = styled.div`
   color: #fff;
   padding: 5px 16px;
   border-radius: 4px;
-  background: radial-gradient(
-    circle at 10% 100%,
-    rgb(177, 139, 16) 30%,
-    rgb(0, 0, 0) 200%
-  );
+  background: radial-gradient(circle at 10% 100%, rgb(177, 139, 16) 30%, rgb(0, 0, 0) 200%);
 
   background-size: 100%;
   text-align: center;

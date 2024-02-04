@@ -15,14 +15,14 @@ const Navbar = () => {
   const isAuth = useSelector((state: RootState) => state.userReducer.isAuth);
   const [isGameProfileExist, setIsGameProfileExist] = useState<boolean>(false);
   useEffect(() => {
-    if (user?.csgo_data || user?.valorant_data) setIsGameProfileExist(true);
+    if (user?.cs2_data || user?.valorant_data) setIsGameProfileExist(true);
   }, [user]);
 
   const openRegModal = () => {
     document.documentElement.style.overflowY = 'hidden';
     dispatch(changeRegState(true));
   };
-
+  console.log(user);
   const openLoginModal = () => {
     document.documentElement.style.overflowY = 'hidden';
     dispatch(changeLoginState(true));
@@ -70,31 +70,21 @@ const Navbar = () => {
             <DropDown>
               <NavLink>Players</NavLink>
               <DropDownContent>
-                <DropDownLink to={isGameProfileExist ? '/players' : '/'}>
-                  Find players
-                </DropDownLink>
-                <DropDownLink to={isGameProfileExist ? '/friends' : '/'}>
-                  Friend list
-                </DropDownLink>
+                <DropDownLink to={isGameProfileExist ? '/players' : '/'}>Find players</DropDownLink>
+                <DropDownLink to={isGameProfileExist ? '/friends' : '/'}>Friend list</DropDownLink>
               </DropDownContent>
             </DropDown>
             <DropDown>
               <NavLink>Teams</NavLink>
               <DropDownContent>
-                <DropDownLink to={isGameProfileExist ? '/team-creator' : '/'}>
-                  Create a Team
-                </DropDownLink>
-                <DropDownLink to={isGameProfileExist ? '/teams' : '/'}>
-                  Teams list
-                </DropDownLink>
+                <DropDownLink to={isGameProfileExist ? '/team-creator' : '/'}>Create a Team</DropDownLink>
+                <DropDownLink to={isGameProfileExist ? '/teams' : '/'}>Teams list</DropDownLink>
               </DropDownContent>
             </DropDown>
             <DropDown>
               <NavLink>Other</NavLink>
               <DropDownContent>
-                <DropDownLink to={`/profile/${user?.nickname}`}>
-                  Profile
-                </DropDownLink>
+                <DropDownLink to={`/profile/${user?.nickname}`}>Profile</DropDownLink>
                 <DropDownLink to={'/matches'}>Matches</DropDownLink>
                 <DropDownLink to={'/news'}>News</DropDownLink>
               </DropDownContent>
@@ -109,9 +99,7 @@ const Navbar = () => {
       ) : (
         <AuthButtons>
           <LoginButton onClick={openLoginModal}>login</LoginButton>
-          <RegistrationButton onClick={openRegModal}>
-            sign up
-          </RegistrationButton>
+          <RegistrationButton onClick={openRegModal}>sign up</RegistrationButton>
         </AuthButtons>
       )}
     </NavbarContainer>
@@ -159,11 +147,7 @@ const RegistrationButton = styled.button`
   color: #fff;
   padding: 5px 16px;
   border-radius: 4px;
-  background: radial-gradient(
-    circle at 10% 20%,
-    rgb(197, 84, 76) 0%,
-    rgb(73, 57, 57) 100.7%
-  );
+  background: radial-gradient(circle at 10% 20%, rgb(197, 84, 76) 0%, rgb(73, 57, 57) 100.7%);
   background-size: 100%;
   height: 32px;
 

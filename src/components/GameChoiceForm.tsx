@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import styled from 'styled-components';
 import { SteamAuth } from '../util/steamAuth';
-import { RootState, useAppDispatch } from '../redux';
+import { RootState } from '../redux';
 import { useSelector } from 'react-redux';
 import Swal from 'sweetalert2';
 import { ConfirmButton } from './UI/ConfirmButton';
@@ -12,7 +12,7 @@ const GameChoiceForm = () => {
   });
 
   const csData = useSelector(
-    (state: RootState) => state.userReducer.user?.csgo_data,
+    (state: RootState) => state.userReducer.user?.cs2_data,
   );
   const pickGame = (selectedGame: 'cs2' | 'valorant') => {
     if (selectedGame === 'cs2') setGame({ valorant: false, cs2: true });
