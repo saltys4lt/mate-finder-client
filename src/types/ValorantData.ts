@@ -1,4 +1,3 @@
-export default interface ValorantData{
-    userId:number
-    }
-    
+export default interface ValorantData {
+  userId: number;
+}

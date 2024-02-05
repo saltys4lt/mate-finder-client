@@ -1,12 +1,12 @@
-import { TextField } from "@mui/material";
-import { SubmitHandler, useForm } from "react-hook-form";
-import { useSelector } from "react-redux";
-import styled from "styled-components";
-import { RootState, useAppDispatch } from "../../redux";
-import { changeLoginState, changeRegState } from "../../redux/modalSlice";
-import { fetchUser } from "../../redux/usersSlice";
-import { ErrorAlert } from "./RegistrationForm";
-import { useEffect } from "react";
+import { TextField } from '@mui/material';
+import { SubmitHandler, useForm } from 'react-hook-form';
+import { useSelector } from 'react-redux';
+import styled from 'styled-components';
+import { RootState, useAppDispatch } from '../../redux';
+import { changeLoginState, changeRegState } from '../../redux/modalSlice';
+import fetchUser from '../../redux/userThunks/fetchUser';
+import { ErrorAlert } from './RegistrationForm';
+import { useEffect } from 'react';
 
 interface IFormInput {
   password: string;
@@ -14,21 +14,23 @@ interface IFormInput {
 }
 
 const LoginForm = () => {
-  
-  const { register, handleSubmit,formState:{errors} } = useForm<IFormInput>();
-  const loginStatus=useSelector((root:RootState)=>root.userReducer.fetchUserStatus)
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<IFormInput>();
+  const loginStatus = useSelector((root: RootState) => root.userReducer.fetchUserStatus);
 
   const dispatch = useAppDispatch();
 
-  const onSubmit: SubmitHandler<IFormInput> = async(data) => {
-    await dispatch(fetchUser({nickname:data.nickname,password:data.password}))
-   
+  const onSubmit: SubmitHandler<IFormInput> = async (data) => {
+    await dispatch(fetchUser({ nickname: data.nickname, password: data.password }));
   };
-useEffect(() => {
-  if(loginStatus==='fulfilled'){
-    dispatch(changeLoginState(false))
-  }
-}, [loginStatus])
+  useEffect(() => {
+    if (loginStatus === 'fulfilled') {
+      dispatch(changeLoginState(false));
+    }
+  }, [loginStatus]);
 
   const switchToRegistration = () => {
     dispatch(changeLoginState(false));
@@ -40,43 +42,35 @@ useEffect(() => {
       <FormContainer>
         <h3>Login</h3>
         <TextField
-          {...register("nickname", {
-            required: { value: true, message: "nickname is required" },
-            maxLength: { value: 10, message: "max length is 10" },
-            minLength: { value: 3, message: "min length is 3" },
+          {...register('nickname', {
+            required: { value: true, message: 'nickname is required' },
+            maxLength: { value: 10, message: 'max length is 10' },
+            minLength: { value: 3, message: 'min length is 3' },
           })}
-          size="small"
-          label="Nickname"
-          color="secondary"
-          variant="filled"
+          size='small'
+          label='Nickname'
+          color='secondary'
+          variant='filled'
         ></TextField>
-        {errors.nickname?.type === "required" && (
-          <ErrorAlert role="alert">Nickname is required</ErrorAlert>
-        )}
-        {errors.nickname?.type === "maxLength" && (
-          <ErrorAlert role="alert">Max length is 10</ErrorAlert>
-        )}
-        {errors.nickname?.type === "minLength" && (
-          <ErrorAlert role="alert">Min length is 3</ErrorAlert>
-        )}
-        
+        {errors.nickname?.type === 'required' && <ErrorAlert role='alert'>Nickname is required</ErrorAlert>}
+        {errors.nickname?.type === 'maxLength' && <ErrorAlert role='alert'>Max length is 10</ErrorAlert>}
+        {errors.nickname?.type === 'minLength' && <ErrorAlert role='alert'>Min length is 3</ErrorAlert>}
+
         <TextField
-          type="password"
-          {...register("password", {
+          type='password'
+          {...register('password', {
             required: true,
           })}
-          size="small"
-          label="Password"
-          color="secondary"
-          variant="filled"
+          size='small'
+          label='Password'
+          color='secondary'
+          variant='filled'
         ></TextField>
 
-          {errors.password?.type === "required" && (
-          <ErrorAlert role="alert">Password is required</ErrorAlert>
-        )}
+        {errors.password?.type === 'required' && <ErrorAlert role='alert'>Password is required</ErrorAlert>}
 
         <FormButtons>
-          <LoginButton type="submit">Welcome back</LoginButton>
+          <LoginButton type='submit'>Welcome back</LoginButton>
           <RegButton onClick={switchToRegistration}>Sign Up</RegButton>
         </FormButtons>
       </FormContainer>

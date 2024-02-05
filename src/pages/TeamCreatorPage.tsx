@@ -1,8 +1,5 @@
-
 const TeamCreatorPage = () => {
-  return (
-    <div>TeamCreatorPage</div>
-  )
-}
+  return <div>TeamCreatorPage</div>;
+};
 
-export default TeamCreatorPage
+export default TeamCreatorPage;
