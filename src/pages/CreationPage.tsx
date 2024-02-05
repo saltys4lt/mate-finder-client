@@ -16,71 +16,12 @@ import { useNavigate } from 'react-router-dom';
 import Cookies from 'js-cookie';
 import ClientUser from '../types/ClientUser';
 import ConfirmButton from '../components/UI/ConfirmButton';
+import { customStyles, CustomOption, CustomSingleValue } from '../components/UI/MapsSelect';
 
 interface CreationDataValidation {
   isRolesValid: boolean;
   isMapsValid: boolean;
 }
-
-const CustomOption: React.FC<any> = ({ innerProps, label, data }) => (
-  <SelectOption {...innerProps}>
-    <img
-      src={data.image}
-      alt={label}
-      style={{
-        marginRight: '8px',
-        width: '100px',
-        height: '40px',
-      }}
-    />
-    {label}
-  </SelectOption>
-);
-
-const CustomSingleValue: React.FC<any> = ({ innerProps, label, data }) => (
-  <SelectOption {...innerProps}>
-    <img
-      src={data.image}
-      alt={label}
-      style={{
-        marginRight: '8px',
-        width: '100px',
-        height: '45px',
-      }}
-    />
-    {label}
-  </SelectOption>
-);
-const customStyles = {
-  control: (baseStyles: any) => ({
-    ...baseStyles,
-    marginTop: '40px',
-    background: '#373737',
-    boxShadow: '0',
-    borderColor: '#484848',
-    cursor: 'pointer',
-    '&:hover': {
-      borderColor: '#808080',
-    },
-  }),
-  menu: (baseStyles: any) => ({
-    ...baseStyles,
-    background: '#373737',
-    color: '#fff',
-    display: 'flex',
-    flexDirection: 'column',
-
-    '& img': {
-      borderRadius: '3px',
-    },
-  }),
-  singleValue: (baseStyles: any) => ({
-    ...baseStyles,
-    background: '#fbfbfb',
-    color: '#fff',
-    display: 'flex',
-  }),
-};
 
 const CreationPage = () => {
   const [roles, setRoles] = useState<string[]>([]);
@@ -409,20 +350,6 @@ const RoleLabel = styled.label`
   user-select: none;
   &:hover {
     cursor: pointer;
-  }
-`;
-
-const SelectOption = styled.div`
-  border-bottom: 1px solid #808080;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  &:hover {
-    background-color: #808080;
-  }
-  &:last-child {
-    border-bottom: transparent;
   }
 `;
 
