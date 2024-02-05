@@ -5,11 +5,9 @@ import { RootState, useAppDispatch } from '../redux';
 import { changeGameProfileState } from '../redux/modalSlice';
 import { useEffect, useState } from 'react';
 import Cookies from 'js-cookie';
-import Cs2Data from '../types/Cs2Data';
 import Swal from 'sweetalert2';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { setGameCreationActive } from '../redux/usersSlice';
 
 const HomePage = () => {
   const user = useSelector((state: RootState) => state.userReducer.user);
@@ -44,41 +42,8 @@ const HomePage = () => {
           showConfirmButton: false,
           timer: 3000,
         });
-      } else if (_csData !== 'noFaceit' && _csData !== 'exist') {
-        const csData: Cs2Data = JSON.parse(_csData as string);
-        if (csData.elo) {
-          Cookies.set('_gc', 'cs2');
-          dispatch(setGameCreationActive('cs2'));
-          Swal.fire({
-            icon: 'success',
-            title: `faceit успешно подключен`,
-            text: `Осталось лишь дополнить ваши данные по команде, приступим?`,
-            showDenyButton: true,
-            confirmButtonText: 'Да',
-            denyButtonText: 'Нет',
-          }).then((result) => {
-            if (result.isConfirmed) {
-              navigate('/creation/cs2');
-            }
-            if (result.isDenied) {
-              Swal.fire({
-                text: `Теперь статистика отображается в вашем профиле. Хотите посмотреть?`,
-                showCancelButton: true,
-                showConfirmButton: true,
-                confirmButtonText: 'Перейти в профиль',
-                cancelButtonText: 'Остаться тут',
-              }).then((result) => {
-                if (result.isConfirmed) {
-                  Cookies.remove('_gc');
-                  navigate(`/profile/${user?.nickname}`);
-                }
-              });
-            }
-          });
-        }
       }
     }
-
     Cookies.remove('_csData');
   }, []);
 

@@ -8,11 +8,15 @@ import Select, { MultiValue } from 'react-select';
 import Option from '../types/Option';
 import Cs2PlayerRoles from '../consts/Cs2PlayerRoles';
 import Cs2Maps from '../consts/Cs2Maps';
-import { ConfirmButton } from '../components/UI/ConfirmButton';
-import { refillCs2Data, setGameCreationActive } from '../redux/usersSlice';
-import { LinearProgress } from '@mui/material';
+
+import { setGameCreationActive } from '../redux/usersSlice';
+import refillCs2Data from '../redux/cs2Thunks/refillCs2Data';
+import { CircularProgress } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import Cookies from 'js-cookie';
+import ClientUser from '../types/ClientUser';
+import ConfirmButton from '../components/UI/ConfirmButton';
+
 interface CreationDataValidation {
   isRolesValid: boolean;
   isMapsValid: boolean;
@@ -87,7 +91,7 @@ const CreationPage = () => {
   });
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const cs2_data = useSelector((state: RootState) => state.userReducer.user?.cs2_data);
+  const user = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
 
   const refillCs2DataStatus = useSelector((state: RootState) => state.userReducer.refillCs2DataStatus);
   const creationContent = useRef<HTMLDivElement>(null);
@@ -101,7 +105,7 @@ const CreationPage = () => {
     if (refillCs2DataStatus === 'fulfilled') {
       Cookies.remove('_gc');
       dispatch(setGameCreationActive(null));
-      navigate('/');
+      navigate(`/profile/${user?.nickname}`);
     }
   }, [refillCs2DataStatus]);
 
@@ -159,45 +163,42 @@ const CreationPage = () => {
   return (
     <CreationPageContainer ref={creationContent}>
       <ContentBackground>
+        {refillCs2DataStatus === 'pending' && (
+          <>
+            <CircularProgress
+              color='error'
+              size={'100px'}
+              sx={{
+                zIndex: 3,
+                position: 'absolute',
+                inset: '0',
+                margin: 'auto',
+              }}
+            />
+            <LoaderBackground />
+          </>
+        )}
         <CreationPageContent>
-          {refillCs2DataStatus === 'pending' && (
-            <>
-              <LinearProgress
-                color='inherit'
-                sx={{
-                  zIndex: 3,
-                  height: '7px',
-                  borderRadius: '10px',
-                  position: 'absolute',
-                  top: '2px',
-                  left: '50%',
-                  width: '100%',
-                  transform: 'translate(-50%,-50%)',
-                }}
-              />
-              <LoaderBackground />
-            </>
-          )}
           <LeftContent>
             <ContentTitle>Ваша статистика</ContentTitle>
-            <LvlImg src={cs2_data?.lvlImg} alt='' />
+            <LvlImg src={user.cs2_data?.lvlImg} alt='' />
             <StatsText>
-              ЕLO: <span>{cs2_data?.elo}</span>
+              ЕLO: <span>{user.cs2_data?.elo}</span>
             </StatsText>
             <StatsText>
-              Матчи: <span>{cs2_data?.matches}</span>
+              Матчи: <span>{user.cs2_data?.matches}</span>
             </StatsText>
             <StatsText>
-              Победы: <span>{cs2_data?.wins}</span>
+              Победы: <span>{user.cs2_data?.wins}</span>
             </StatsText>
             <StatsText>
-              Винрейт: <span>{cs2_data?.winrate}</span>%
+              Винрейт: <span>{user.cs2_data?.winrate}</span>%
             </StatsText>
             <StatsText>
-              Кд: <span>{cs2_data?.kd}</span>
+              Кд: <span>{user.cs2_data?.kd}</span>
             </StatsText>
             <StatsText>
-              Хс: <span>{cs2_data?.hs}</span>%
+              Хс: <span>{user.cs2_data?.hs}</span>%
             </StatsText>
           </LeftContent>
 
@@ -228,7 +229,7 @@ const CreationPage = () => {
               <MapContentTitle>На каких картах вы предпочитаете играть ?</MapContentTitle>
               <ContentSubtitle>Выберите 3 карты. Они будут отображены в вашем профиле</ContentSubtitle>
               <Select
-                maxMenuHeight={200}
+                maxMenuHeight={150}
                 styles={customStyles}
                 options={Cs2Maps}
                 isMulti
@@ -276,15 +277,14 @@ const CreationPageContainer = styled.div`
 
 const ContentBackground = styled.div`
   position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   padding: 25px;
   width: 55%;
+
   @media (max-width: 1050px) {
     min-width: 550px;
   }
   &::before {
+    overflow: hidden;
     border-radius: 20px;
     content: '';
     position: absolute;
@@ -302,6 +302,7 @@ const CreationPageContent = styled.div`
 
   display: flex;
   justify-content: space-between;
+
   width: 100%;
 `;
 
@@ -310,7 +311,7 @@ const LeftContent = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  row-gap: 30px;
+  gap: 35px;
   padding: 20px;
 `;
 
@@ -338,6 +339,9 @@ const RightContent = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
+  @media (max-width: 1170px) {
+    row-gap: 30px;
+  }
   border-left: 1px solid #fff;
 `;
 
@@ -437,7 +441,7 @@ const LoaderBackground = styled.div`
   opacity: 0.7;
   inset: 0;
   margin: auto;
-  border-radius: 12px;
+  border-radius: 20px;
   z-index: 2;
 `;
 export default CreationPage;

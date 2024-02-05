@@ -4,16 +4,14 @@ import { SteamAuth } from '../util/steamAuth';
 import { RootState } from '../redux';
 import { useSelector } from 'react-redux';
 import Swal from 'sweetalert2';
-import { ConfirmButton } from './UI/ConfirmButton';
+import ConfirmButton from './UI/ConfirmButton';
 const GameChoiceForm = () => {
   const [game, setGame] = useState<{ cs2: boolean; valorant: boolean }>({
     cs2: false,
     valorant: false,
   });
 
-  const csData = useSelector(
-    (state: RootState) => state.userReducer.user?.cs2_data,
-  );
+  const csData = useSelector((state: RootState) => state.userReducer.user?.cs2_data);
   const pickGame = (selectedGame: 'cs2' | 'valorant') => {
     if (selectedGame === 'cs2') setGame({ valorant: false, cs2: true });
     else setGame({ valorant: true, cs2: false });
@@ -39,10 +37,7 @@ const GameChoiceForm = () => {
     <ModalContainer>
       <h3>Choose a game</h3>
       <GamesContainer>
-        <GameItem
-          $isActive={String(game.valorant)}
-          onClick={() => pickGame('valorant')}
-        >
+        <GameItem $isActive={String(game.valorant)} onClick={() => pickGame('valorant')}>
           <GameIcon src='/images/valorantLogo.png' />
           <p>Valorant</p>
         </GameItem>
@@ -54,8 +49,8 @@ const GameChoiceForm = () => {
 
       <ConfirmButton onClick={handleConfirm}>Confirm</ConfirmButton>
       <AttentionText>
-        <span>Важно!</span> Ваш steam обязательно должен быть привязан к faceit,
-        а также на этом аккаунте должно быть сыграно миннимум 3 игры
+        <span>Важно!</span> Ваш steam обязательно должен быть привязан к faceit, а также на этом аккаунте должно быть сыграно миннимум 3
+        игры
       </AttentionText>
     </ModalContainer>
   );

@@ -3,11 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { RootState, useAppDispatch } from '../redux';
-import {
-  changeGameProfileState,
-  changeLoginState,
-  changeRegState,
-} from '../redux/modalSlice';
+import { changeGameProfileState, changeLoginState, changeRegState } from '../redux/modalSlice';
 import LoginForm from './AuthForms/LoginForm';
 import RegistrationForm from './AuthForms/RegistrationForm';
 import GameChoiceForm from './GameChoiceForm';
@@ -18,15 +14,9 @@ interface ModalStatus {
 
 const Modal = () => {
   const dispatch = useAppDispatch();
-  const regIsActive = useSelector(
-    (state: RootState) => state.modalReducer.regIsActive,
-  );
-  const loginIsActive = useSelector(
-    (state: RootState) => state.modalReducer.loginIsActive,
-  );
-  const gameChoiceIsActive = useSelector(
-    (state: RootState) => state.modalReducer.gameChoiceIsActive,
-  );
+  const regIsActive = useSelector((state: RootState) => state.modalReducer.regIsActive);
+  const loginIsActive = useSelector((state: RootState) => state.modalReducer.loginIsActive);
+  const gameChoiceIsActive = useSelector((state: RootState) => state.modalReducer.gameChoiceIsActive);
 
   const [isActive, setIsActive] = useState<string>('false');
 
@@ -45,12 +35,8 @@ const Modal = () => {
     }, 500);
   };
 
-  const regStatus = useSelector(
-    (state: RootState) => state.userReducer.createUserStatus,
-  );
-  const loginStatus = useSelector(
-    (state: RootState) => state.userReducer.fetchUserStatus,
-  );
+  const regStatus = useSelector((state: RootState) => state.userReducer.createUserStatus);
+  const loginStatus = useSelector((state: RootState) => state.userReducer.fetchUserStatus);
 
   return (
     <ModalContainer $active={isActive} onClick={closeModal}>
@@ -117,8 +103,7 @@ const Content = styled.div<ModalStatus>`
   max-width: 450px;
   max-height: 600px;
   transition: all 0.3s ease-in-out;
-  transform: ${(p) =>
-    p.$active == 'true' ? `translateY(0)` : `translateY(-150%)`};
+  transform: ${(p) => (p.$active == 'true' ? `translateY(0)` : `translateY(-150%)`)};
   opacity: ${(p) => (p.$active == 'true' ? 1 : 0)};
   position: relative;
 `;

@@ -19,22 +19,14 @@ const Footer = () => {
               <ContactsIcon src='/images/github.png' />
             </ContactsItem>
 
-            <ContactsItem
-              href='https://www.linkedin.com/in/ilia-shpak-8b1524298/'
-              target='_blank'
-            >
+            <ContactsItem href='https://www.linkedin.com/in/ilia-shpak-8b1524298/' target='_blank'>
               <ContactsLink>Ilia Shpak</ContactsLink>
               <ContactsIcon src='/images/linkedin.png' />
             </ContactsItem>
           </FooterColumn>
           <FooterColumn>
-            <FooterTitle>
-              If you don't need money lend me a cup of coffee plz :3{' '}
-            </FooterTitle>
-            <ContactsItem
-              href='https://www.buymeacoffee.com/ahrisai'
-              target='_blank'
-            >
+            <FooterTitle>If you don't need money lend me a cup of coffee plz :3 </FooterTitle>
+            <ContactsItem href='https://www.buymeacoffee.com/ahrisai' target='_blank'>
               <ContactsLink>buymeacoffee.com/ahrisai</ContactsLink>
               <ContactsIcon src='/images/coffee-cup.png' />
             </ContactsItem>

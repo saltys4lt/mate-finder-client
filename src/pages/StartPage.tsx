@@ -97,11 +97,7 @@ const StartButton = styled.button`
   color: #fff;
   padding: 5px 16px;
   border-radius: 4px;
-  background: radial-gradient(
-    circle at 10% 200%,
-    rgb(197, 84, 76) 30%,
-    rgb(0, 0, 0) 200%
-  );
+  background: radial-gradient(circle at 10% 200%, rgb(197, 84, 76) 30%, rgb(0, 0, 0) 200%);
 
   background-size: 100%;
   height: 80px;

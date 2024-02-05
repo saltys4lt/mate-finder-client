@@ -1,30 +1,11 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import axios from 'axios';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import Swal from 'sweetalert2';
 import ClientUser from '../types/ClientUser';
 import Cs2Data from '../types/Cs2Data';
 import checkUserIsAuth from './userThunks/checkUserIsAuth';
 import fetchUser from './userThunks/fetchUser';
 import createUser from './userThunks/createUser';
-const baseUrl = import.meta.env.VITE_BASE_URL;
-
-export const refillCs2Data = createAsyncThunk('usersReducer/refillCs2Data', async (data: Record<string, number[]>, { rejectWithValue }) => {
-  const response = axios
-    .patch(`${baseUrl}/refillCs2`, data, { withCredentials: true })
-    .then((res) => {
-      return res.data;
-    })
-    .catch((error) => {
-      if (axios.isAxiosError(error)) {
-        return rejectWithValue(error.response?.data.message ?? 'Unknown error');
-      } else if (error instanceof Error) {
-        return rejectWithValue(error.message ?? 'Unknown error');
-      } else {
-        return rejectWithValue('Unknown error');
-      }
-    });
-  return response;
-});
+import refillCs2Data from './cs2Thunks/refillCs2Data';
 
 interface UserState {
   user: ClientUser | null;

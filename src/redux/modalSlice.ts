@@ -29,7 +29,6 @@ const modalSlice = createSlice({
   },
 });
 
-export const { changeLoginState, changeRegState, changeGameProfileState } =
-  modalSlice.actions;
+export const { changeLoginState, changeRegState, changeGameProfileState } = modalSlice.actions;
 
 export default modalSlice.reducer;
