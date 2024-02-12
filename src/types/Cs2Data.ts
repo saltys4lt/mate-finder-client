@@ -8,6 +8,20 @@ export default interface Cs2Data {
   wins: number;
   hs: number;
   lvlImg: string;
-  roles?: string[];
-  maps?: string[];
+  roles: Role[];
+  maps: Map[];
 }
+
+type Role = Record<
+  'cs2Role',
+  {
+    name: string;
+  }
+>;
+
+type Map = Record<
+  'cs2Map',
+  {
+    name: string;
+  }
+>;

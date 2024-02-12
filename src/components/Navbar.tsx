@@ -5,7 +5,7 @@ import styled from 'styled-components';
 import Swal from 'sweetalert2';
 import { RootState, useAppDispatch } from '../redux';
 import { changeLoginState, changeRegState } from '../redux/modalSlice';
-import { changeIsAuth } from '../redux/usersSlice';
+import { changeIsAuth } from '../redux/userSlice';
 import { useEffect, useState } from 'react';
 
 const Navbar = () => {

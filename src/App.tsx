@@ -5,9 +5,11 @@ import GlobalStyle from './GlobalStyles';
 import AppRouter from './components/AppRouter';
 import Loader from './components/Loader';
 import { RootState, useAppDispatch } from './redux';
-import { setGameCreationActive, setPendingForCheck } from './redux/usersSlice';
+import { setGameCreationActive, setPendingForCheck } from './redux/userSlice';
 import checkUserIsAuth from './redux/userThunks/checkUserIsAuth';
 import { useSelector } from 'react-redux';
+import Footer from './components/Footer';
+import Header from './components/Header';
 
 function App() {
   const token = Cookies.get('token');
@@ -18,8 +20,10 @@ function App() {
     if (token) {
       dispatch(setPendingForCheck());
       dispatch(checkUserIsAuth());
+    } else {
+      dispatch(checkUserIsAuth());
     }
-    dispatch(checkUserIsAuth());
+
     if (_gc) {
       dispatch(setGameCreationActive(_gc as 'cs2' | 'valorant'));
     }
@@ -46,11 +50,18 @@ function App() {
       window.removeEventListener('load', handleLoad);
     };
   }, []);
-
   return (
     <BrowserRouter>
       <GlobalStyle />
-      {!loaded || (check !== 'fulfilled' && check !== 'rejected') ? <Loader /> : <AppRouter />}
+      {!loaded || (check !== 'fulfilled' && check !== 'rejected') ? (
+        <Loader />
+      ) : (
+        <>
+          <Header />
+          <AppRouter />
+          <Footer />
+        </>
+      )}
     </BrowserRouter>
   );
 }

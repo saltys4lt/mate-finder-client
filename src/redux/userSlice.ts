@@ -24,6 +24,7 @@ const initialState: UserState = {
   user: null,
   isAuth: false,
   isGameCreationActive: null,
+
   createUserStatus: 'idle',
   createUserError: null,
 
@@ -36,8 +37,8 @@ const initialState: UserState = {
   refillCs2DataError: null,
 };
 
-const usersSlice = createSlice({
-  name: 'usersReducer',
+const userSlice = createSlice({
+  name: 'userReducer',
   initialState,
   reducers: {
     resetUserStatus(state) {
@@ -175,6 +176,6 @@ const usersSlice = createSlice({
   },
 });
 
-export const { resetUserStatus, changeIsAuth, setPendingForCheck, setGameCreationActive } = usersSlice.actions;
+export const { resetUserStatus, changeIsAuth, setPendingForCheck, setGameCreationActive } = userSlice.actions;
 
-export default usersSlice.reducer;
+export default userSlice.reducer;
