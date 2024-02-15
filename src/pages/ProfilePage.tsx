@@ -14,6 +14,9 @@ import Player from '../types/Player';
 import { setPlayer, setPlayerError } from '../redux/playerSlice';
 import Loader from '../components/Loader';
 import { useNavigate } from 'react-router-dom';
+import updateCs2Data from '../redux/cs2Thunks/updateCs2Data';
+import { CircularProgress } from '@mui/material';
+import LoaderBackground from '../components/UI/LoaderBackground';
 const ProfilePage = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -21,6 +24,7 @@ const ProfilePage = () => {
   const user = useSelector((state: RootState) => state.userReducer.user);
   const player = useSelector((root: RootState) => root.playerReducer.player);
   const playerError = useSelector((root: RootState) => root.playerReducer.fetchPlayerByNameError);
+  const updateFaceitStatus = useSelector((root: RootState) => root.userReducer.updateCs2DataStatus);
   const [profileUser, setProfileUser] = useState<ClientUser | Player | null>(null);
 
   useEffect(() => {
@@ -40,11 +44,23 @@ const ProfilePage = () => {
     };
   }, [nickname, player]);
 
+  useEffect(() => {
+    if (updateFaceitStatus === 'fulfilled') {
+      setProfileUser(user);
+    }
+
+    return () => {};
+  }, [updateFaceitStatus]);
+
   if (playerError) {
     dispatch(setPlayer(null));
     dispatch(setPlayerError(null));
     navigate('/');
   }
+
+  const handleUpdateFaceitData = (steamId: string) => {
+    dispatch(updateCs2Data(steamId));
+  };
 
   if (!profileUser) {
     return <Loader />;
@@ -125,6 +141,21 @@ const ProfilePage = () => {
         <ProfileMainContainer>
           <LeftContainer>
             <GameContainer>
+              {updateFaceitStatus === 'pending' && (
+                <>
+                  <CircularProgress
+                    color='error'
+                    size={'100px'}
+                    sx={{
+                      zIndex: 3,
+                      position: 'absolute',
+                      inset: '0',
+                      margin: 'auto',
+                    }}
+                  />
+                  <LoaderBackground bgColor='#333' borderRadius='0px' />
+                </>
+              )}
               <GameIcon src='/images/cs2-profile-pic.jpeg' />
               <Cs2Stats>
                 {profileUser?.cs2_data ? (
@@ -167,7 +198,18 @@ const ProfilePage = () => {
                     </MapsContainer>
                     {!player && (
                       <GameContainerButtons>
-                        <GameContainerButton>Обновить данные</GameContainerButton>
+                        <DropDown>
+                          <GameContainerButton>
+                            Изменить <img src='/images/drop-down-arrow.png' alt='' />
+                          </GameContainerButton>
+                          <DropDownContent>
+                            <DropDownButton onClick={() => handleUpdateFaceitData(user?.cs2_data?.steamId as string)}>
+                              Обновить данные faceit
+                            </DropDownButton>
+                            <DropDownButton>Изменить роли/карты</DropDownButton>
+                          </DropDownContent>
+                        </DropDown>
+
                         <GameContainerButton>Удалить игровой профиль</GameContainerButton>
                       </GameContainerButtons>
                     )}
@@ -192,7 +234,18 @@ const ProfilePage = () => {
               </ValorantStats>
             </GameContainer>
           </LeftContainer>
-          <RightContainer></RightContainer>
+          <RightContainer>
+            <Description>
+              <RightContentTitle>Описание</RightContentTitle>
+              <DescriptionText>{profileUser.description ? profileUser.description : 'Информация отсутствует...'}</DescriptionText>
+            </Description>
+            <Teams>
+              <RightContentTitle>Команды</RightContentTitle>
+              <TeamsContainer>
+                <Team></Team>
+              </TeamsContainer>
+            </Teams>
+          </RightContainer>
         </ProfileMainContainer>
       </Container>
     </>
@@ -307,7 +360,7 @@ const ProfileMainContainer = styled.div`
   width: 100%;
   display: flex;
   justify-content: space-between;
-  margin-top: 40px;
+  margin: 40px 0;
   @media (max-width: 980px) {
     flex-direction: column;
 
@@ -318,6 +371,7 @@ const LeftContainer = styled.div`
   display: flex;
   flex-direction: column;
   row-gap: 50px;
+  width: 65%;
   @media (max-width: 980px) {
     width: 95%;
   }
@@ -335,12 +389,15 @@ const GameContainer = styled.div`
   display: flex;
   align-items: center;
   border-radius: 5px;
-  overflow: hidden;
-  background-color: #1b1b1b;
+  background-color: #202020;
+  width: 100%;
+  position: relative;
 `;
 
 const GameIcon = styled.img`
-  width: 220px;
+  width: 100%;
+  max-width: 220px;
+  height: 350px;
 `;
 
 const Cs2Stats = styled.div`
@@ -418,7 +475,7 @@ const Maps = styled(Roles)`
 `;
 
 const GameContainerButtons = styled.div`
-  margin-top: 30px;
+  margin-top: 15px;
   display: flex;
   align-items: center;
   justify-content: space-around;
@@ -431,6 +488,36 @@ const CreateGameProfileButton = styled(CommonButton)`
 
 const GameContainerButton = styled(CommonButton)`
   border-color: #d8702f;
+  padding-inline: 27px;
+`;
+
+const DropDownContent = styled.div`
+  border-radius: 5px;
+  width: 100%;
+  position: absolute;
+
+  display: none;
+  z-index: 2;
+  border-radius: 3px 3px 5px 5px;
+  top: 30px;
+  box-shadow: 0px 4px 15px #d8702f;
+  overflow: hidden;
+`;
+const DropDown = styled.div`
+  position: relative;
+
+  &:hover ${DropDownContent} {
+    display: block;
+  }
+`;
+
+const DropDownButton = styled(CommonButton)`
+  border-radius: 0px;
+  border: 0;
+  &:hover {
+    color: aliceblue;
+    background-color: #232323;
+  }
 `;
 
 const MapsContainer = styled(RolesContainer)``;
@@ -443,4 +530,34 @@ const ValorantStats = styled.div`
   width: 100%;
 `;
 
+const RightContentTitle = styled.h3`
+  color: #fff;
+`;
+
+const Description = styled.div`
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  row-gap: 20px;
+`;
+
+const DescriptionText = styled.p`
+  padding: 5px 15px;
+  color: #fff;
+  background-color: #2f2f2f;
+  min-height: 220px;
+  border-radius: 5px;
+`;
+
+const Teams = styled(Description)`
+  margin-top: 20px;
+`;
+
+const TeamsContainer = styled.div`
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  row-gap: 20px;
+`;
+const Team = styled.div``;
 export default ProfilePage;

@@ -1,11 +1,12 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import Swal from 'sweetalert2';
 import ClientUser from '../types/ClientUser';
-import Cs2Data from '../types/Cs2Data';
+import Cs2Data, { Map, Role } from '../types/Cs2Data';
 import checkUserIsAuth from './userThunks/checkUserIsAuth';
 import fetchUser from './userThunks/fetchUser';
 import createUser from './userThunks/createUser';
 import refillCs2Data from './cs2Thunks/refillCs2Data';
+import updateCs2Data from './cs2Thunks/updateCs2Data';
 
 interface UserState {
   user: ClientUser | null;
@@ -15,6 +16,7 @@ interface UserState {
   fetchUserStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
   checkUserStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
   refillCs2DataStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
+  updateCs2DataStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
   createUserError: string | null;
   fetchUserError: string | null;
   refillCs2DataError: string | null;
@@ -35,6 +37,8 @@ const initialState: UserState = {
 
   refillCs2DataStatus: 'idle',
   refillCs2DataError: null,
+
+  updateCs2DataStatus: 'idle',
 };
 
 const userSlice = createSlice({
@@ -60,6 +64,9 @@ const userSlice = createSlice({
     },
     setGameCreationActive(state, action: PayloadAction<'cs2' | 'valorant' | null>) {
       state.isGameCreationActive = action.payload;
+    },
+    setUpdateFaceitStatus(state, action) {
+      state.updateCs2DataStatus = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -173,9 +180,30 @@ const userSlice = createSlice({
       state.refillCs2DataStatus = 'rejected';
       state.refillCs2DataError = action.payload as string;
     });
+
+    //updateCs2data
+    builder.addCase(updateCs2Data.pending, (state) => {
+      state.updateCs2DataStatus = 'pending';
+    });
+
+    builder.addCase(updateCs2Data.fulfilled, (state, action: PayloadAction<Cs2Data>) => {
+      state.updateCs2DataStatus = 'fulfilled';
+      if (state.user) {
+        const roles = state.user.cs2_data?.roles;
+        const maps = state.user.cs2_data?.maps;
+        state.user = {
+          ...state.user,
+          cs2_data: (state.user.cs2_data = { ...action.payload, roles: roles as Role[], maps: maps as Map[] }),
+        };
+      }
+    });
+
+    builder.addCase(updateCs2Data.rejected, (state) => {
+      state.updateCs2DataStatus = 'rejected';
+    });
   },
 });
 
-export const { resetUserStatus, changeIsAuth, setPendingForCheck, setGameCreationActive } = userSlice.actions;
+export const { resetUserStatus, changeIsAuth, setPendingForCheck, setGameCreationActive, setUpdateFaceitStatus } = userSlice.actions;
 
 export default userSlice.reducer;

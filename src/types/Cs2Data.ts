@@ -12,14 +12,14 @@ export default interface Cs2Data {
   maps: Map[];
 }
 
-type Role = Record<
+export type Role = Record<
   'cs2Role',
   {
     name: string;
   }
 >;
 
-type Map = Record<
+export type Map = Record<
   'cs2Map',
   {
     name: string;
