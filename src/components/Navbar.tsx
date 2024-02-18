@@ -227,11 +227,12 @@ const NavNickname = styled.span`
   transition: all 0.2s ease-in-out;
 `;
 const NavAvatar = styled.img`
+  display: block;
   width: 50px;
   height: 50px;
-  background-color: #fff;
+
   border-radius: 50%;
-  transition: transform 0.2s ease-in-out;
+  transition: transform 0.2s linear;
 `;
 const NavProfile = styled(Link)`
   display: flex;
@@ -239,12 +240,13 @@ const NavProfile = styled(Link)`
   align-items: center;
   cursor: pointer;
   text-decoration: none;
+
   &:hover ${NavNickname} {
     color: #ffbf00;
     transform: scale(1.06);
   }
   &:hover ${NavAvatar} {
-    transform: scale(1.06);
+    transform: scale(1.03);
   }
 `;
 

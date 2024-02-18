@@ -7,7 +7,11 @@ interface ConfirmButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const CommonButton: FC<ConfirmButtonProps> = ({ children, ...props }) => {
-  return <CommonButtonStyled {...props}>{children}</CommonButtonStyled>;
+  return (
+    <div>
+      <CommonButtonStyled {...props}>{children}</CommonButtonStyled>
+    </div>
+  );
 };
 
 const CommonButtonStyled = styled.button`

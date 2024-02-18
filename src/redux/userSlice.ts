@@ -91,8 +91,12 @@ const userSlice = createSlice({
         title: 'Signed in successfully',
         text: `Welcome, ${action.payload.nickname}`,
       });
-      state.user = action.payload;
-      state.isAuth = true;
+      if (action.payload) {
+        state.checkUserStatus = 'fulfilled';
+        const userAvatar = action.payload.user_avatar ? action.payload.user_avatar : '/images/default-avatar.png';
+        state.user = { ...action.payload, user_avatar: userAvatar };
+        state.isAuth = true;
+      }
     });
     builder.addCase(fetchUser.rejected, (state, action) => {
       state.fetchUserStatus = 'rejected';
@@ -139,7 +143,8 @@ const userSlice = createSlice({
     builder.addCase(checkUserIsAuth.fulfilled, (state, action: PayloadAction<ClientUser | undefined>) => {
       if (action.payload) {
         state.checkUserStatus = 'fulfilled';
-        state.user = action.payload;
+        const userAvatar = action.payload.user_avatar ? action.payload.user_avatar : '/images/default-avatar.png';
+        state.user = { ...action.payload, user_avatar: userAvatar };
         state.isAuth = true;
       }
     });

@@ -5,7 +5,7 @@ import { dateToUserAge } from '../util/dateToUserAge';
 import Container from '../components/Container';
 import CommonButton from '../components/UI/CommonButton';
 import MapsImages from '../consts/MapsImages';
-import { useEffect, useState } from 'react';
+import { ChangeEvent, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import Modal from '../components/Modal';
 import fetchPlayerByName from '../redux/playerThunks/fetchPlayerByName';
@@ -17,6 +17,15 @@ import { useNavigate } from 'react-router-dom';
 import updateCs2Data from '../redux/cs2Thunks/updateCs2Data';
 import { CircularProgress } from '@mui/material';
 import LoaderBackground from '../components/UI/LoaderBackground';
+import copyCurrentUrl from '../util/copyCurrentUrl';
+import { getDownloadURL, ref, uploadBytes, deleteObject } from 'firebase/storage';
+import { storage } from '../firebase/firebase';
+
+interface UpdatedUserData {
+  description: string | null;
+  user_avatar: string | null;
+}
+
 const ProfilePage = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -26,6 +35,13 @@ const ProfilePage = () => {
   const playerError = useSelector((root: RootState) => root.playerReducer.fetchPlayerByNameError);
   const updateFaceitStatus = useSelector((root: RootState) => root.userReducer.updateCs2DataStatus);
   const [profileUser, setProfileUser] = useState<ClientUser | Player | null>(null);
+  const [editMode, setEditMode] = useState<boolean>(false);
+  const [urlTextCopied, setUrlTextCopied] = useState<boolean>(false);
+  const [filename, setFileName] = useState<string>('');
+  const [updatedUserData, setUpdatedUserData] = useState<UpdatedUserData>({
+    description: '',
+    user_avatar: '',
+  });
 
   useEffect(() => {
     if (user?.nickname === nickname) {
@@ -48,8 +64,6 @@ const ProfilePage = () => {
     if (updateFaceitStatus === 'fulfilled') {
       setProfileUser(user);
     }
-
-    return () => {};
   }, [updateFaceitStatus]);
 
   if (playerError) {
@@ -57,6 +71,13 @@ const ProfilePage = () => {
     dispatch(setPlayerError(null));
     navigate('/');
   }
+
+  useEffect(() => {
+    if (urlTextCopied)
+      setTimeout(() => {
+        setUrlTextCopied(false);
+      }, 2000);
+  }, [urlTextCopied]);
 
   const handleUpdateFaceitData = (steamId: string) => {
     dispatch(updateCs2Data(steamId));
@@ -66,6 +87,35 @@ const ProfilePage = () => {
     return <Loader />;
   }
 
+  const cancelEdit = async () => {
+    setEditMode(false);
+    if (updatedUserData.user_avatar) {
+      const storageRef = ref(storage, `avatars/${filename}`);
+
+      await deleteObject(storageRef);
+    }
+    setFileName('');
+    setUpdatedUserData({ description: '', user_avatar: '' });
+  };
+  const confirmEdit = async () => {
+    //добавить запрос
+  };
+  const openFileExplorer = () => {
+    document.getElementById('file__input')?.click();
+  };
+
+  const uploadAvatar = async (e: ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files?.length) return;
+    const avatar = e.target.files[0];
+    const storageRef = ref(storage, `avatars/${avatar.name}`);
+    await uploadBytes(storageRef, avatar).then(() => {
+      getDownloadURL(storageRef).then((url: string) => {
+        setFileName(avatar.name);
+        setUpdatedUserData({ user_avatar: url, description: updatedUserData.description });
+      });
+    });
+  };
+
   return (
     <>
       <Modal />
@@ -73,10 +123,10 @@ const ProfilePage = () => {
         <Container>
           <MainDataContainer>
             <ProfileAvatarContainer>
-              <ProfileAvatar src={profileUser?.user_avatar} alt='' />
-              {!player && (
+              <ProfileAvatar src={updatedUserData.user_avatar ? updatedUserData.user_avatar : profileUser?.user_avatar} alt='' />
+              {editMode && (
                 <>
-                  <ChangeAvatarButton>
+                  <ChangeAvatarButton onClick={openFileExplorer}>
                     <ChangeAvatarButtonIcon src='/images/edit.png' alt='' />
                   </ChangeAvatarButton>
                   <input
@@ -85,7 +135,9 @@ const ProfilePage = () => {
                     className='file__upload__input'
                     type='file'
                     accept='image/png, image/jpeg'
-                    onChange={() => {}}
+                    onChange={(e) => {
+                      uploadAvatar(e);
+                    }}
                   />
                 </>
               )}
@@ -94,8 +146,14 @@ const ProfilePage = () => {
               <UserData>
                 <UserNickname>{profileUser?.nickname}</UserNickname>
                 <UserAge>Возраст: {dateToUserAge(profileUser?.birthday as string)}</UserAge>
+
                 <UserDataButtons>
-                  <CommonButton>
+                  <CommonButton
+                    onClick={() => {
+                      copyCurrentUrl();
+                      setUrlTextCopied(true);
+                    }}
+                  >
                     <img src='/images/link.png' alt='' />
                     Скопировать ссылку
                   </CommonButton>
@@ -105,36 +163,61 @@ const ProfilePage = () => {
                       Пригласить в команду
                     </CommonButton>
                   )}
+                  {urlTextCopied && <CopyUrlText>Ссылка скопирована!</CopyUrlText>}
                 </UserDataButtons>
               </UserData>
             </UserDataContainer>
           </MainDataContainer>
-          <SocialButtons>
-            {!player ? (
-              <>
-                <CommonButton>
-                  <img src='/images/friends.png' alt='' />
-                  Мои друзья
-                </CommonButton>
+          <FooterUserData>
+            {!player &&
+              (editMode ? (
+                <SocialButtons>
+                  <CancelEditButton onClick={cancelEdit}>
+                    <img src='/images/close-cross.png' alt='' />
+                    Отменить изменения
+                  </CancelEditButton>
+                  <ConfirmEditButton onClick={confirmEdit}>
+                    <img src='/public/images/confirm-edit.png' alt='' />
+                    Подтвердить изменения
+                  </ConfirmEditButton>
+                </SocialButtons>
+              ) : (
+                <EditProfileButton
+                  onClick={() => {
+                    setEditMode(!editMode);
+                  }}
+                >
+                  <img src='/images/edit-profile.png' alt='' />
+                  Редактировать профиль
+                </EditProfileButton>
+              ))}
+            <SocialButtons>
+              {!player ? (
+                <>
+                  <CommonButton>
+                    <img src='/images/friends.png' alt='' />
+                    Мои друзья
+                  </CommonButton>
 
-                <CommonButton>
-                  <img src='/images/send-message.png' alt='' />
-                  Мои сообщения
-                </CommonButton>
-              </>
-            ) : (
-              <>
-                <CommonButton>
-                  <img src='/images/add-friend.png' alt='' />
-                  Добавить в друзья
-                </CommonButton>
-                <CommonButton>
-                  <img src='/images/send-message.png' alt='' />
-                  Cообщение
-                </CommonButton>
-              </>
-            )}
-          </SocialButtons>
+                  <CommonButton>
+                    <img src='/images/send-message.png' alt='' />
+                    Мои сообщения
+                  </CommonButton>
+                </>
+              ) : (
+                <>
+                  <CommonButton>
+                    <img src='/images/add-friend.png' alt='' />
+                    Добавить в друзья
+                  </CommonButton>
+                  <CommonButton>
+                    <img src='/images/send-message.png' alt='' />
+                    Cообщение
+                  </CommonButton>
+                </>
+              )}
+            </SocialButtons>
+          </FooterUserData>
         </Container>
       </ProfileHeader>
       <Container>
@@ -209,13 +292,12 @@ const ProfilePage = () => {
                             <DropDownButton>Изменить роли/карты</DropDownButton>
                           </DropDownContent>
                         </DropDown>
-
-                        <GameContainerButton>Удалить игровой профиль</GameContainerButton>
+                        <GameContainerButton onClick={() => {}}>Удалить игровой профиль</GameContainerButton>
                       </GameContainerButtons>
                     )}
                   </>
                 ) : !player ? (
-                  <CreateGameProfileButton>Создайте игровой профиль</CreateGameProfileButton>
+                  <CreateGameProfileButton>Создать игровой профиль</CreateGameProfileButton>
                 ) : (
                   <p style={{ color: '#fff', textAlign: 'center' }}>У этого пользователя нет игрового профиля</p>
                 )}
@@ -227,7 +309,7 @@ const ProfilePage = () => {
                 {profileUser.valorant_data ? (
                   <></>
                 ) : !player ? (
-                  <CreateGameProfileButton>Создайте игровой профиль</CreateGameProfileButton>
+                  <CreateGameProfileButton>Создать игровой профиль</CreateGameProfileButton>
                 ) : (
                   <p style={{ color: '#fff', textAlign: 'center' }}>У этого пользователя нет игрового профиля</p>
                 )}
@@ -237,7 +319,17 @@ const ProfilePage = () => {
           <RightContainer>
             <Description>
               <RightContentTitle>Описание</RightContentTitle>
-              <DescriptionText>{profileUser.description ? profileUser.description : 'Информация отсутствует...'}</DescriptionText>
+              {editMode ? (
+                <DescriptionInput
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
+                    setUpdatedUserData({ ...updatedUserData, description: e.target.value });
+                  }}
+                  $editMode={editMode}
+                  placeholder='Напишите о себе...'
+                />
+              ) : (
+                <DescriptionText>{profileUser.description ? profileUser.description : 'Информация отсутствует...'}</DescriptionText>
+              )}
             </Description>
             <Teams>
               <RightContentTitle>Команды</RightContentTitle>
@@ -345,9 +437,14 @@ const UserDataButtons = styled.div`
   column-gap: 15px;
   flex-wrap: wrap;
 `;
-
-const SocialButtons = styled.div`
+const FooterUserData = styled.div`
+  margin-top: 10px;
   width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`;
+const SocialButtons = styled.div`
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -392,6 +489,7 @@ const GameContainer = styled.div`
   background-color: #202020;
   width: 100%;
   position: relative;
+  border-radius: 15px;
 `;
 
 const GameIcon = styled.img`
@@ -491,11 +589,22 @@ const GameContainerButton = styled(CommonButton)`
   padding-inline: 27px;
 `;
 
+const EditProfileButton = styled(CommonButton)`
+  align-self: flex-start;
+`;
+
+const ConfirmEditButton = styled(CommonButton)`
+  border-color: #5cd82f;
+`;
+
+const CancelEditButton = styled(CommonButton)`
+  border-color: #d82f2f;
+`;
+
 const DropDownContent = styled.div`
   border-radius: 5px;
   width: 100%;
   position: absolute;
-
   display: none;
   z-index: 2;
   border-radius: 3px 3px 5px 5px;
@@ -527,6 +636,7 @@ const ValorantStats = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
   width: 100%;
 `;
 
@@ -542,15 +652,35 @@ const Description = styled.div`
 `;
 
 const DescriptionText = styled.p`
-  padding: 5px 15px;
+  padding: 9px 15px;
   color: #fff;
   background-color: #2f2f2f;
   min-height: 220px;
   border-radius: 5px;
+  font-size: 14px;
+`;
+
+const DescriptionInput = styled.textarea<{ $editMode: boolean }>`
+  font-size: 14px;
+  padding: 10px 15px;
+  color: #fff;
+  background-color: #2f2f2f;
+  min-height: 220px;
+  border-radius: 5px;
+  border: ${(p) => (p.$editMode ? '1px solid #d82f2f' : 'none')};
+  resize: none;
+  &::placeholder {
+    font-size: 15px;
+  }
 `;
 
 const Teams = styled(Description)`
   margin-top: 20px;
+`;
+
+const CopyUrlText = styled.span`
+  color: #fff;
+  font-size: 13px;
 `;
 
 const TeamsContainer = styled.div`
