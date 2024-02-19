@@ -20,11 +20,11 @@ import LoaderBackground from '../components/UI/LoaderBackground';
 import copyCurrentUrl from '../util/copyCurrentUrl';
 import { getDownloadURL, ref, uploadBytes, deleteObject } from 'firebase/storage';
 import { storage } from '../firebase/firebase';
-
-interface UpdatedUserData {
-  description: string | null;
-  user_avatar: string | null;
-}
+import updateUser from '../redux/userThunks/updateUser';
+import UpdatedUserData from '../types/UpdatedUserData';
+import Swal from 'sweetalert2';
+import deleteCs2Data from '../redux/cs2Thunks/deleteCs2Data';
+import { changeGameProfileState } from '../redux/modalSlice';
 
 const ProfilePage = () => {
   const dispatch = useAppDispatch();
@@ -32,15 +32,18 @@ const ProfilePage = () => {
   const nickname = useParams().nickname;
   const user = useSelector((state: RootState) => state.userReducer.user);
   const player = useSelector((root: RootState) => root.playerReducer.player);
+
   const playerError = useSelector((root: RootState) => root.playerReducer.fetchPlayerByNameError);
   const updateFaceitStatus = useSelector((root: RootState) => root.userReducer.updateCs2DataStatus);
+  const deleteCs2Status = useSelector((root: RootState) => root.userReducer.deleteCs2Status);
   const [profileUser, setProfileUser] = useState<ClientUser | Player | null>(null);
   const [editMode, setEditMode] = useState<boolean>(false);
   const [urlTextCopied, setUrlTextCopied] = useState<boolean>(false);
   const [filename, setFileName] = useState<string>('');
+  const [avatarIsLoading, setAvatarIsLoading] = useState<boolean>(false);
   const [updatedUserData, setUpdatedUserData] = useState<UpdatedUserData>({
-    description: '',
-    user_avatar: '',
+    description: user?.description ?? '',
+    user_avatar: user?.user_avatar ?? '',
   });
 
   useEffect(() => {
@@ -58,7 +61,7 @@ const ProfilePage = () => {
         dispatch(setPlayerError(null));
       }
     };
-  }, [nickname, player]);
+  }, [nickname, player, user]);
 
   useEffect(() => {
     if (updateFaceitStatus === 'fulfilled') {
@@ -90,15 +93,21 @@ const ProfilePage = () => {
   const cancelEdit = async () => {
     setEditMode(false);
     if (updatedUserData.user_avatar) {
-      const storageRef = ref(storage, `avatars/${filename}`);
+      if (filename) {
+        const storageRef = ref(storage, `avatars/${filename}`);
 
-      await deleteObject(storageRef);
+        await deleteObject(storageRef);
+      }
     }
     setFileName('');
-    setUpdatedUserData({ description: '', user_avatar: '' });
+    setUpdatedUserData({
+      description: user?.description ? user?.description : '',
+      user_avatar: user?.user_avatar ? user?.user_avatar : '',
+    });
   };
   const confirmEdit = async () => {
-    //добавить запрос
+    await dispatch(updateUser(updatedUserData));
+    setEditMode(false);
   };
   const openFileExplorer = () => {
     document.getElementById('file__input')?.click();
@@ -106,6 +115,7 @@ const ProfilePage = () => {
 
   const uploadAvatar = async (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length) return;
+    setAvatarIsLoading(true);
     const avatar = e.target.files[0];
     const storageRef = ref(storage, `avatars/${avatar.name}`);
     await uploadBytes(storageRef, avatar).then(() => {
@@ -113,6 +123,27 @@ const ProfilePage = () => {
         setFileName(avatar.name);
         setUpdatedUserData({ user_avatar: url, description: updatedUserData.description });
       });
+    });
+    setAvatarIsLoading(false);
+  };
+
+  const handleChangeDescription = (e: ChangeEvent<HTMLTextAreaElement>) => {
+    setUpdatedUserData({ ...updatedUserData, description: e.target.value });
+  };
+
+  const handleDeleteCs2data = () => {
+    Swal.fire({
+      title: 'Уверены?',
+      text: 'Вам предеться снова регистрировать игровой профиль, чтобы открыть основные функции для этой игры!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#a4a4a4',
+      confirmButtonText: 'Leave',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        dispatch(deleteCs2Data());
+      }
     });
   };
 
@@ -123,7 +154,11 @@ const ProfilePage = () => {
         <Container>
           <MainDataContainer>
             <ProfileAvatarContainer>
-              <ProfileAvatar src={updatedUserData.user_avatar ? updatedUserData.user_avatar : profileUser?.user_avatar} alt='' />
+              <ProfileAvatar
+                $avatarIsLoading={avatarIsLoading}
+                src={updatedUserData.user_avatar ? updatedUserData.user_avatar : profileUser?.user_avatar}
+                alt=''
+              />
               {editMode && (
                 <>
                   <ChangeAvatarButton onClick={openFileExplorer}>
@@ -140,6 +175,18 @@ const ProfilePage = () => {
                     }}
                   />
                 </>
+              )}
+              {avatarIsLoading && (
+                <CircularProgress
+                  color='error'
+                  size={'50px'}
+                  sx={{
+                    zIndex: 3,
+                    position: 'absolute',
+                    inset: '0',
+                    margin: 'auto',
+                  }}
+                />
               )}
             </ProfileAvatarContainer>
             <UserDataContainer>
@@ -176,7 +223,7 @@ const ProfilePage = () => {
                     <img src='/images/close-cross.png' alt='' />
                     Отменить изменения
                   </CancelEditButton>
-                  <ConfirmEditButton onClick={confirmEdit}>
+                  <ConfirmEditButton onClick={confirmEdit} disabled={!updatedUserData.description && !updatedUserData.user_avatar}>
                     <img src='/public/images/confirm-edit.png' alt='' />
                     Подтвердить изменения
                   </ConfirmEditButton>
@@ -191,32 +238,34 @@ const ProfilePage = () => {
                   Редактировать профиль
                 </EditProfileButton>
               ))}
-            <SocialButtons>
-              {!player ? (
-                <>
-                  <CommonButton>
-                    <img src='/images/friends.png' alt='' />
-                    Мои друзья
-                  </CommonButton>
+            {!editMode && (
+              <SocialButtons>
+                {!player ? (
+                  <>
+                    <CommonButton>
+                      <img src='/images/friends.png' alt='' />
+                      Мои друзья
+                    </CommonButton>
 
-                  <CommonButton>
-                    <img src='/images/send-message.png' alt='' />
-                    Мои сообщения
-                  </CommonButton>
-                </>
-              ) : (
-                <>
-                  <CommonButton>
-                    <img src='/images/add-friend.png' alt='' />
-                    Добавить в друзья
-                  </CommonButton>
-                  <CommonButton>
-                    <img src='/images/send-message.png' alt='' />
-                    Cообщение
-                  </CommonButton>
-                </>
-              )}
-            </SocialButtons>
+                    <CommonButton>
+                      <img src='/images/send-message.png' alt='' />
+                      Мои сообщения
+                    </CommonButton>
+                  </>
+                ) : (
+                  <>
+                    <CommonButton>
+                      <img src='/images/add-friend.png' alt='' />
+                      Добавить в друзья
+                    </CommonButton>
+                    <CommonButton>
+                      <img src='/images/send-message.png' alt='' />
+                      Cообщение
+                    </CommonButton>
+                  </>
+                )}
+              </SocialButtons>
+            )}
           </FooterUserData>
         </Container>
       </ProfileHeader>
@@ -224,7 +273,7 @@ const ProfilePage = () => {
         <ProfileMainContainer>
           <LeftContainer>
             <GameContainer>
-              {updateFaceitStatus === 'pending' && (
+              {(updateFaceitStatus === 'pending' || deleteCs2Status === 'pending') && (
                 <>
                   <CircularProgress
                     color='error'
@@ -292,12 +341,14 @@ const ProfilePage = () => {
                             <DropDownButton>Изменить роли/карты</DropDownButton>
                           </DropDownContent>
                         </DropDown>
-                        <GameContainerButton onClick={() => {}}>Удалить игровой профиль</GameContainerButton>
+                        <GameContainerButton onClick={handleDeleteCs2data}>Удалить игровой профиль</GameContainerButton>
                       </GameContainerButtons>
                     )}
                   </>
                 ) : !player ? (
-                  <CreateGameProfileButton>Создать игровой профиль</CreateGameProfileButton>
+                  <CreateGameProfileButton onClick={() => dispatch(changeGameProfileState(true))}>
+                    Создать игровой профиль
+                  </CreateGameProfileButton>
                 ) : (
                   <p style={{ color: '#fff', textAlign: 'center' }}>У этого пользователя нет игрового профиля</p>
                 )}
@@ -309,7 +360,9 @@ const ProfilePage = () => {
                 {profileUser.valorant_data ? (
                   <></>
                 ) : !player ? (
-                  <CreateGameProfileButton>Создать игровой профиль</CreateGameProfileButton>
+                  <CreateGameProfileButton onClick={() => dispatch(changeGameProfileState(true))}>
+                    Создать игровой профиль
+                  </CreateGameProfileButton>
                 ) : (
                   <p style={{ color: '#fff', textAlign: 'center' }}>У этого пользователя нет игрового профиля</p>
                 )}
@@ -321,11 +374,12 @@ const ProfilePage = () => {
               <RightContentTitle>Описание</RightContentTitle>
               {editMode ? (
                 <DescriptionInput
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
-                    setUpdatedUserData({ ...updatedUserData, description: e.target.value });
+                  onChange={(e) => {
+                    handleChangeDescription(e);
                   }}
                   $editMode={editMode}
                   placeholder='Напишите о себе...'
+                  value={updatedUserData.description as string}
                 />
               ) : (
                 <DescriptionText>{profileUser.description ? profileUser.description : 'Информация отсутствует...'}</DescriptionText>
@@ -345,7 +399,7 @@ const ProfilePage = () => {
 };
 
 const ProfileHeader = styled.div`
-  background-color: #7a7a7a;
+  background-color: #5a5a5a;
   min-height: 250px;
   padding: 16px;
 `;
@@ -387,13 +441,13 @@ const ChangeAvatarButtonIcon = styled.img`
   height: 20px;
   filter: invert(1);
 `;
-const ProfileAvatar = styled.img`
+const ProfileAvatar = styled.img<{ $avatarIsLoading: boolean }>`
   display: block;
-  background-color: white;
   border-radius: 50%;
   width: 160px;
   height: 160px;
   position: relative;
+  opacity: ${(p) => (p.$avatarIsLoading ? '0.4' : '1')};
 `;
 
 const UserDataContainer = styled.div`
@@ -503,9 +557,11 @@ const Cs2Stats = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
   width: 100%;
 `;
 const Cs2StatsHeader = styled.div`
+  width: 100%;
   padding-bottom: 10px;
   border-bottom: 1px solid #333;
 `;
@@ -540,6 +596,7 @@ const Cs2StatsText = styled.p`
 `;
 
 const RolesContainer = styled.div`
+  width: 100%;
   margin-top: 30px;
   display: flex;
   align-items: center;
@@ -573,6 +630,7 @@ const Maps = styled(Roles)`
 `;
 
 const GameContainerButtons = styled.div`
+  width: 100%;
   margin-top: 15px;
   display: flex;
   align-items: center;
@@ -581,7 +639,7 @@ const GameContainerButtons = styled.div`
 
 const CreateGameProfileButton = styled(CommonButton)`
   border-color: #d82f2f;
-  align-self: center;
+  display: block;
 `;
 
 const GameContainerButton = styled(CommonButton)`
@@ -595,6 +653,9 @@ const EditProfileButton = styled(CommonButton)`
 
 const ConfirmEditButton = styled(CommonButton)`
   border-color: #5cd82f;
+  &:disabled {
+    border-color: #565656;
+  }
 `;
 
 const CancelEditButton = styled(CommonButton)`

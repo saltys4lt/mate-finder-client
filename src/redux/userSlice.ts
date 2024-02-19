@@ -7,6 +7,8 @@ import fetchUser from './userThunks/fetchUser';
 import createUser from './userThunks/createUser';
 import refillCs2Data from './cs2Thunks/refillCs2Data';
 import updateCs2Data from './cs2Thunks/updateCs2Data';
+import updateUser from './userThunks/updateUser';
+import deleteCs2Data from './cs2Thunks/deleteCs2Data';
 
 interface UserState {
   user: ClientUser | null;
@@ -17,6 +19,9 @@ interface UserState {
   checkUserStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
   refillCs2DataStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
   updateCs2DataStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
+  updateUserStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
+  deleteCs2Status: 'idle' | 'pending' | 'fulfilled' | 'rejected';
+
   createUserError: string | null;
   fetchUserError: string | null;
   refillCs2DataError: string | null;
@@ -39,6 +44,9 @@ const initialState: UserState = {
   refillCs2DataError: null,
 
   updateCs2DataStatus: 'idle',
+  updateUserStatus: 'idle',
+
+  deleteCs2Status: 'idle',
 };
 
 const userSlice = createSlice({
@@ -205,6 +213,32 @@ const userSlice = createSlice({
 
     builder.addCase(updateCs2Data.rejected, (state) => {
       state.updateCs2DataStatus = 'rejected';
+    });
+
+    //update user data
+    builder.addCase(updateUser.pending, (state) => {
+      state.updateUserStatus = 'pending';
+    });
+    builder.addCase(updateUser.fulfilled, (state, action: PayloadAction<ClientUser>) => {
+      state.updateUserStatus = 'fulfilled';
+      state.user = action.payload;
+    });
+    builder.addCase(updateUser.rejected, (state) => {
+      state.updateUserStatus = 'rejected';
+    });
+
+    //delete cs2data
+    builder.addCase(deleteCs2Data.pending, (state) => {
+      state.updateUserStatus = 'pending';
+    });
+
+    builder.addCase(deleteCs2Data.fulfilled, (state, action) => {
+      state.deleteCs2Status = 'fulfilled';
+      console.log(action.payload);
+      state.user = { ...state.user, cs2_data: null } as ClientUser;
+    });
+    builder.addCase(deleteCs2Data.rejected, (state) => {
+      state.updateUserStatus = 'rejected';
     });
   },
 });

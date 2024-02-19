@@ -35,6 +35,13 @@ const CommonButtonStyled = styled.button`
     width: 20px;
     filter: invert(0.5);
   }
+  &:disabled {
+    opacity: 0.7;
+    &:hover {
+      border-color: #565656;
+      cursor: auto;
+    }
+  }
 `;
 
 export default CommonButton;
