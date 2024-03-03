@@ -8,7 +8,7 @@ import { SubmitHandler, useForm } from 'react-hook-form';
 import { useSelector } from 'react-redux';
 import { RootState, useAppDispatch } from '../../redux';
 import { changeLoginState, changeRegState } from '../../redux/modalSlice';
-import { resetUserStatus } from '../../redux/usersSlice';
+import { resetUserStatus } from '../../redux/userSlice';
 import createUser from '../../redux/userThunks/createUser';
 import User from '../../types/User';
 import { checkYears } from '../../util/checkYears';

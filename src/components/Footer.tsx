@@ -39,7 +39,8 @@ const Footer = () => {
 };
 
 const MainFooter = styled.footer`
-  background-color: #202020;
+  background-color: rgb(31, 31, 31);
+
   padding: 30px 0;
 `;
 

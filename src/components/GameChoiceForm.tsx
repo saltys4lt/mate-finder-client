@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import styled from 'styled-components';
-import { SteamAuth } from '../util/steamAuth';
+import { SteamAuth } from '../api/steamAuth';
 import { RootState } from '../redux';
 import { useSelector } from 'react-redux';
 import Swal from 'sweetalert2';

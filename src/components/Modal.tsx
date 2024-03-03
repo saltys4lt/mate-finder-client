@@ -7,7 +7,7 @@ import { changeGameProfileState, changeLoginState, changeRegState } from '../red
 import LoginForm from './AuthForms/LoginForm';
 import RegistrationForm from './AuthForms/RegistrationForm';
 import GameChoiceForm from './GameChoiceForm';
-
+import LoaderBackground from './UI/LoaderBackground';
 interface ModalStatus {
   $active: string;
 }
@@ -121,17 +121,6 @@ const CloseCross = styled.img`
   &:hover {
     transform: scale(1.3);
   }
-`;
-const LoaderBackground = styled.div`
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background-color: #bababa;
-  opacity: 0.7;
-  inset: 0;
-  margin: auto;
-  border-radius: 12px;
-  z-index: 2;
 `;
 
 export default Modal;
