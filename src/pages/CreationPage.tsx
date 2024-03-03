@@ -9,7 +9,7 @@ import Option from '../types/Option';
 import Cs2PlayerRoles from '../consts/Cs2PlayerRoles';
 import Cs2Maps from '../consts/Cs2Maps';
 
-import { setGameCreationActive } from '../redux/usersSlice';
+import { setGameCreationActive } from '../redux/userSlice';
 import refillCs2Data from '../redux/cs2Thunks/refillCs2Data';
 import { CircularProgress } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
@@ -17,6 +17,8 @@ import Cookies from 'js-cookie';
 import ClientUser from '../types/ClientUser';
 import ConfirmButton from '../components/UI/ConfirmButton';
 import { customStyles, CustomOption, CustomSingleValue } from '../components/UI/MapsSelect';
+
+import checkUserIsAuth from '../redux/userThunks/checkUserIsAuth';
 
 interface CreationDataValidation {
   isRolesValid: boolean;
@@ -46,6 +48,7 @@ const CreationPage = () => {
     if (refillCs2DataStatus === 'fulfilled') {
       Cookies.remove('_gc');
       dispatch(setGameCreationActive(null));
+      dispatch(checkUserIsAuth());
       navigate(`/profile/${user?.nickname}`);
     }
   }, [refillCs2DataStatus]);

@@ -1,11 +1,14 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import Swal from 'sweetalert2';
 import ClientUser from '../types/ClientUser';
-import Cs2Data from '../types/Cs2Data';
+import Cs2Data, { Map, Role } from '../types/Cs2Data';
 import checkUserIsAuth from './userThunks/checkUserIsAuth';
 import fetchUser from './userThunks/fetchUser';
 import createUser from './userThunks/createUser';
 import refillCs2Data from './cs2Thunks/refillCs2Data';
+import updateCs2Data from './cs2Thunks/updateCs2Data';
+import updateUser from './userThunks/updateUser';
+import deleteCs2Data from './cs2Thunks/deleteCs2Data';
 
 interface UserState {
   user: ClientUser | null;
@@ -15,6 +18,10 @@ interface UserState {
   fetchUserStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
   checkUserStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
   refillCs2DataStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
+  updateCs2DataStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
+  updateUserStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
+  deleteCs2Status: 'idle' | 'pending' | 'fulfilled' | 'rejected';
+
   createUserError: string | null;
   fetchUserError: string | null;
   refillCs2DataError: string | null;
@@ -24,6 +31,7 @@ const initialState: UserState = {
   user: null,
   isAuth: false,
   isGameCreationActive: null,
+
   createUserStatus: 'idle',
   createUserError: null,
 
@@ -34,10 +42,15 @@ const initialState: UserState = {
 
   refillCs2DataStatus: 'idle',
   refillCs2DataError: null,
+
+  updateCs2DataStatus: 'idle',
+  updateUserStatus: 'idle',
+
+  deleteCs2Status: 'idle',
 };
 
-const usersSlice = createSlice({
-  name: 'usersReducer',
+const userSlice = createSlice({
+  name: 'userReducer',
   initialState,
   reducers: {
     resetUserStatus(state) {
@@ -59,6 +72,9 @@ const usersSlice = createSlice({
     },
     setGameCreationActive(state, action: PayloadAction<'cs2' | 'valorant' | null>) {
       state.isGameCreationActive = action.payload;
+    },
+    setUpdateFaceitStatus(state, action) {
+      state.updateCs2DataStatus = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -83,8 +99,12 @@ const usersSlice = createSlice({
         title: 'Signed in successfully',
         text: `Welcome, ${action.payload.nickname}`,
       });
-      state.user = action.payload;
-      state.isAuth = true;
+      if (action.payload) {
+        state.checkUserStatus = 'fulfilled';
+        const userAvatar = action.payload.user_avatar ? action.payload.user_avatar : '/images/default-avatar.png';
+        state.user = { ...action.payload, user_avatar: userAvatar };
+        state.isAuth = true;
+      }
     });
     builder.addCase(fetchUser.rejected, (state, action) => {
       state.fetchUserStatus = 'rejected';
@@ -131,7 +151,8 @@ const usersSlice = createSlice({
     builder.addCase(checkUserIsAuth.fulfilled, (state, action: PayloadAction<ClientUser | undefined>) => {
       if (action.payload) {
         state.checkUserStatus = 'fulfilled';
-        state.user = action.payload;
+        const userAvatar = action.payload.user_avatar ? action.payload.user_avatar : '/images/default-avatar.png';
+        state.user = { ...action.payload, user_avatar: userAvatar };
         state.isAuth = true;
       }
     });
@@ -172,9 +193,56 @@ const usersSlice = createSlice({
       state.refillCs2DataStatus = 'rejected';
       state.refillCs2DataError = action.payload as string;
     });
+
+    //updateCs2data
+    builder.addCase(updateCs2Data.pending, (state) => {
+      state.updateCs2DataStatus = 'pending';
+    });
+
+    builder.addCase(updateCs2Data.fulfilled, (state, action: PayloadAction<Cs2Data>) => {
+      state.updateCs2DataStatus = 'fulfilled';
+      if (state.user) {
+        const roles = state.user.cs2_data?.roles;
+        const maps = state.user.cs2_data?.maps;
+        state.user = {
+          ...state.user,
+          cs2_data: (state.user.cs2_data = { ...action.payload, roles: roles as Role[], maps: maps as Map[] }),
+        };
+      }
+    });
+
+    builder.addCase(updateCs2Data.rejected, (state) => {
+      state.updateCs2DataStatus = 'rejected';
+    });
+
+    //update user data
+    builder.addCase(updateUser.pending, (state) => {
+      state.updateUserStatus = 'pending';
+    });
+    builder.addCase(updateUser.fulfilled, (state, action: PayloadAction<ClientUser>) => {
+      state.updateUserStatus = 'fulfilled';
+      state.user = action.payload;
+    });
+    builder.addCase(updateUser.rejected, (state) => {
+      state.updateUserStatus = 'rejected';
+    });
+
+    //delete cs2data
+    builder.addCase(deleteCs2Data.pending, (state) => {
+      state.updateUserStatus = 'pending';
+    });
+
+    builder.addCase(deleteCs2Data.fulfilled, (state, action) => {
+      state.deleteCs2Status = 'fulfilled';
+      console.log(action.payload);
+      state.user = { ...state.user, cs2_data: null } as ClientUser;
+    });
+    builder.addCase(deleteCs2Data.rejected, (state) => {
+      state.updateUserStatus = 'rejected';
+    });
   },
 });
 
-export const { resetUserStatus, changeIsAuth, setPendingForCheck, setGameCreationActive } = usersSlice.actions;
+export const { resetUserStatus, changeIsAuth, setPendingForCheck, setGameCreationActive, setUpdateFaceitStatus } = userSlice.actions;
 
-export default usersSlice.reducer;
+export default userSlice.reducer;

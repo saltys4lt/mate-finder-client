@@ -7,9 +7,9 @@ import TeamCreatorPage from '../pages/TeamCreatorPage';
 import TeamsPage from '../pages/TeamsPage';
 import MatchesPage from '../pages/MatchesPage';
 import NewsPage from '../pages/NewsPage';
-import ProfilePage from '../pages/ProfilePage';
 import { Navigate } from 'react-router-dom';
 const HomePage = lazy(() => import('../pages/HomePage'));
+const ProfilePage = lazy(() => import('../pages/ProfilePage'));
 
 export const authorizedGameProfileRoutes = [
   { path: '/players', element: <PlayersPage /> },

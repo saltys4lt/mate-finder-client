@@ -1,11 +1,14 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { useDispatch } from 'react-redux';
-import usersSlice from './usersSlice';
+import userSlice from './userSlice';
 import modalSlice from './modalSlice';
+import playerSlice from './playerSlice';
+
 export const store = configureStore({
   reducer: {
-    userReducer: usersSlice,
+    userReducer: userSlice,
     modalReducer: modalSlice,
+    playerReducer: playerSlice,
   },
 });
 
