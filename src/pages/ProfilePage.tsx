@@ -224,7 +224,7 @@ const ProfilePage = () => {
                     Отменить изменения
                   </CancelEditButton>
                   <ConfirmEditButton onClick={confirmEdit} disabled={!updatedUserData.description && !updatedUserData.user_avatar}>
-                    <img src='/public/images/confirm-edit.png' alt='' />
+                    <img src='/images/confirm-edit.png' alt='' />
                     Подтвердить изменения
                   </ConfirmEditButton>
                 </SocialButtons>
@@ -399,9 +399,24 @@ const ProfilePage = () => {
 };
 
 const ProfileHeader = styled.div`
-  background-color: #5a5a5a;
   min-height: 250px;
   padding: 16px;
+  position: relative;
+  overflow: hidden;
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('/images/profile-bg.webp');
+    z-index: -1;
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    filter: blur(5px);
+  }
 `;
 
 const MainDataContainer = styled.div`
@@ -446,6 +461,8 @@ const ProfileAvatar = styled.img<{ $avatarIsLoading: boolean }>`
   border-radius: 50%;
   width: 160px;
   height: 160px;
+  border: 4px solid #2b2b2b;
+  box-shadow: 0px 3px 15px 10px rgba(0, 0, 0, 0.6);
   position: relative;
   opacity: ${(p) => (p.$avatarIsLoading ? '0.4' : '1')};
 `;
