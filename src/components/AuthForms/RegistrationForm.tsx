@@ -12,6 +12,7 @@ import { resetUserStatus } from '../../redux/userSlice';
 import createUser from '../../redux/userThunks/createUser';
 import User from '../../types/User';
 import { checkYears } from '../../util/checkYears';
+import { getYears } from '../../util/getYears';
 
 interface IFormInput {
   nickname: string;
@@ -47,13 +48,14 @@ const RegistrationForm = () => {
 
   const onSubmit: SubmitHandler<IFormInput> = async (data) => {
     if (data.birthday) if (!checkYears(data.birthday)) return;
-
+    const age: number = getYears(data.birthday);
     const newUser: User = {
       nickname: data.nickname,
       password: data.password,
       email: data.email,
       gender: data.gender,
       birthday: data.birthday.toString(),
+      age,
     };
     await dispatch(createUser(newUser));
   };

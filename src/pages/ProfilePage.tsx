@@ -42,8 +42,8 @@ const ProfilePage = () => {
   const [filename, setFileName] = useState<string>('');
   const [avatarIsLoading, setAvatarIsLoading] = useState<boolean>(false);
   const [updatedUserData, setUpdatedUserData] = useState<UpdatedUserData>({
-    description: user?.description ?? '',
-    user_avatar: user?.user_avatar ?? '',
+    description: profileUser?.description ?? '',
+    user_avatar: profileUser?.user_avatar ?? '',
   });
 
   useEffect(() => {
@@ -147,6 +147,14 @@ const ProfilePage = () => {
     });
   };
 
+  const profileAvatar = player
+    ? profileUser.user_avatar
+      ? profileUser.user_avatar
+      : '/images/default-avatar.png'
+    : updatedUserData.user_avatar
+      ? updatedUserData.user_avatar
+      : profileUser?.user_avatar;
+  console.log(profileUser);
   return (
     <>
       <Modal />
@@ -154,11 +162,7 @@ const ProfilePage = () => {
         <Container>
           <MainDataContainer>
             <ProfileAvatarContainer>
-              <ProfileAvatar
-                $avatarIsLoading={avatarIsLoading}
-                src={updatedUserData.user_avatar ? updatedUserData.user_avatar : profileUser?.user_avatar}
-                alt=''
-              />
+              <ProfileAvatar $avatarIsLoading={avatarIsLoading} src={profileAvatar} alt='' />
               {editMode && (
                 <>
                   <ChangeAvatarButton onClick={openFileExplorer}>
@@ -232,6 +236,7 @@ const ProfilePage = () => {
                 <EditProfileButton
                   onClick={() => {
                     setEditMode(!editMode);
+                    setUpdatedUserData({ user_avatar: profileUser.user_avatar as string, description: profileUser.description as string });
                   }}
                 >
                   <img src='/images/edit-profile.png' alt='' />
