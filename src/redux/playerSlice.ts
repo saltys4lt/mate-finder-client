@@ -6,7 +6,7 @@ import fetchPlayers from './playerThunks/fetchPlayers';
 interface PlayerState {
   player: Player | null;
   players: Player[];
-
+  pages: number;
   fetchPlayerByNameStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
   fetchPlayerByNameError: null | string;
 
@@ -17,6 +17,7 @@ interface PlayerState {
 const initialState: PlayerState = {
   player: null,
   players: [],
+  pages: 1,
   fetchPlayerByNameStatus: 'idle',
   fetchPlayerByNameError: null,
   fetchPlayersStatus: 'idle',
@@ -52,10 +53,13 @@ const playerSlice = createSlice({
     builder.addCase(fetchPlayers.pending, (state) => {
       state.fetchPlayersStatus = 'pending';
     });
-    builder.addCase(fetchPlayers.fulfilled, (state, action: PayloadAction<Player[]>) => {
+    builder.addCase(fetchPlayers.fulfilled, (state, action: PayloadAction<{ players: Player[]; pages: number }>) => {
       state.fetchPlayersStatus = 'fulfilled';
       state.fetchPlayerByNameError = null;
-      state.players = action.payload;
+      const { pages, players } = action.payload;
+      state.pages = pages;
+
+      state.players = players;
     });
     builder.addCase(fetchPlayers.rejected, (state, action) => {
       state.fetchPlayersStatus = 'rejected';

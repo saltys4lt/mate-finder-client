@@ -32,14 +32,16 @@ const PlayersPage = () => {
   const query = useQuery();
   const [searchParams, setSearchParams] = useSearchParams();
   const players = useSelector((state: RootState) => state.playerReducer.players);
+  const pages = useSelector((state: RootState) => state.playerReducer.pages);
+
   const fetchPlayersStatus = useSelector((state: RootState) => state.playerReducer.fetchPlayersStatus);
   const [playersFilter, setPlayersFilter] = useState<fetchPlayersParams | null>(null);
   const dispatch = useAppDispatch();
+
   useEffect(() => {
     const queryParams: fetchPlayersParams = takeQueryFromUrl(query);
 
     if (Object.keys(queryParams).length) {
-      setPlayersFilter(queryParams as fetchPlayersParams);
       if (!queryParams.page) {
         setSearchParams({ ...queryParams, page: '1' });
       }
@@ -49,12 +51,18 @@ const PlayersPage = () => {
 
     return () => {};
   }, []);
-  console.log(playersFilter);
 
   useEffect(() => {
-    if (playersFilter) {
-      dispatch(fetchPlayers(playersFilter));
-    } else dispatch(fetchPlayers(null));
+    const queryParams: fetchPlayersParams = takeQueryFromUrl(query);
+    if (queryParams.page && Number(queryParams.page) > pages && players) {
+      setSearchParams({ ...searchParams, page: '1' });
+      queryParams.page = '1';
+      setPlayersFilter(queryParams as fetchPlayersParams);
+    } else {
+      if (playersFilter) {
+        dispatch(fetchPlayers(playersFilter));
+      } else dispatch(fetchPlayers({ page: '1' }));
+    }
   }, [playersFilter]);
 
   return (
@@ -68,7 +76,7 @@ const PlayersPage = () => {
             </SearchBar>
             <ListContainer></ListContainer>
             <ThemeProvider theme={theme}>
-              <Pagination count={10} color='primary' />
+              <Pagination count={pages} color='primary' />
             </ThemeProvider>
           </LeftContainer>
           <RightContainer>

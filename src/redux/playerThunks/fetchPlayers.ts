@@ -6,7 +6,7 @@ const baseUrl = import.meta.env.VITE_BASE_URL;
 
 export default createAsyncThunk('usersReducer/fetchPlayers', async (data: fetchPlayersParams | null, { rejectWithValue }) => {
   const response = axios
-    .get<Player[]>(`${baseUrl}/players`, {
+    .get<{ players: Player[]; pages: number }>(`${baseUrl}/players`, {
       params: {
         ...data,
       },
