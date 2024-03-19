@@ -1,4 +1,5 @@
-export interface fetchPlayersParams {
+export interface PlayersCs2Filters {
+  category?: 'all' | 'recs';
   gender?: string;
   page?: string;
   searchQuery?: string;
