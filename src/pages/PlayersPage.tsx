@@ -4,8 +4,8 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { Pagination } from '@mui/material';
 import { useSelector } from 'react-redux';
 import { RootState, useAppDispatch } from '../redux';
-import { ChangeEvent, useEffect, useState } from 'react';
-import { fetchPlayersParams } from '../types/fetchPlayersParams';
+import { ChangeEvent, MouseEvent, useEffect, useState } from 'react';
+import { PlayersCs2Filters } from '../types/queryTypes/PlayersC2Filters';
 import { useQuery } from '../hooks/useQuery';
 import { takeQueryFromUrl } from '../util/takeQueryFromUrl';
 import fetchPlayers from '../redux/playerThunks/fetchPlayers';
@@ -13,6 +13,9 @@ import { useSearchParams } from 'react-router-dom';
 import SearchBar from '../components/SearchBar';
 import MapsImages from '../consts/MapsImages';
 import { getAgeString } from '../util/getAgeString';
+import CommonButton from '../components/UI/CommonButton';
+import FilterBar from '../components/FilterBar';
+import { FilterPurposes } from '../consts/enums/FilterPurposes';
 const theme = createTheme({
   palette: {
     primary: {
@@ -33,40 +36,39 @@ const theme = createTheme({
 
 const PlayersPage = () => {
   const query = useQuery();
+  const queryParams: PlayersCs2Filters = takeQueryFromUrl(query);
   const [searchParams, setSearchParams] = useSearchParams();
   const players = useSelector((state: RootState) => state.playerReducer.players);
   const pages = useSelector((state: RootState) => state.playerReducer.pages);
+  const userElo: number = useSelector((state: RootState) => state.userReducer.user?.cs2_data?.elo) as number;
 
-  const fetchPlayersStatus = useSelector((state: RootState) => state.playerReducer.fetchPlayersStatus);
-  const [playersFilter, setPlayersFilter] = useState<fetchPlayersParams | null>(null);
+  const [playersFilter, setPlayersFilter] = useState<PlayersCs2Filters | null>(null);
   const [searchBarValue, setSearchBarValue] = useState('');
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    const queryParams: fetchPlayersParams = takeQueryFromUrl(query);
-
     if (Object.keys(queryParams).length) {
-      if (!queryParams.page) {
+      if (!queryParams.page || Number(queryParams.page) > pages || (Number(queryParams.page) < 1 && players)) {
         setSearchParams({ ...queryParams, page: '1' });
+      } else if (queryParams.category !== 'all' && queryParams.category !== 'recs') {
+        setSearchParams({ ...queryParams, category: 'all' });
+      } else {
+        if (queryParams.category === 'recs') {
+          setPlayersFilter({ ...queryParams, maxEloValue: (userElo + 150).toString(), minEloValue: (userElo - 200).toString() });
+        } else setPlayersFilter(queryParams as PlayersCs2Filters);
       }
     } else {
-      setSearchParams({ page: '1' });
+      setSearchParams({ page: '1', category: 'all' });
     }
 
     return () => {};
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
-    const queryParams: fetchPlayersParams = takeQueryFromUrl(query);
-    if (queryParams.page && Number(queryParams.page) > pages && players) {
-      setSearchParams({ ...searchParams, page: '1' });
-      queryParams.page = '1';
-      setPlayersFilter(queryParams as fetchPlayersParams);
-    } else {
-      if (playersFilter) {
-        dispatch(fetchPlayers(playersFilter));
-      } else dispatch(fetchPlayers({ page: '1' }));
+    if (playersFilter) {
+      dispatch(fetchPlayers(playersFilter));
     }
+    return () => {};
   }, [playersFilter]);
 
   const handleChangeSearchBar = (e: ChangeEvent<HTMLInputElement>) => {
@@ -74,9 +76,21 @@ const PlayersPage = () => {
   };
 
   const handleSearch = () => {
-    console.log('поиск игроков...');
+    const playerFilters: PlayersCs2Filters = playersFilter as PlayersCs2Filters;
+    if (searchBarValue) playerFilters.searchQuery = searchBarValue;
+    if (playerFilters.category === 'all') {
+      setSearchParams({ ...playerFilters });
+    }
+
+    dispatch(fetchPlayers(playerFilters));
   };
 
+  const handleChangeCategory = (e: MouseEvent<HTMLButtonElement>) => {
+    const category = e.currentTarget.value as 'all' | 'recs';
+    setSearchBarValue('');
+
+    setSearchParams({ category });
+  };
   return (
     <Main>
       <Container>
@@ -91,6 +105,26 @@ const PlayersPage = () => {
             />
 
             <ListContainer>
+              <PlayersCategories>
+                <CategoryButton
+                  onClick={(e) => {
+                    handleChangeCategory(e);
+                  }}
+                  value={'all'}
+                  disabled={playersFilter?.category === 'all'}
+                >
+                  Все
+                </CategoryButton>
+                <CategoryButton
+                  onClick={(e) => {
+                    handleChangeCategory(e);
+                  }}
+                  value={'recs'}
+                  disabled={playersFilter?.category === 'recs'}
+                >
+                  Рекомендуемые
+                </CategoryButton>
+              </PlayersCategories>
               {players ? (
                 players.map((player) => (
                   <ListItem key={player.nickname}>
@@ -141,7 +175,7 @@ const PlayersPage = () => {
                   </ListItem>
                 ))
               ) : (
-                <h3>Никого нету =\</h3>
+                <h3 style={{ marginTop: '30px', textAlign: 'center', color: '#fff' }}>По вашему запрос ничего не найдено =\</h3>
               )}
             </ListContainer>
 
@@ -150,7 +184,7 @@ const PlayersPage = () => {
             </ThemeProvider>
           </LeftContainer>
           <RightContainer>
-            <FilterBar></FilterBar>
+            <FilterBar filters={playersFilter as PlayersCs2Filters} setFilters={setPlayersFilter} purpose={FilterPurposes.PlayersCs2} />
           </RightContainer>
         </MainContainer>
       </Container>
@@ -185,7 +219,7 @@ const ListItem = styled.div`
   align-items: center;
   column-gap: 20px;
   width: 100%;
-  height: 400px;
+  height: 320px;
   padding: 10px 10px;
   background-color: #1f1f1f;
   border-radius: 5px;
@@ -302,18 +336,15 @@ const ListContainer = styled.div`
   flex-direction: column;
   gap: 10px;
   overflow: auto;
-  scrollbar-width: thin;
-  scrollbar-color: #2f2f2f #f1f1f1;
 
   &::-webkit-scrollbar {
-    width: 20px;
+    width: 13px;
     border-radius: 20px;
   }
 
   &::-webkit-scrollbar-track {
-    background-color: #f1f1f1;
-    border-radius: 10px;
-    box-shadow: inset 0 0 5px grey;
+    background-color: #565656;
+    border-radius: 5px;
   }
 
   &::-webkit-scrollbar-thumb {
@@ -322,11 +353,24 @@ const ListContainer = styled.div`
   }
 
   &::-webkit-scrollbar-thumb:hover {
-    background-color: #555;
+    background-color: #707070;
     border-radius: 10px;
   }
 `;
 
-const FilterBar = styled.div``;
+const PlayersCategories = styled.div`
+  display: flex;
+  column-gap: 20px;
+`;
+
+const CategoryButton = styled(CommonButton)`
+  border-color: #d82f2f;
+  &:disabled {
+    &:hover {
+      border-color: #d82f2f;
+      cursor: auto;
+    }
+  }
+`;
 
 export default PlayersPage;

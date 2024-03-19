@@ -1,10 +1,10 @@
+import { PlayersCs2Filters } from './../../types/queryTypes/PlayersC2Filters';
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import Player from '../../types/Player';
-import { fetchPlayersParams } from '../../types/fetchPlayersParams';
 const baseUrl = import.meta.env.VITE_BASE_URL;
 
-export default createAsyncThunk('usersReducer/fetchPlayers', async (data: fetchPlayersParams | null, { rejectWithValue }) => {
+export default createAsyncThunk('usersReducer/fetchPlayers', async (data: PlayersCs2Filters | null, { rejectWithValue }) => {
   const response = axios
     .get<{ players: Player[]; pages: number }>(`${baseUrl}/players`, {
       params: {
