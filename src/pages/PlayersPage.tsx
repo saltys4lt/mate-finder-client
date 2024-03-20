@@ -40,15 +40,18 @@ const PlayersPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const players = useSelector((state: RootState) => state.playerReducer.players);
   const pages = useSelector((state: RootState) => state.playerReducer.pages);
+
   const userElo: number = useSelector((state: RootState) => state.userReducer.user?.cs2_data?.elo) as number;
 
   const [playersFilter, setPlayersFilter] = useState<PlayersCs2Filters | null>(null);
-  const [searchBarValue, setSearchBarValue] = useState('');
+  const [searchBarValue, setSearchBarValue] = useState<string>('');
+
   const dispatch = useAppDispatch();
 
   useEffect(() => {
     if (Object.keys(queryParams).length) {
       if (!queryParams.page || Number(queryParams.page) > pages || (Number(queryParams.page) < 1 && players)) {
+        console.log(pages);
         setSearchParams({ ...queryParams, page: '1' });
       } else if (queryParams.category !== 'all' && queryParams.category !== 'recs') {
         setSearchParams({ ...queryParams, category: 'all' });
@@ -91,6 +94,10 @@ const PlayersPage = () => {
 
     setSearchParams({ category });
   };
+
+  const handleChangePage = (page: number) => {
+    setSearchParams({ ...searchParams, page: page.toString() });
+  };
   return (
     <Main>
       <Container>
@@ -103,85 +110,97 @@ const PlayersPage = () => {
               inputFunc={handleChangeSearchBar}
               buttonFunc={handleSearch}
             />
+            <PlayersCategories>
+              <CategoryButton
+                onClick={(e) => {
+                  handleChangeCategory(e);
+                }}
+                value={'all'}
+                disabled={playersFilter?.category === 'all'}
+              >
+                Все
+              </CategoryButton>
+              <CategoryButton
+                onClick={(e) => {
+                  handleChangeCategory(e);
+                }}
+                value={'recs'}
+                disabled={playersFilter?.category === 'recs'}
+              >
+                Рекомендуемые
+              </CategoryButton>
+            </PlayersCategories>
+            <ListContainerBackground>
+              <ListContainer>
+                {players ? (
+                  players.map((player) => (
+                    <ListItem key={player.nickname}>
+                      <PlayerInfo>
+                        <PlayerInfoHeader>
+                          <PlayerLvl src={player.cs2_data?.lvlImg} />
+                          <PlayerNickname>{player.nickname}</PlayerNickname>
 
-            <ListContainer>
-              <PlayersCategories>
-                <CategoryButton
-                  onClick={(e) => {
-                    handleChangeCategory(e);
+                          <PlayerAge>{getAgeString(player.age)}</PlayerAge>
+                        </PlayerInfoHeader>
+                        <PlayerInfoInner>
+                          <PlayerAvatar src={player.user_avatar ? player.user_avatar : '/images/default-avatar.png'} />
+                          <PlayerStats>
+                            <PlayerStatsText>
+                              ELO: <PlayerStatsTextSpan>{player.cs2_data?.elo}</PlayerStatsTextSpan>
+                            </PlayerStatsText>
+                            <PlayerStatsText>
+                              КД: <PlayerStatsTextSpan>{player.cs2_data?.kd}</PlayerStatsTextSpan>
+                            </PlayerStatsText>
+                            <PlayerStatsText>
+                              Процент убийств в голову: <PlayerStatsTextSpan>{player.cs2_data?.hs}%</PlayerStatsTextSpan>
+                            </PlayerStatsText>
+
+                            <PlayerStatsText>
+                              Процент побед: <PlayerStatsTextSpan>{player.cs2_data?.winrate}%</PlayerStatsTextSpan>
+                            </PlayerStatsText>
+                            <PlayerStatsText>
+                              Всего матчей: <PlayerStatsTextSpan>{player.cs2_data?.matches}</PlayerStatsTextSpan>
+                            </PlayerStatsText>
+                            <PlayerStatsText>
+                              Побед: <PlayerStatsTextSpan>{player.cs2_data?.wins}</PlayerStatsTextSpan>
+                            </PlayerStatsText>
+                          </PlayerStats>
+                        </PlayerInfoInner>
+                        <RolesContainer>
+                          <PlayerStatsText>Роли:</PlayerStatsText>
+                          <Roles>{player?.cs2_data?.roles?.map((role) => <Role key={role.cs2Role.name}>{role.cs2Role.name}</Role>)}</Roles>
+                        </RolesContainer>
+                        <MapsContainer>
+                          <PlayerStatsText>Карты:</PlayerStatsText>
+                          <Maps>
+                            {player?.cs2_data?.maps?.map((map) => (
+                              <img key={MapsImages[map.cs2Map.name]} src={MapsImages[map.cs2Map.name]} />
+                            ))}
+                          </Maps>
+                        </MapsContainer>
+                      </PlayerInfo>
+                    </ListItem>
+                  ))
+                ) : (
+                  <h3 style={{ marginTop: '30px', textAlign: 'center', color: '#fff' }}>По вашему запрос ничего не найдено =\</h3>
+                )}
+              </ListContainer>
+            </ListContainerBackground>
+
+            {!playersFilter ? (
+              <div></div>
+            ) : (
+              <ThemeProvider theme={theme}>
+                <Pagination
+                  count={pages}
+                  color='primary'
+                  page={Number(playersFilter?.page)}
+                  onChange={(_, value: number) => {
+                    handleChangePage(value);
                   }}
-                  value={'all'}
-                  disabled={playersFilter?.category === 'all'}
-                >
-                  Все
-                </CategoryButton>
-                <CategoryButton
-                  onClick={(e) => {
-                    handleChangeCategory(e);
-                  }}
-                  value={'recs'}
-                  disabled={playersFilter?.category === 'recs'}
-                >
-                  Рекомендуемые
-                </CategoryButton>
-              </PlayersCategories>
-              {players ? (
-                players.map((player) => (
-                  <ListItem key={player.nickname}>
-                    <PlayerInfo>
-                      <PlayerInfoHeader>
-                        <PlayerLvl src={player.cs2_data?.lvlImg} />
-                        <PlayerNickname>{player.nickname}</PlayerNickname>
-
-                        <PlayerAge>{getAgeString(player.age)}</PlayerAge>
-                      </PlayerInfoHeader>
-                      <PlayerInfoInner>
-                        <PlayerAvatar src={player.user_avatar ? player.user_avatar : '/images/default-avatar.png'} />
-                        <PlayerStats>
-                          <PlayerStatsText>
-                            ELO: <PlayerStatsTextSpan>{player.cs2_data?.elo}</PlayerStatsTextSpan>
-                          </PlayerStatsText>
-                          <PlayerStatsText>
-                            КД: <PlayerStatsTextSpan>{player.cs2_data?.kd}</PlayerStatsTextSpan>
-                          </PlayerStatsText>
-                          <PlayerStatsText>
-                            Процент убийств в голову: <PlayerStatsTextSpan>{player.cs2_data?.hs}%</PlayerStatsTextSpan>
-                          </PlayerStatsText>
-
-                          <PlayerStatsText>
-                            Процент побед: <PlayerStatsTextSpan>{player.cs2_data?.winrate}%</PlayerStatsTextSpan>
-                          </PlayerStatsText>
-                          <PlayerStatsText>
-                            Всего матчей: <PlayerStatsTextSpan>{player.cs2_data?.matches}</PlayerStatsTextSpan>
-                          </PlayerStatsText>
-                          <PlayerStatsText>
-                            Побед: <PlayerStatsTextSpan>{player.cs2_data?.wins}</PlayerStatsTextSpan>
-                          </PlayerStatsText>
-                        </PlayerStats>
-                      </PlayerInfoInner>
-                      <RolesContainer>
-                        <PlayerStatsText>Роли:</PlayerStatsText>
-                        <Roles>{player?.cs2_data?.roles?.map((role) => <Role key={role.cs2Role.name}>{role.cs2Role.name}</Role>)}</Roles>
-                      </RolesContainer>
-                      <MapsContainer>
-                        <PlayerStatsText>Карты:</PlayerStatsText>
-                        <Maps>
-                          {player?.cs2_data?.maps?.map((map) => (
-                            <img key={MapsImages[map.cs2Map.name]} src={MapsImages[map.cs2Map.name]} />
-                          ))}
-                        </Maps>
-                      </MapsContainer>
-                    </PlayerInfo>
-                  </ListItem>
-                ))
-              ) : (
-                <h3 style={{ marginTop: '30px', textAlign: 'center', color: '#fff' }}>По вашему запрос ничего не найдено =\</h3>
-              )}
-            </ListContainer>
-
-            <ThemeProvider theme={theme}>
-              <Pagination count={pages} color='primary' />
-            </ThemeProvider>
+                />
+              </ThemeProvider>
+            )}
           </LeftContainer>
           <RightContainer>
             <FilterBar filters={playersFilter as PlayersCs2Filters} setFilters={setPlayersFilter} purpose={FilterPurposes.PlayersCs2} />
@@ -202,7 +221,7 @@ const MainContainer = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-top: 20px;
-  height: 120vh;
+  height: 90vh;
 `;
 
 const LeftContainer = styled.div`
@@ -214,13 +233,51 @@ const LeftContainer = styled.div`
   justify-content: space-between;
 `;
 
+const ListContainerBackground = styled.div`
+  background-color: #2f2f2f;
+  height: 80%;
+  width: 100%;
+  border-radius: 5px;
+  padding: 10px;
+`;
+const ListContainer = styled.div`
+  background-color: #2f2f2f;
+  height: 100%;
+  width: 100%;
+  border-radius: 5px;
+  padding-inline: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: auto;
+
+  &::-webkit-scrollbar {
+    width: 13px;
+    border-radius: 20px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background-color: #565656;
+    border-radius: 5px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #888;
+    border-radius: 10px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: #707070;
+    border-radius: 10px;
+  }
+`;
 const ListItem = styled.div`
   display: flex;
   align-items: center;
   column-gap: 20px;
   width: 100%;
-  height: 320px;
-  padding: 10px 10px;
+
+  padding: 15px 10px;
   background-color: #1f1f1f;
   border-radius: 5px;
 `;
@@ -326,39 +383,8 @@ const RightContainer = styled.div`
   border-radius: 5px;
 `;
 
-const ListContainer = styled.div`
-  background-color: #2f2f2f;
-  height: 85%;
-  width: 100%;
-  border-radius: 5px;
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  overflow: auto;
-
-  &::-webkit-scrollbar {
-    width: 13px;
-    border-radius: 20px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background-color: #565656;
-    border-radius: 5px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background-color: #888;
-    border-radius: 10px;
-  }
-
-  &::-webkit-scrollbar-thumb:hover {
-    background-color: #707070;
-    border-radius: 10px;
-  }
-`;
-
 const PlayersCategories = styled.div`
+  align-self: flex-start;
   display: flex;
   column-gap: 20px;
 `;

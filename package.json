@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "all": "concurrently \"npm run dev:client\" \"npm run dev:ApiServer\" \"npm run dev:SteamAuth\"",
-    "dev:client": "cd D:\\diplom\\mate-finder-client && npm run --host dev",
-    "dev:ApiServer": "cd D:\\diplom\\mate-finder-server && npm run dev",
-    "dev:SteamAuth": "cd D:\\diplom\\steam-auth-server && npm run dev",
+    "dev:client": "cd ..\\mate-finder-client && npm run --host dev",
+    "dev:ApiServer": "cd ..\\mate-finder-server && npm run dev",
+    "dev:SteamAuth": "cd ..\\steam-auth-server && npm run dev",
     "dev": "vite",
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",

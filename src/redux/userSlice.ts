@@ -184,7 +184,7 @@ const userSlice = createSlice({
         Toast.fire({
           icon: 'success',
           title: 'Ура!',
-          text: `Ваш игровой профиль по CS2 успешно создан! Желаете посмотреть его?`,
+          text: `Ваш игровой профиль по CS2 успешно создан!`,
         });
       }
     });
