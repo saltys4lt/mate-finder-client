@@ -1,9 +1,17 @@
 export const getAgeString = (age: number) => {
-  if (age === 1 || age % 10 === 1) {
-    return age + ' год';
-  } else if ((age >= 2 && age <= 4) || (age % 10 >= 2 && age % 10 <= 4)) {
-    return age + ' года';
+  let txt;
+  let count = age % 100;
+  if (count >= 5 && count <= 20) {
+    txt = 'лет';
   } else {
-    return age + ' лет';
+    count = count % 10;
+    if (count == 1) {
+      txt = 'год';
+    } else if (count >= 2 && count <= 4) {
+      txt = 'года';
+    } else {
+      txt = 'лет';
+    }
   }
+  return age + ' ' + txt;
 };
