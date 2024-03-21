@@ -1,4 +1,4 @@
-export enum FilterPurposes {
+export enum PagePurposes {
   PlayersCs2 = 'playersCs2',
   PlayersValorant = 'playersValorant',
   TeamsCs2 = 'teamsCs2',

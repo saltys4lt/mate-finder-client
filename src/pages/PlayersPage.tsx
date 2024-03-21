@@ -11,11 +11,11 @@ import { takeQueryFromUrl } from '../util/takeQueryFromUrl';
 import fetchPlayers from '../redux/playerThunks/fetchPlayers';
 import { useSearchParams } from 'react-router-dom';
 import SearchBar from '../components/SearchBar';
-import MapsImages from '../consts/MapsImages';
-import { getAgeString } from '../util/getAgeString';
 import CommonButton from '../components/UI/CommonButton';
 import FilterBar from '../components/FilterBar';
-import { FilterPurposes } from '../consts/enums/FilterPurposes';
+import { PagePurposes } from '../consts/enums/PagePurposes';
+import List from '../components/List';
+import Cs2Data from '../types/Cs2Data';
 const theme = createTheme({
   palette: {
     primary: {
@@ -41,9 +41,12 @@ const PlayersPage = () => {
   const players = useSelector((state: RootState) => state.playerReducer.players);
   const pages = useSelector((state: RootState) => state.playerReducer.pages);
 
-  const userElo: number = useSelector((state: RootState) => state.userReducer.user?.cs2_data?.elo) as number;
+  const cs2Data: Cs2Data = useSelector((state: RootState) => state.userReducer.user?.cs2_data) as Cs2Data;
 
   const [playersFilter, setPlayersFilter] = useState<PlayersCs2Filters | null>(null);
+  const [FilterValues, setFilterValues] = useState<PlayersCs2Filters | null>(null);
+  const [hasStateChanged, setHasStateChanged] = useState(false);
+
   const [searchBarValue, setSearchBarValue] = useState<string>('');
 
   const dispatch = useAppDispatch();
@@ -57,13 +60,22 @@ const PlayersPage = () => {
         setSearchParams({ ...queryParams, category: 'all' });
       } else {
         if (queryParams.category === 'recs') {
-          setPlayersFilter({ ...queryParams, maxEloValue: (userElo + 150).toString(), minEloValue: (userElo - 200).toString() });
+          setPlayersFilter({
+            ...queryParams,
+            maxEloValue: (cs2Data.elo + 150).toString(),
+            minEloValue: (cs2Data.elo - 200).toString(),
+            minKdValue: (cs2Data.kd - 0.15).toString(),
+            maxKdValue: (cs2Data.kd + 0.2).toString(),
+          });
         } else setPlayersFilter(queryParams as PlayersCs2Filters);
       }
     } else {
       setSearchParams({ page: '1', category: 'all' });
     }
-
+    if (queryParams.searchQuery) {
+      setSearchBarValue(queryParams.searchQuery);
+    }
+    setFilterValues({ ...(queryParams as PlayersCs2Filters) });
     return () => {};
   }, [searchParams]);
 
@@ -75,28 +87,39 @@ const PlayersPage = () => {
   }, [playersFilter]);
 
   const handleChangeSearchBar = (e: ChangeEvent<HTMLInputElement>) => {
+    console.log(e.target.value);
     setSearchBarValue(e.target.value);
   };
 
   const handleSearch = () => {
-    const playerFilters: PlayersCs2Filters = playersFilter as PlayersCs2Filters;
-    if (searchBarValue) playerFilters.searchQuery = searchBarValue;
-    if (playerFilters.category === 'all') {
-      setSearchParams({ ...playerFilters });
+    const currentPlayersFilters: PlayersCs2Filters = playersFilter as PlayersCs2Filters;
+    if (searchBarValue) {
+      currentPlayersFilters.searchQuery = searchBarValue;
+    } else {
+      delete currentPlayersFilters.searchQuery;
     }
 
-    dispatch(fetchPlayers(playerFilters));
+    const commonFilters: PlayersCs2Filters = Object.assign(currentPlayersFilters, FilterValues as PlayersCs2Filters);
+    console.log(FilterValues);
+    if (currentPlayersFilters.category === 'all') {
+      setSearchParams({ ...commonFilters });
+    } else {
+      delete currentPlayersFilters.maxEloValue;
+      delete currentPlayersFilters.minEloValue;
+      delete currentPlayersFilters.maxKdValue;
+      delete currentPlayersFilters.minKdValue;
+      setSearchParams({ ...commonFilters });
+    }
   };
 
   const handleChangeCategory = (e: MouseEvent<HTMLButtonElement>) => {
     const category = e.currentTarget.value as 'all' | 'recs';
     setSearchBarValue('');
-
     setSearchParams({ category });
   };
 
   const handleChangePage = (page: number) => {
-    setSearchParams({ ...searchParams, page: page.toString() });
+    if (page.toString() !== queryParams.page) setSearchParams({ ...searchParams, page: page.toString() });
   };
   return (
     <Main>
@@ -130,63 +153,7 @@ const PlayersPage = () => {
                 Рекомендуемые
               </CategoryButton>
             </PlayersCategories>
-            <ListContainerBackground>
-              <ListContainer>
-                {players ? (
-                  players.map((player) => (
-                    <ListItem key={player.nickname}>
-                      <PlayerInfo>
-                        <PlayerInfoHeader>
-                          <PlayerLvl src={player.cs2_data?.lvlImg} />
-                          <PlayerNickname>{player.nickname}</PlayerNickname>
-
-                          <PlayerAge>{getAgeString(player.age)}</PlayerAge>
-                        </PlayerInfoHeader>
-                        <PlayerInfoInner>
-                          <PlayerAvatar src={player.user_avatar ? player.user_avatar : '/images/default-avatar.png'} />
-                          <PlayerStats>
-                            <PlayerStatsText>
-                              ELO: <PlayerStatsTextSpan>{player.cs2_data?.elo}</PlayerStatsTextSpan>
-                            </PlayerStatsText>
-                            <PlayerStatsText>
-                              КД: <PlayerStatsTextSpan>{player.cs2_data?.kd}</PlayerStatsTextSpan>
-                            </PlayerStatsText>
-                            <PlayerStatsText>
-                              Процент убийств в голову: <PlayerStatsTextSpan>{player.cs2_data?.hs}%</PlayerStatsTextSpan>
-                            </PlayerStatsText>
-
-                            <PlayerStatsText>
-                              Процент побед: <PlayerStatsTextSpan>{player.cs2_data?.winrate}%</PlayerStatsTextSpan>
-                            </PlayerStatsText>
-                            <PlayerStatsText>
-                              Всего матчей: <PlayerStatsTextSpan>{player.cs2_data?.matches}</PlayerStatsTextSpan>
-                            </PlayerStatsText>
-                            <PlayerStatsText>
-                              Побед: <PlayerStatsTextSpan>{player.cs2_data?.wins}</PlayerStatsTextSpan>
-                            </PlayerStatsText>
-                          </PlayerStats>
-                        </PlayerInfoInner>
-                        <RolesContainer>
-                          <PlayerStatsText>Роли:</PlayerStatsText>
-                          <Roles>{player?.cs2_data?.roles?.map((role) => <Role key={role.cs2Role.name}>{role.cs2Role.name}</Role>)}</Roles>
-                        </RolesContainer>
-                        <MapsContainer>
-                          <PlayerStatsText>Карты:</PlayerStatsText>
-                          <Maps>
-                            {player?.cs2_data?.maps?.map((map) => (
-                              <img key={MapsImages[map.cs2Map.name]} src={MapsImages[map.cs2Map.name]} />
-                            ))}
-                          </Maps>
-                        </MapsContainer>
-                      </PlayerInfo>
-                    </ListItem>
-                  ))
-                ) : (
-                  <h3 style={{ marginTop: '30px', textAlign: 'center', color: '#fff' }}>По вашему запрос ничего не найдено =\</h3>
-                )}
-              </ListContainer>
-            </ListContainerBackground>
-
+            <List purpose={PagePurposes.PlayersCs2} data={players} />
             {!playersFilter ? (
               <div></div>
             ) : (
@@ -203,7 +170,7 @@ const PlayersPage = () => {
             )}
           </LeftContainer>
           <RightContainer>
-            <FilterBar filters={playersFilter as PlayersCs2Filters} setFilters={setPlayersFilter} purpose={FilterPurposes.PlayersCs2} />
+            <FilterBar filters={FilterValues as PlayersCs2Filters} setFilters={setFilterValues} purpose={PagePurposes.PlayersCs2} />
           </RightContainer>
         </MainContainer>
       </Container>
@@ -231,148 +198,6 @@ const LeftContainer = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
-`;
-
-const ListContainerBackground = styled.div`
-  background-color: #2f2f2f;
-  height: 80%;
-  width: 100%;
-  border-radius: 5px;
-  padding: 10px;
-`;
-const ListContainer = styled.div`
-  background-color: #2f2f2f;
-  height: 100%;
-  width: 100%;
-  border-radius: 5px;
-  padding-inline: 5px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  overflow: auto;
-
-  &::-webkit-scrollbar {
-    width: 13px;
-    border-radius: 20px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background-color: #565656;
-    border-radius: 5px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background-color: #888;
-    border-radius: 10px;
-  }
-
-  &::-webkit-scrollbar-thumb:hover {
-    background-color: #707070;
-    border-radius: 10px;
-  }
-`;
-const ListItem = styled.div`
-  display: flex;
-  align-items: center;
-  column-gap: 20px;
-  width: 100%;
-
-  padding: 15px 10px;
-  background-color: #1f1f1f;
-  border-radius: 5px;
-`;
-
-const PlayerAvatar = styled.img`
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-`;
-const PlayerInfoInner = styled.div`
-  display: flex;
-  align-items: center;
-  padding-block: 10px;
-  column-gap: 20px;
-`;
-const PlayerInfo = styled.div`
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-`;
-
-const PlayerInfoHeader = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 5px;
-`;
-const PlayerNickname = styled.p`
-  margin-left: 7px;
-  color: #fff;
-  font-size: 18px;
-`;
-const PlayerLvl = styled.img`
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-`;
-
-const PlayerStats = styled.div`
-  margin-top: 20px;
-  width: 60%;
-  display: flex;
-  column-gap: 30px;
-  row-gap: 10px;
-  flex-wrap: wrap;
-`;
-const PlayerStatsText = styled.p`
-  color: #9f9f9f;
-  font-size: 14px;
-  white-space: nowrap;
-`;
-const PlayerStatsTextSpan = styled.span`
-  color: #cacaca;
-  font-size: 15px;
-  font-weight: 700;
-`;
-
-const PlayerAge = styled.p`
-  color: #e0e0e0;
-  font-size: 14px;
-  margin-left: 10px;
-`;
-
-const RolesContainer = styled.div`
-  width: 100%;
-
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  margin-top: 15px;
-  flex-wrap: wrap;
-  @media (max-width: 980px) {
-    flex-wrap: wrap;
-  }
-  &:last-child {
-    padding: 0;
-    border: 0;
-  }
-`;
-
-const Roles = styled.div`
-  display: flex;
-  column-gap: 20px;
-`;
-
-const Role = styled.div`
-  color: #fff;
-`;
-
-const MapsContainer = styled(RolesContainer)``;
-
-const Maps = styled(Roles)`
-  img {
-    width: 70px;
-    border-radius: 5px;
-  }
 `;
 
 const RightContainer = styled.div`
