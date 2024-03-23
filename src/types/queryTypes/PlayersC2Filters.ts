@@ -11,6 +11,8 @@ export interface PlayersCs2Filters {
   minHsValue?: string;
   maxKdValue?: string;
   minKdValue?: string;
+  minMatchesValue?: string;
+  maxMatchesValue?: string;
   maxWinrateValue?: string;
   minWinrateValue?: string;
   roles?: string[];

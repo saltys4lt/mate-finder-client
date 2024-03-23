@@ -12,7 +12,7 @@ interface SearchBarProps {
 const SearchBar: FC<SearchBarProps> = ({ inputPlaceholder, inputValue, buttonText, inputFunc, buttonFunc }) => {
   return (
     <SearchBarContainer>
-      <SearchInput placeholder={inputPlaceholder} onChange={(e) => inputFunc(e)} value={inputValue} />
+      <SearchInput placeholder={inputPlaceholder} onChange={(e) => inputFunc(e)} value={inputValue ? inputValue : ''} />
       <SearchButton onClick={buttonFunc}>{buttonText}</SearchButton>
     </SearchBarContainer>
   );

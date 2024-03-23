@@ -16,6 +16,8 @@ import FilterBar from '../components/FilterBar';
 import { PagePurposes } from '../consts/enums/PagePurposes';
 import List from '../components/List';
 import Cs2Data from '../types/Cs2Data';
+import playerSlice from '../redux/playerSlice';
+import { FilterSharp } from '@mui/icons-material';
 const theme = createTheme({
   palette: {
     primary: {
@@ -44,17 +46,17 @@ const PlayersPage = () => {
   const cs2Data: Cs2Data = useSelector((state: RootState) => state.userReducer.user?.cs2_data) as Cs2Data;
 
   const [playersFilter, setPlayersFilter] = useState<PlayersCs2Filters | null>(null);
-  const [FilterValues, setFilterValues] = useState<PlayersCs2Filters | null>(null);
-  const [hasStateChanged, setHasStateChanged] = useState(false);
+  const [FilterValues, setFilterValues] = useState<PlayersCs2Filters | null>({
+    roles: [],
+    maps: [],
+  });
 
-  const [searchBarValue, setSearchBarValue] = useState<string>('');
-
+  console.log(playersFilter);
   const dispatch = useAppDispatch();
 
   useEffect(() => {
     if (Object.keys(queryParams).length) {
       if (!queryParams.page || Number(queryParams.page) > pages || (Number(queryParams.page) < 1 && players)) {
-        console.log(pages);
         setSearchParams({ ...queryParams, page: '1' });
       } else if (queryParams.category !== 'all' && queryParams.category !== 'recs') {
         setSearchParams({ ...queryParams, category: 'all' });
@@ -64,18 +66,33 @@ const PlayersPage = () => {
             ...queryParams,
             maxEloValue: (cs2Data.elo + 150).toString(),
             minEloValue: (cs2Data.elo - 200).toString(),
-            minKdValue: (cs2Data.kd - 0.15).toString(),
-            maxKdValue: (cs2Data.kd + 0.2).toString(),
+            minKdValue: (cs2Data.kd - 0.35).toString(),
+            maxKdValue: (cs2Data.kd + 0.25).toString(),
+            roles: searchParams.getAll('roles'),
           });
-        } else setPlayersFilter(queryParams as PlayersCs2Filters);
+        } else
+          setPlayersFilter({
+            ...(queryParams as PlayersCs2Filters),
+            roles: searchParams.getAll('roles'),
+            maps: searchParams.getAll('maps'),
+          });
       }
     } else {
       setSearchParams({ page: '1', category: 'all' });
     }
     if (queryParams.searchQuery) {
-      setSearchBarValue(queryParams.searchQuery);
+      setFilterValues({ ...FilterValues, searchQuery: queryParams.searchQuery });
     }
-    setFilterValues({ ...(queryParams as PlayersCs2Filters) });
+    if (queryParams.category === 'recs')
+      setFilterValues({
+        ...FilterValues,
+        maxEloValue: (cs2Data.elo + 150).toString(),
+        minEloValue: (cs2Data.elo - 200).toString(),
+        minKdValue: (cs2Data.kd - 0.35).toString(),
+        maxKdValue: (cs2Data.kd + 0.25).toString(),
+        roles: searchParams.getAll('roles'),
+      });
+    else setFilterValues({ ...(queryParams as PlayersCs2Filters), roles: searchParams.getAll('roles'), maps: searchParams.getAll('maps') });
     return () => {};
   }, [searchParams]);
 
@@ -87,20 +104,21 @@ const PlayersPage = () => {
   }, [playersFilter]);
 
   const handleChangeSearchBar = (e: ChangeEvent<HTMLInputElement>) => {
-    console.log(e.target.value);
-    setSearchBarValue(e.target.value);
+    setFilterValues({ ...FilterValues, searchQuery: e.target.value });
   };
 
   const handleSearch = () => {
     const currentPlayersFilters: PlayersCs2Filters = playersFilter as PlayersCs2Filters;
+    const searchBarValue = FilterValues?.searchQuery;
     if (searchBarValue) {
       currentPlayersFilters.searchQuery = searchBarValue;
     } else {
       delete currentPlayersFilters.searchQuery;
+      delete FilterValues?.searchQuery;
     }
 
     const commonFilters: PlayersCs2Filters = Object.assign(currentPlayersFilters, FilterValues as PlayersCs2Filters);
-    console.log(FilterValues);
+    console.log(commonFilters);
     if (currentPlayersFilters.category === 'all') {
       setSearchParams({ ...commonFilters });
     } else {
@@ -114,7 +132,7 @@ const PlayersPage = () => {
 
   const handleChangeCategory = (e: MouseEvent<HTMLButtonElement>) => {
     const category = e.currentTarget.value as 'all' | 'recs';
-    setSearchBarValue('');
+    setFilterValues({ ...FilterValues, searchQuery: '', category: category });
     setSearchParams({ category });
   };
 
@@ -126,9 +144,12 @@ const PlayersPage = () => {
       <Container>
         <MainContainer>
           <LeftContainer>
+            <FilterBar filters={FilterValues as PlayersCs2Filters} setFilters={setFilterValues} purpose={PagePurposes.PlayersCs2} />
+          </LeftContainer>
+          <RightContainer>
             <SearchBar
               inputPlaceholder='Введите никнейм игрока...'
-              inputValue={searchBarValue}
+              inputValue={FilterValues?.searchQuery as string}
               buttonText='Поиск'
               inputFunc={handleChangeSearchBar}
               buttonFunc={handleSearch}
@@ -168,9 +189,6 @@ const PlayersPage = () => {
                 />
               </ThemeProvider>
             )}
-          </LeftContainer>
-          <RightContainer>
-            <FilterBar filters={FilterValues as PlayersCs2Filters} setFilters={setFilterValues} purpose={PagePurposes.PlayersCs2} />
           </RightContainer>
         </MainContainer>
       </Container>
@@ -188,10 +206,10 @@ const MainContainer = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-top: 20px;
-  height: 90vh;
+  height: 105vh;
 `;
 
-const LeftContainer = styled.div`
+const RightContainer = styled.div`
   width: 70%;
   height: 100%;
   display: flex;
@@ -200,7 +218,7 @@ const LeftContainer = styled.div`
   justify-content: space-between;
 `;
 
-const RightContainer = styled.div`
+const LeftContainer = styled.div`
   width: 28%;
   flex-direction: column;
   height: 100%;
