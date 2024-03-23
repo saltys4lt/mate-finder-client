@@ -13,6 +13,11 @@ import { takeQueryFromUrl } from '../util/takeQueryFromUrl';
 import { useQuery } from '../hooks/useQuery';
 import { Radio, RadioGroup } from '@mui/material';
 import Cs2PlayerRoles from '../consts/Cs2PlayerRoles';
+import Select from 'react-select';
+import { CustomOption, CustomSingleValue, customStyles } from './UI/MapsSelect';
+import Option from '../types/Option';
+import Cs2Maps from '../consts/Cs2Maps';
+import { MultiValue } from 'react-select';
 
 interface FilterBarProps {
   filters: Filters;
@@ -24,6 +29,14 @@ const inputWidth = 130;
 
 const FilterBar: FC<FilterBarProps> = ({ filters, setFilters, purpose }) => {
   const query = useQuery();
+  const [selectedMaps, setSelectedMaps] = useState<MultiValue<Option>>([]);
+  useEffect(() => {
+    if (selectedMaps.length !== 0) {
+      setFilters({ ...filters, maps: selectedMaps.map((map) => map.value) });
+    } else {
+      setFilters({ ...filters, maps: [] });
+    }
+  }, [selectedMaps]);
 
   if (purpose === PagePurposes.PlayersCs2) {
     const queryParams: PlayersCs2Filters = takeQueryFromUrl(query);
@@ -38,6 +51,10 @@ const FilterBar: FC<FilterBarProps> = ({ filters, setFilters, purpose }) => {
       if (!currentFilters.roles?.includes(e.target.value))
         setFilters({ ...currentFilters, roles: [...(currentFilters.roles as string[]), e.target.value] });
       else setFilters({ ...currentFilters, roles: [...currentFilters.roles.filter((role) => role !== e.target.value)] });
+    };
+
+    const handleSelectChange = (map: MultiValue<Option>) => {
+      setSelectedMaps(map);
     };
 
     return (
@@ -69,7 +86,7 @@ const FilterBar: FC<FilterBarProps> = ({ filters, setFilters, purpose }) => {
               </FilterRow>
             </FilterCell>
             <FilterCell>
-              <span>Пол</span>
+              <span>Пол :</span>
               <RadioGroup
                 row
                 defaultValue={'any'}
@@ -83,7 +100,7 @@ const FilterBar: FC<FilterBarProps> = ({ filters, setFilters, purpose }) => {
               </RadioGroup>
             </FilterCell>
             <FilterCell>
-              <span>ELO</span>
+              <span>ELO :</span>
               <FilterRow>
                 <DoubleInput>
                   <CommonInput
@@ -105,7 +122,7 @@ const FilterBar: FC<FilterBarProps> = ({ filters, setFilters, purpose }) => {
               </FilterRow>
             </FilterCell>
             <FilterCell>
-              <span>K/D</span>
+              <span>K/D :</span>
 
               <FilterRow>
                 <DoubleInput>
@@ -128,7 +145,7 @@ const FilterBar: FC<FilterBarProps> = ({ filters, setFilters, purpose }) => {
               </FilterRow>
             </FilterCell>
             <FilterCell>
-              <span>HS</span>
+              <span>HS :</span>
 
               <FilterRow>
                 <DoubleInput>
@@ -149,7 +166,7 @@ const FilterBar: FC<FilterBarProps> = ({ filters, setFilters, purpose }) => {
               </FilterRow>
             </FilterCell>
             <FilterCell>
-              <span>Винрейт</span>
+              <span>Винрейт :</span>
 
               <FilterRow>
                 <DoubleInput>
@@ -163,14 +180,14 @@ const FilterBar: FC<FilterBarProps> = ({ filters, setFilters, purpose }) => {
                     value={currentFilters.maxWinrateValue as string}
                     onChange={(e) => setFilters({ ...currentFilters, maxWinrateValue: e.target.value })}
                     placeholder='до'
-                    style={{ maxWidth: inputWidth }} //Добавить еще фильтров
+                    style={{ maxWidth: inputWidth }}
                   />
                 </DoubleInput>
               </FilterRow>
             </FilterCell>
 
             <FilterCell>
-              <span>Кол-во матчей</span>
+              <span>Кол-во матчей :</span>
 
               <FilterRow>
                 <DoubleInput>
@@ -190,7 +207,7 @@ const FilterBar: FC<FilterBarProps> = ({ filters, setFilters, purpose }) => {
               </FilterRow>
             </FilterCell>
             <FilterCell>
-              <span>Роли</span>
+              <span>Роли :</span>
               <RolesContainer>
                 {Cs2PlayerRoles.map((role, index) => (
                   <RoleCard key={role.id}>
@@ -201,6 +218,35 @@ const FilterBar: FC<FilterBarProps> = ({ filters, setFilters, purpose }) => {
                   </RoleCard>
                 ))}
               </RolesContainer>
+            </FilterCell>
+            <FilterCell>
+              <span>Карты :</span>
+              <Select
+                maxMenuHeight={150}
+                styles={{
+                  ...customStyles,
+                  control: (base: any) => ({
+                    ...base,
+                    marginTop: '20px',
+                    background: '#181818',
+                    boxShadow: '0',
+                    borderColor: '#484848',
+                    cursor: 'pointer',
+                    '&:hover': {
+                      borderColor: '#808080',
+                    },
+                  }),
+                }}
+                options={Cs2Maps}
+                isMulti
+                value={selectedMaps}
+                onChange={handleSelectChange}
+                components={{
+                  Option: CustomOption,
+                  SingleValue: CustomSingleValue,
+                }}
+                placeholder='Выбор карт...'
+              ></Select>
             </FilterCell>
           </>
         ) : (
@@ -287,7 +333,7 @@ const RolesContainer = styled.div`
   display: flex;
   justify-content: space-around;
   align-items: center;
-  margin-top: 20px;
+
   flex-wrap: wrap;
 `;
 

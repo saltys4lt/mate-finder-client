@@ -65,6 +65,23 @@ export const customStyles = {
     '& img': {
       borderRadius: '3px',
     },
+
+    '& ::-webkit-scrollbar': {
+      width: '8px',
+    },
+
+    '& ::-webkit-scrollbar-track': {
+      background: '#484848',
+    },
+
+    '& ::-webkit-scrollbar-thumb': {
+      background: '#808080',
+      borderRadius: '4px',
+    },
+
+    '& ::-webkit-scrollbar-thumb:hover': {
+      background: '#a0a0a0',
+    },
   }),
   singleValue: (baseStyles: any) => ({
     ...baseStyles,

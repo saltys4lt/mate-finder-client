@@ -132,7 +132,7 @@ const PlayersPage = () => {
 
   const handleChangeCategory = (e: MouseEvent<HTMLButtonElement>) => {
     const category = e.currentTarget.value as 'all' | 'recs';
-    setFilterValues({ ...FilterValues, searchQuery: '', category: category });
+    setFilterValues({ ...FilterValues, searchQuery: '', category: category, gender: '' });
     setSearchParams({ category });
   };
 
@@ -202,11 +202,9 @@ const Main = styled.main`
 
 const MainContainer = styled.div`
   width: 100%;
+
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-top: 20px;
-  height: 105vh;
 `;
 
 const RightContainer = styled.div`
@@ -215,13 +213,14 @@ const RightContainer = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;
+  row-gap: 10px;
 `;
 
 const LeftContainer = styled.div`
   width: 28%;
-  flex-direction: column;
   height: 100%;
+  flex-direction: column;
+
   background-color: #2f2f2f;
   border-radius: 5px;
 `;

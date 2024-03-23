@@ -16,7 +16,9 @@ const Cs2PlayerListItem: FC<ListItemProps> = ({ player }) => {
           <PlayerLvl src={player.cs2_data?.lvlImg} />
           <PlayerNickname>{player.nickname}</PlayerNickname>
 
-          <PlayerAge>{getAgeString(player.age)}</PlayerAge>
+          <PlayerAge>
+            {getAgeString(player.age)}, пол: {player.gender === 'male' ? 'Мужской' : 'Женский'}
+          </PlayerAge>
         </PlayerInfoHeader>
         <PlayerInfoInner>
           <PlayerAvatar src={player.user_avatar ? player.user_avatar : '/images/default-avatar.png'} />
