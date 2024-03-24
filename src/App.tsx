@@ -10,6 +10,7 @@ import checkUserIsAuth from './redux/userThunks/checkUserIsAuth';
 import { useSelector } from 'react-redux';
 import Footer from './components/Footer';
 import Header from './components/Header';
+import styled from 'styled-components';
 
 function App() {
   const token = Cookies.get('token');
@@ -56,14 +57,22 @@ function App() {
       {!loaded || (check !== 'fulfilled' && check !== 'rejected') ? (
         <Loader />
       ) : (
-        <>
+        <AppContainer>
           <Header />
           <AppRouter />
           <Footer />
-        </>
+        </AppContainer>
       )}
     </BrowserRouter>
   );
 }
+
+const AppContainer = styled.div`
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+`;
 
 export default App;

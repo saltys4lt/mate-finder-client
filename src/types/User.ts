@@ -5,6 +5,7 @@ import ValorantData from './ValorantData';
 export default interface User {
   nickname: string;
   email: string;
+  age: number;
   password: string;
   user_avatar?: string;
   description?: string;

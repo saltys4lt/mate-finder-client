@@ -11,9 +11,11 @@ const Container: FC<ContainerProps> = ({ children }) => {
 
 const MainContainer = styled.div`
   width: 100%;
+
   max-width: 1440px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding-left: 20px;
+  padding-right: 40px;
 `;
 
 export default Container;
