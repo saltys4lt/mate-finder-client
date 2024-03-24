@@ -51,7 +51,6 @@ const PlayersPage = () => {
     maps: [],
   });
 
-  console.log(playersFilter);
   const dispatch = useAppDispatch();
 
   useEffect(() => {
@@ -69,13 +68,17 @@ const PlayersPage = () => {
             minKdValue: (cs2Data.kd - 0.35).toString(),
             maxKdValue: (cs2Data.kd + 0.25).toString(),
             roles: searchParams.getAll('roles'),
+            maps: searchParams.getAll('maps'),
           });
-        } else
+        } else {
+          console.log('ds');
+          console.log(queryParams);
           setPlayersFilter({
             ...(queryParams as PlayersCs2Filters),
             roles: searchParams.getAll('roles'),
             maps: searchParams.getAll('maps'),
           });
+        }
       }
     } else {
       setSearchParams({ page: '1', category: 'all' });
@@ -118,26 +121,32 @@ const PlayersPage = () => {
     }
 
     const commonFilters: PlayersCs2Filters = Object.assign(currentPlayersFilters, FilterValues as PlayersCs2Filters);
-    console.log(commonFilters);
-    if (currentPlayersFilters.category === 'all') {
+    for (const key of Object.keys(commonFilters)) {
+      const value = (commonFilters as any)[key];
+      if (value === '') {
+        delete (commonFilters as any)[key];
+      }
+    }
+
+    if (commonFilters.category === 'all') {
       setSearchParams({ ...commonFilters });
     } else {
-      delete currentPlayersFilters.maxEloValue;
-      delete currentPlayersFilters.minEloValue;
-      delete currentPlayersFilters.maxKdValue;
-      delete currentPlayersFilters.minKdValue;
+      delete commonFilters.maxEloValue;
+      delete commonFilters.minEloValue;
+      delete commonFilters.maxKdValue;
+      delete commonFilters.minKdValue;
       setSearchParams({ ...commonFilters });
     }
   };
 
   const handleChangeCategory = (e: MouseEvent<HTMLButtonElement>) => {
     const category = e.currentTarget.value as 'all' | 'recs';
-    setFilterValues({ ...FilterValues, searchQuery: '', category: category, gender: '' });
+    setFilterValues({ ...FilterValues, searchQuery: '', category: category, gender: '', roles: [], maps: [] });
     setSearchParams({ category });
   };
 
   const handleChangePage = (page: number) => {
-    if (page.toString() !== queryParams.page) setSearchParams({ ...searchParams, page: page.toString() });
+    if (page.toString() !== queryParams.page) setSearchParams({ ...queryParams, page: page.toString() });
   };
   return (
     <Main>

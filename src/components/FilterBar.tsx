@@ -18,6 +18,7 @@ import { CustomOption, CustomSingleValue, customStyles } from './UI/MapsSelect';
 import Option from '../types/Option';
 import Cs2Maps from '../consts/Cs2Maps';
 import { MultiValue } from 'react-select';
+import { useSearchParams } from 'react-router-dom';
 
 interface FilterBarProps {
   filters: Filters;
@@ -29,14 +30,18 @@ const inputWidth = 130;
 
 const FilterBar: FC<FilterBarProps> = ({ filters, setFilters, purpose }) => {
   const query = useQuery();
+  const [searchParams] = useSearchParams();
+
   const [selectedMaps, setSelectedMaps] = useState<MultiValue<Option>>([]);
+
   useEffect(() => {
-    if (selectedMaps.length !== 0) {
-      setFilters({ ...filters, maps: selectedMaps.map((map) => map.value) });
-    } else {
-      setFilters({ ...filters, maps: [] });
+    if (purpose === PagePurposes.PlayersCs2) {
+      const maps: string[] = searchParams.getAll('maps');
+      if (maps?.length !== 0) {
+        setSelectedMaps(Cs2Maps.filter((map) => maps?.includes(map.value)));
+      }
     }
-  }, [selectedMaps]);
+  }, []);
 
   if (purpose === PagePurposes.PlayersCs2) {
     const queryParams: PlayersCs2Filters = takeQueryFromUrl(query);
@@ -53,8 +58,9 @@ const FilterBar: FC<FilterBarProps> = ({ filters, setFilters, purpose }) => {
       else setFilters({ ...currentFilters, roles: [...currentFilters.roles.filter((role) => role !== e.target.value)] });
     };
 
-    const handleSelectChange = (map: MultiValue<Option>) => {
-      setSelectedMaps(map);
+    const handleSelectChange = (maps: MultiValue<Option>) => {
+      setSelectedMaps(maps);
+      setFilters({ ...currentFilters, maps: maps.map((value) => value.value) });
     };
 
     return (
