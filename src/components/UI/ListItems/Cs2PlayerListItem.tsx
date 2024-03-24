@@ -3,12 +3,16 @@ import styled from 'styled-components';
 import Player from '../../../types/Player';
 import MapsImages from '../../../consts/MapsImages';
 import { getAgeString } from '../../../util/getAgeString';
+import CommonButton from '../CommonButton';
+import { useNavigate } from 'react-router-dom';
+import { ioSocket } from '../../../api/webSockets/socket';
 
 interface ListItemProps {
   player: Player;
 }
 
 const Cs2PlayerListItem: FC<ListItemProps> = ({ player }) => {
+  const navigate = useNavigate();
   return (
     <ListItemContainer>
       <PlayerInfo>
@@ -53,6 +57,23 @@ const Cs2PlayerListItem: FC<ListItemProps> = ({ player }) => {
           <Maps>{player?.cs2_data?.maps?.map((map) => <img key={MapsImages[map.cs2Map.name]} src={MapsImages[map.cs2Map.name]} />)}</Maps>
         </MapsContainer>
       </PlayerInfo>
+      <ListItemsButtons>
+        <CommonButton
+          style={{ width: 'auto' }}
+          onClick={() => {
+            ioSocket.emit('message', JSON.stringify({ lox: 1 }));
+          }}
+        >
+          Написать сообщение
+        </CommonButton>
+        <CommonButton
+          onClick={() => {
+            navigate(`/profile/${player.nickname}`);
+          }}
+        >
+          Открыть профиль
+        </CommonButton>
+      </ListItemsButtons>
     </ListItemContainer>
   );
 };
@@ -103,7 +124,7 @@ const PlayerLvl = styled.img`
 
 const PlayerStats = styled.div`
   margin-top: 20px;
-  width: 60%;
+  width: 100%;
   display: flex;
   column-gap: 30px;
   row-gap: 10px;
@@ -159,6 +180,14 @@ const Maps = styled(Roles)`
     width: 70px;
     border-radius: 5px;
   }
+`;
+
+const ListItemsButtons = styled.div`
+  width: 30%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  row-gap: 10px;
 `;
 
 export default Cs2PlayerListItem;
