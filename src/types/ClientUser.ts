@@ -3,6 +3,7 @@ import Team from './Team';
 import ValorantData from './ValorantData';
 
 export default interface ClientUser {
+  id: number;
   nickname: string;
   age: number;
   user_avatar?: string;
