@@ -7,12 +7,21 @@ import CommonButton from '../CommonButton';
 import { useNavigate } from 'react-router-dom';
 import { ioSocket } from '../../../api/webSockets/socket';
 
+import { useAppDispatch } from '../../../redux';
+import { changeChatState } from '../../../redux/modalSlice';
 interface ListItemProps {
   player: Player;
 }
 
 const Cs2PlayerListItem: FC<ListItemProps> = ({ player }) => {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const handleChatOpen = () => {
+    dispatch(changeChatState(true));
+
+    ioSocket.emit('roomJoin', player.id);
+  };
+
   return (
     <ListItemContainer>
       <PlayerInfo>
@@ -61,7 +70,8 @@ const Cs2PlayerListItem: FC<ListItemProps> = ({ player }) => {
         <CommonButton
           style={{ width: 'auto' }}
           onClick={() => {
-            ioSocket.emit('message', JSON.stringify({ lox: 1 }));
+            // ioSocket.emit('message', JSON.stringify({ lox: 1 }));
+            handleChatOpen();
           }}
         >
           Написать сообщение

@@ -11,6 +11,7 @@ import { useSelector } from 'react-redux';
 import Footer from './components/Footer';
 import Header from './components/Header';
 import styled from 'styled-components';
+import Chat from './components/chat/Chat';
 
 function App() {
   const token = Cookies.get('token');
@@ -56,6 +57,7 @@ function App() {
         <Loader />
       ) : (
         <AppContainer>
+          <Chat />
           <Header />
           <AppRouter />
           <Footer />
@@ -71,6 +73,7 @@ const AppContainer = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  position: relative;
 `;
 
 export default App;
