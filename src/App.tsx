@@ -28,10 +28,6 @@ function App() {
     if (_gc) {
       dispatch(setGameCreationActive(_gc as 'cs2' | 'valorant'));
     }
-  }, []);
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
     const handleLoad = () => {
       const fontRegular = new FontFace('montserrat', 'url(/fonts/Montserrat-Regular.ttf)', { weight: '400' });
       const fontBold = new FontFace('montserrat', 'url(/fonts/Montserrat-Bold.ttf)', { weight: '700' });
@@ -51,6 +47,8 @@ function App() {
       window.removeEventListener('load', handleLoad);
     };
   }, []);
+  const [loaded, setLoaded] = useState(false);
+
   return (
     <BrowserRouter>
       <GlobalStyle />
