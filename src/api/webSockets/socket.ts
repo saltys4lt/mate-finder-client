@@ -4,11 +4,3 @@ import { io } from 'socket.io-client';
 const webSocketUrl = import.meta.env.VITE_WEBSOCKET_URL;
 
 export const ioSocket = io(webSocketUrl, { withCredentials: true });
-
-ioSocket.on('connection', () => {
-  console.log('подключение установленно');
-});
-
-ioSocket.on('message', (value) => {
-  console.log(value);
-});

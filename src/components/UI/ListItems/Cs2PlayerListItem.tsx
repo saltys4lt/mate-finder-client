@@ -7,19 +7,25 @@ import CommonButton from '../CommonButton';
 import { useNavigate } from 'react-router-dom';
 import { ioSocket } from '../../../api/webSockets/socket';
 
-import { useAppDispatch } from '../../../redux';
+import { RootState, useAppDispatch } from '../../../redux';
 import { changeChatState } from '../../../redux/modalSlice';
+import Chat from '../../chat/Chat';
+import { useSelector } from 'react-redux';
 interface ListItemProps {
   player: Player;
 }
 
 const Cs2PlayerListItem: FC<ListItemProps> = ({ player }) => {
+  const userId = useSelector((state: RootState) => state.userReducer.user?.id);
+
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+
   const handleChatOpen = () => {
     dispatch(changeChatState(true));
+    dispatch(changeChatState(true));
 
-    ioSocket.emit('roomJoin', player.id);
+    ioSocket.emit('join', { playerId: player.id, userId });
   };
 
   return (

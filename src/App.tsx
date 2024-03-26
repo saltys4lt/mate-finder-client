@@ -12,12 +12,18 @@ import Footer from './components/Footer';
 import Header from './components/Header';
 import styled from 'styled-components';
 import Chat from './components/chat/Chat';
+import { ioSocket } from './api/webSockets/socket';
 
 function App() {
   const token = Cookies.get('token');
   const _gc = Cookies.get('_gc');
   const dispatch = useAppDispatch();
   const check = useSelector((state: RootState) => state.userReducer.checkUserStatus);
+  const user = useSelector((state: RootState) => state.userReducer.user);
+
+  const currentChat = useSelector((state: RootState) => state.chatReducer.currentChat);
+  const chats = useSelector((state: RootState) => state.chatReducer.chats);
+
   useEffect(() => {
     if (token) {
       dispatch(setPendingForCheck());
@@ -57,7 +63,8 @@ function App() {
         <Loader />
       ) : (
         <AppContainer>
-          <Chat />
+          {check === 'fulfilled' && <>{(user?.cs2_data || user?.valorant_data) && <Chat />}</>}
+
           <Header />
           <AppRouter />
           <Footer />

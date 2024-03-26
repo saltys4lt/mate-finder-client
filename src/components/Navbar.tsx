@@ -7,6 +7,7 @@ import { RootState, useAppDispatch } from '../redux';
 import { changeLoginState, changeRegState } from '../redux/modalSlice';
 import { changeIsAuth } from '../redux/userSlice';
 import { useEffect, useState } from 'react';
+import { ioSocket } from '../api/webSockets/socket';
 
 const Navbar = () => {
   const dispatch = useAppDispatch();
@@ -38,6 +39,7 @@ const Navbar = () => {
       confirmButtonText: 'Leave',
     }).then((result) => {
       if (result.isConfirmed) {
+        ioSocket.emit('logout', () => {});
         Cookies.remove('token');
         dispatch(changeIsAuth(false));
       }

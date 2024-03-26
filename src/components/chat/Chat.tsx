@@ -1,19 +1,42 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { RootState, useAppDispatch } from '../../redux';
 import { changeChatState } from '../../redux/modalSlice';
+import { ioSocket } from '../../api/webSockets/socket';
+import { JoinPlayer } from '../../types/webSocketTypes';
 
 const Chat = () => {
   const isActive = useSelector((state: RootState) => state.modalReducer.chatIsActive);
   const chats = useSelector((state: RootState) => state.chatReducer.chats);
   const currentChat = useSelector((state: RootState) => state.chatReducer.currentChat);
+  const userId = useSelector((state: RootState) => state.userReducer.user?.id);
 
   const dispatch = useAppDispatch();
-
   const handleChangeChatState = (value: boolean) => {
     dispatch(changeChatState(value));
   };
+
+  useEffect(() => {
+    ioSocket.on('connection', () => {
+      console.log('подключение установленно');
+    });
+    ioSocket.on('message', (value: string) => {
+      console.log(value);
+    });
+    ioSocket.on('joinPlayer', (value: JoinPlayer) => {
+      if (userId === value.playerId) {
+        ioSocket.emit('join', { userId, room: value.room });
+      } else {
+        console.log('net');
+      }
+    });
+
+    ioSocket.on('getChats', (value: Chat[]) => {});
+    ioSocket.on('disconnect', () => {
+      console.log('disconnect');
+    });
+  }, []);
 
   return !isActive ? (
     <ChatButtonContainer>
@@ -46,7 +69,23 @@ const Chat = () => {
             <>нету</>
           )}
         </ChatList>
-        <CurrentChat>dsd</CurrentChat>
+        <CurrentChat>
+          <div>
+            {currentChat ? (
+              'nickname' in currentChat.partner ? (
+                <div>
+                  <img src={currentChat.partner.user_avatar} alt='' /> <span>{currentChat.partner.nickname}</span>
+                </div>
+              ) : (
+                <div>
+                  <img src={currentChat.partner.avatar} alt='' /> <span>{currentChat.partner.name}</span>
+                </div>
+              )
+            ) : (
+              <>...</>
+            )}
+          </div>
+        </CurrentChat>
       </OpenChat>
     </OpenChatContainer>
   );
