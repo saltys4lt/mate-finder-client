@@ -12,7 +12,6 @@ import Footer from './components/Footer';
 import Header from './components/Header';
 import styled from 'styled-components';
 import Chat from './components/chat/Chat';
-import { ioSocket } from './api/webSockets/socket';
 
 function App() {
   const token = Cookies.get('token');
@@ -20,9 +19,6 @@ function App() {
   const dispatch = useAppDispatch();
   const check = useSelector((state: RootState) => state.userReducer.checkUserStatus);
   const user = useSelector((state: RootState) => state.userReducer.user);
-
-  const currentChat = useSelector((state: RootState) => state.chatReducer.currentChat);
-  const chats = useSelector((state: RootState) => state.chatReducer.chats);
 
   useEffect(() => {
     if (token) {

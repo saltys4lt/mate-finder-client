@@ -1,9 +1,15 @@
 import { Message } from './Message';
-import Player from './Player';
+
 import Team from './Team';
+
+export interface ChatUser {
+  id: number;
+  nickname: string;
+  avatar: string;
+}
 
 export interface Chat {
   id: string;
   messages: Message[];
-  partner: Player | Team;
+  partner: ChatUser | Team;
 }

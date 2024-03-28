@@ -39,7 +39,6 @@ const Navbar = () => {
       confirmButtonText: 'Leave',
     }).then((result) => {
       if (result.isConfirmed) {
-        ioSocket.emit('logout', () => {});
         Cookies.remove('token');
         dispatch(changeIsAuth(false));
       }

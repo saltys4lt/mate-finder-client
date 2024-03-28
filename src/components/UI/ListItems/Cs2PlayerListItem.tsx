@@ -5,27 +5,36 @@ import MapsImages from '../../../consts/MapsImages';
 import { getAgeString } from '../../../util/getAgeString';
 import CommonButton from '../CommonButton';
 import { useNavigate } from 'react-router-dom';
-import { ioSocket } from '../../../api/webSockets/socket';
 
 import { RootState, useAppDispatch } from '../../../redux';
 import { changeChatState } from '../../../redux/modalSlice';
-import Chat from '../../chat/Chat';
 import { useSelector } from 'react-redux';
+import { setCurrentChat } from '../../../redux/chatSlice';
+import { ChatUser } from '../../../types/Chat';
 interface ListItemProps {
   player: Player;
 }
 
 const Cs2PlayerListItem: FC<ListItemProps> = ({ player }) => {
   const userId = useSelector((state: RootState) => state.userReducer.user?.id);
+  const chats = useSelector((state: RootState) => state.chatReducer.chats);
 
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
   const handleChatOpen = () => {
     dispatch(changeChatState(true));
-    dispatch(changeChatState(true));
-
-    ioSocket.emit('join', { playerId: player.id, userId });
+    const chatId: string = userId?.toString() + player.id.toString();
+    const openedChat = {
+      id: userId?.toString() + player.id.toString(),
+      partner: { avatar: player.user_avatar, id: player.id } as ChatUser,
+      messages: [],
+    };
+    if (chats?.find((chat) => chat.id === chatId && dispatch(setCurrentChat(chat)))) {
+      return;
+    } else {
+      dispatch(setCurrentChat(openedChat));
+    }
   };
 
   return (
