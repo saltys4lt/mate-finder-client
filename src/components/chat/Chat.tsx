@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { RootState, useAppDispatch } from '../../redux';
@@ -10,70 +10,157 @@ import UserMessage from './UserMessage';
 import PlayerMessage from './PlayerMessage';
 import { Message } from '../../types/Message';
 
-import { getChat, getMessage, setCurrentChat } from '../../redux/chatSlice';
-import { ChatUser, Chat as IChat } from '../../types/Chat';
+import { getChat, getMessage, setCurrentChat, updateChatMessages, updateMessage } from '../../redux/chatSlice';
+import { Chat as IChat } from '../../types/Chat';
+import ClientUser from '../../types/ClientUser';
+import fetchChats from '../../redux/chatThunks/fetchChats';
+import { formatDate } from '../../util/formatDate';
 
 const Chat = () => {
   const isActive = useSelector((state: RootState) => state.modalReducer.chatIsActive);
-  const chats = useSelector((state: RootState) => state.chatReducer.chats);
+  const chats: IChat[] = useSelector((state: RootState) => state.chatReducer.chats) as IChat[];
+  const fetchChatsStatus = useSelector((state: RootState) => state.chatReducer.fetchChatsStatus);
   const currentChat = useSelector((state: RootState) => state.chatReducer.currentChat);
-  const user = useSelector((state: RootState) => state.userReducer.user);
 
+  const user: ClientUser = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
+  const messageContainer = useRef<HTMLDivElement>(null);
   const [message, setMessage] = useState<string>('');
 
   const dispatch = useAppDispatch();
   const handleChangeChatState = (value: boolean) => {
     dispatch(changeChatState(value));
+    if (currentChat && currentChat.messages.find((message) => !message.checked && message.nickname !== user.nickname)) {
+      ioSocket.emit(
+        'checkWholeChat',
+        currentChat.messages.filter((message) => message.nickname !== user.nickname && !message.checked),
+      );
+    }
+    setTimeout(() => {
+      if (messageContainer.current) {
+        messageContainer.current.scrollTop = messageContainer.current.scrollHeight;
+      }
+    });
+  };
+
+  const handleChangeChat = (chat: IChat) => {
+    if (chat.messages.find((message) => !message.checked && message.nickname !== user.nickname)) {
+      ioSocket.emit(
+        'checkWholeChat',
+        chat.messages.filter((message) => message.nickname !== user.nickname && !message.checked),
+      );
+    }
+    dispatch(setCurrentChat(chat));
+
+    setTimeout(() => {
+      if (messageContainer.current) {
+        messageContainer.current.scrollTop = messageContainer.current.scrollHeight;
+      }
+    });
   };
 
   const handleSendMessage = () => {
     if (message) {
       const newMessage: Message = {
-        chatId: currentChat?.id as string,
+        roomId: currentChat?.roomId as string,
         nickname: user?.nickname as string,
         text: message,
         time: Date.now().toString(),
-        userId: user?.id as number,
+        checked: false,
       };
       setMessage('');
       if (currentChat?.messages.length === 0) {
-        ioSocket.emit('firstMessage', {
-          chat: { ...currentChat, messages: [newMessage] },
-          partner: {
-            avatar: currentChat.partner.avatar,
-            nickname: (currentChat.partner as ChatUser).nickname,
-            id: (currentChat.partner as ChatUser).id,
-          } as ChatUser,
-        });
+        ioSocket.emit('firstMessage', { ...currentChat, messages: [newMessage] });
       } else ioSocket.emit('sendMessage', newMessage);
     }
   };
 
   useEffect(() => {
+    dispatch(fetchChats());
     ioSocket.on('connection', () => {});
-    ioSocket.on('getMessage', (value: Message) => {
-      dispatch(getMessage(value));
+
+    ioSocket.on('checkWholeChat', (checkedMessages: Message[]) => {
+      dispatch(updateChatMessages(checkedMessages));
     });
-    ioSocket.on('firstMessage', (value: { chat: IChat; playerId: number }) => {
-      if (user?.id === value.playerId) {
-        ioSocket.emit('join', value.chat.id);
-        dispatch(getChat(value.chat));
+    ioSocket.on('firstMessage', ({ chat, playerId }) => {
+      if (playerId === user.id) {
+        ioSocket.emit('join', chat.roomId);
+        dispatch(getChat(chat));
+        setTimeout(() => {
+          if (messageContainer.current) {
+            messageContainer.current.scrollTop = messageContainer.current.scrollHeight;
+          }
+        });
       }
     });
+    ioSocket.on('getMessage', (value: Message) => {
+      if (value.roomId === currentChat?.roomId && value.nickname !== user.nickname) {
+        ioSocket.emit('readMessage', value);
+      }
+      dispatch(getMessage(value));
 
-    ioSocket.on('getChats', (value: IChat[]) => {});
+      setTimeout(() => {
+        if (messageContainer.current) {
+          messageContainer.current.scrollTop = messageContainer.current.scrollHeight;
+        }
+      });
+    });
+
+    ioSocket.on('readMessage', (value: Message) => {
+      dispatch(updateMessage(value));
+    });
     ioSocket.on('disconnect', () => {});
 
+    if (messageContainer.current) {
+      messageContainer.current.scrollTop = messageContainer.current.scrollHeight;
+    }
+    ioSocket.emit('connection');
     return () => {
       ioSocket.removeAllListeners();
     };
   }, []);
 
-  return !isActive ? (
+  useEffect(() => {
+    if (chats.length !== 0) {
+      ioSocket.emit('joinRooms', chats);
+    }
+  }, [chats]);
+
+  useEffect(() => {
+    if (currentChat) {
+      ioSocket.removeListener('getMessage');
+      ioSocket.on('getMessage', (value: Message) => {
+        if (value.roomId === currentChat?.roomId && value.nickname !== user.nickname) {
+          ioSocket.emit('readMessage', value);
+        }
+        dispatch(getMessage(value));
+
+        setTimeout(() => {
+          if (messageContainer.current) {
+            messageContainer.current.scrollTop = messageContainer.current.scrollHeight;
+          }
+        });
+      });
+    }
+  }, [currentChat]);
+
+  const uncheckedMessages = chats.reduce((acc, chat) => {
+    const unreadMessages = chat.messages.filter((message) => !message.checked && message.nickname !== user.nickname);
+    return acc + unreadMessages.length;
+  }, 0);
+
+  return fetchChatsStatus === 'pending' || fetchChatsStatus === 'idle' ? (
     <ChatButtonContainer>
-      <ChatButton onClick={() => handleChangeChatState(true)}>
+      <ChatButton>
         <img src='/images/chat.png' alt='' />
       </ChatButton>
+    </ChatButtonContainer>
+  ) : !isActive ? (
+    <ChatButtonContainer>
+      <ChatButtonInnerContainer data-uncheked={uncheckedMessages} $messages={uncheckedMessages}>
+        <ChatButton onClick={() => handleChangeChatState(true)}>
+          <img src='/images/chat.png' alt='' />
+        </ChatButton>
+      </ChatButtonInnerContainer>
     </ChatButtonContainer>
   ) : (
     <OpenChatContainer>
@@ -84,15 +171,33 @@ const Chat = () => {
         <ChatList>
           {chats.length !== 0 ? (
             chats.map((chat) => (
-              <ChatListItem key={chat.id} onClick={() => dispatch(setCurrentChat(chat))}>
-                {'nickname' in chat.partner ? (
+              <ChatListItem
+                data-uncheked={chat.messages.reduce(
+                  (acc, message) => (message.nickname !== user.nickname && !message.checked ? acc + 1 : acc),
+                  0,
+                )}
+                $messages={chat.messages.reduce(
+                  (acc, message) => (message.nickname !== user.nickname && !message.checked ? acc + 1 : acc),
+                  0,
+                )}
+                selected={chat.roomId === currentChat?.roomId}
+                key={chat.roomId}
+                onClick={() => handleChangeChat(chat)}
+              >
+                {!chat.team ? (
                   <>
-                    <img src={chat.partner.avatar} alt='' /> <span>{chat.partner.nickname}</span>
+                    <img
+                      src={
+                        chat.members.find((member) => member.id !== user?.id)?.user_avatar
+                          ? chat.members.find((member) => member.id !== user?.id)?.user_avatar
+                          : '/images/default-user_avatar.png'
+                      }
+                      alt=''
+                    />{' '}
+                    <span>{chat.members.find((member) => member.id !== user?.id)?.nickname}</span>
                   </>
                 ) : (
-                  <>
-                    <img src={chat.partner.avatar} alt='' /> <span>{chat.partner.name}</span>
-                  </>
+                  <>team</>
                 )}
               </ChatListItem>
             ))
@@ -103,40 +208,48 @@ const Chat = () => {
 
         <CurrentChat>
           {currentChat ? (
-            'nickname' in currentChat.partner ? (
+            !currentChat.team ? (
               <>
                 <CurrentChatHeader>
-                  <img src={currentChat.partner.avatar} alt='' /> <span>{currentChat.partner.nickname}</span>
+                  <img
+                    src={
+                      currentChat.members.find((member) => member.id !== user?.id)?.user_avatar
+                        ? currentChat.members.find((member) => member.id !== user?.id)?.user_avatar
+                        : '/images/default-user_avatar.png'
+                    }
+                    alt=''
+                  />{' '}
+                  <span>{currentChat.members.find((member) => member.id !== user?.id)?.nickname}</span>
                 </CurrentChatHeader>
-                <MessagesContainer>
-                  {currentChat.messages.map((message) =>
-                    message.userId === user?.id ? (
-                      <UserMessage key={message.time} message={message}></UserMessage>
-                    ) : (
-                      <PlayerMessage key={message.time} message={message}></PlayerMessage>
-                    ),
-                  )}
+                <MessagesContainer ref={messageContainer}>
+                  {currentChat.messages.map((message, index, messages) => (
+                    <MessageComponent $isuser={message.nickname === user?.nickname ? '1' : ''} key={message.id}>
+                      {index !== 0 && new Date(+message.time).getDate() !== new Date(+messages[index - 1].time).getDate() && (
+                        <b style={{ textAlign: 'center', margin: '10px 0' }}>{formatDate(message.time)}</b>
+                      )}
+                      {message.nickname === user?.nickname ? <UserMessage message={message} /> : <PlayerMessage message={message} />}
+                    </MessageComponent>
+                  ))}
                 </MessagesContainer>
-                <SendMessageContainer>
+                <SendMessageContainer
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSendMessage();
+                  }}
+                >
                   <CommonInput
                     style={{ borderRadius: '5px 0 0 5px' }}
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder='Ваше сообщение...'
                   />
-                  <SendMessageButton
-                    onClick={() => {
-                      handleSendMessage();
-                    }}
-                  >
+                  <SendMessageButton type='submit'>
                     <img src='/images/message.png' alt='' />
                   </SendMessageButton>
                 </SendMessageContainer>
               </>
             ) : (
-              <CurrentChatHeader>
-                <img src={currentChat.partner.avatar} alt='' /> <span>{currentChat.partner.name}</span>
-              </CurrentChatHeader>
+              <CurrentChatHeader>team</CurrentChatHeader>
             )
           ) : (
             <>...</>
@@ -146,6 +259,26 @@ const Chat = () => {
     </OpenChatContainer>
   );
 };
+
+const ChatButtonInnerContainer = styled.div<{ $messages: number }>`
+  position: relative;
+  display: block;
+
+  &::before {
+    content: ${(p) => (p.$messages != 0 ? 'attr(data-uncheked)' : '')};
+    position: absolute;
+    display: block;
+    text-align: center;
+    border-radius: 50%;
+    background-color: #cf2b2b;
+    width: 20px;
+    height: 20px;
+    color: #fff;
+    right: -2px;
+    top: -2px;
+    z-index: 10;
+  }
+`;
 
 const ChatButtonContainer = styled.div`
   position: fixed;
@@ -178,8 +311,8 @@ const OpenChatContainer = styled.div`
   bottom: 20px;
   right: 20px;
   background-color: #434343;
-  width: 500px;
-  height: 300px;
+  width: 900px;
+  height: 400px;
   z-index: 10;
 `;
 const OpenChat = styled.div`
@@ -212,21 +345,43 @@ const CloseButton = styled.button`
 const ChatList = styled.div`
   width: 28%;
   height: 100%;
+  display: flex;
+  flex-direction: column;
   border-right: 1px solid #fff;
+  row-gap: 5px;
 `;
 
-const ChatListItem = styled.div`
+const ChatListItem = styled.div<{ selected: boolean; $messages: number }>`
   display: flex;
+  position: relative;
   width: 100%;
   align-items: center;
+  padding: 5px;
   column-gap: 10px;
-
+  border-radius: 5px 0 0 5px;
   img {
-    width: 30px;
+    border-radius: 50%;
+    width: 40px;
   }
   &:hover {
     cursor: pointer;
     background-color: #838383;
+  }
+  background-color: ${(p) => (p.selected ? '#838383' : 'transparent')};
+
+  &::before {
+    content: ${(p) => (p.$messages != 0 ? 'attr(data-uncheked)' : '')};
+    position: absolute;
+    display: block;
+    text-align: center;
+    border-radius: 50%;
+    background-color: #cf2b2b;
+    width: 20px;
+    height: 20px;
+    color: #fff;
+    right: 0;
+    top: 0;
+    z-index: 10;
   }
 `;
 
@@ -235,19 +390,27 @@ const CurrentChat = styled.div`
   height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  row-gap: 10px;
 `;
 
 const CurrentChatHeader = styled.div`
   display: flex;
+  align-items: center;
   width: 100%;
-  column-gap: 20px;
+  column-gap: 10px;
+  font-weight: 700;
+  color: #d1d1d1;
+  font-size: 20px;
   img {
-    width: 30px;
+    width: 50px;
+    border-radius: 50%;
+
+    border: 2px solid;
   }
 `;
 
 const MessagesContainer = styled.div`
+  border-radius: 3px;
   width: 100%;
   padding: 5px;
   height: 80%;
@@ -256,27 +419,40 @@ const MessagesContainer = styled.div`
   flex-direction: column;
   overflow-y: auto;
   &::-webkit-scrollbar {
-    width: 13px;
+    width: 7px;
     border-radius: 20px;
   }
 
   &::-webkit-scrollbar-track {
     background-color: #565656;
-    border-radius: 5px;
+    border-radius: 3px;
+    width: 3px;
   }
 
   &::-webkit-scrollbar-thumb {
     background-color: #888;
-    border-radius: 10px;
+    width: 1px;
+    border-radius: 15px;
   }
 
   &::-webkit-scrollbar-thumb:hover {
     background-color: #707070;
-    border-radius: 10px;
   }
+  background: rgb(37, 37, 37);
+  backdrop-filter: blur(100px);
 `;
 
-const SendMessageContainer = styled.div`
+const MessageComponent = styled.div<{ $isuser: string }>`
+  width: 100%;
+
+  color: #d1d1d1;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: ${(p) => (p.$isuser ? 'flex-end' : 'flex-start')};
+`;
+
+const SendMessageContainer = styled.form`
   width: 100%;
   height: 30px;
   display: flex;

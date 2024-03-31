@@ -149,6 +149,7 @@ const userSlice = createSlice({
       state.checkUserStatus = 'pending';
     });
     builder.addCase(checkUserIsAuth.fulfilled, (state, action: PayloadAction<ClientUser | undefined>) => {
+      console.log(action.payload);
       if (action.payload) {
         state.checkUserStatus = 'fulfilled';
         const userAvatar = action.payload.user_avatar ? action.payload.user_avatar : '/images/default-avatar.png';

@@ -1,18 +1,18 @@
 import React, { FC } from 'react';
 import styled from 'styled-components';
 import { Message } from '../../types/Message';
-
+import { toMessageTime } from '../../util/toMessageTime';
+import { messageToLink } from '../../util/MessageToLink';
 interface MessageProps {
   message: Message;
 }
-
 const UserMessage: FC<MessageProps> = ({ message }) => {
   return (
     <MessageContainer>
       <MessageHeader>
-        <b>{message.nickname}</b> <span>{message.time}</span>
+        <b>Вы</b> <span>{toMessageTime(message.time)}</span>
       </MessageHeader>
-      <MessageText>{message.text}</MessageText>
+      <MessageText>{messageToLink(message.text)}</MessageText>
     </MessageContainer>
   );
 };
@@ -20,17 +20,31 @@ const UserMessage: FC<MessageProps> = ({ message }) => {
 const MessageContainer = styled.div`
   align-self: flex-end;
   display: flex;
-  border-radius: 3px 0 0 3px;
   flex-direction: column;
-  background-color: #787878;
 `;
 
 const MessageHeader = styled.div`
+  align-self: flex-end;
   display: flex;
   align-items: center;
   column-gap: 5px;
+  color: #d1d1d1;
+  margin-right: 5px;
 `;
 
-const MessageText = styled.p``;
+const MessageText = styled.p`
+  background-color: #8f2121;
+
+  border-radius: 5px 3px 3px 5px;
+  padding: 5px 10px;
+  color: #dedede;
+  word-wrap: break-word;
+
+  max-width: 350px;
+
+  a {
+    color: #d1d1d1;
+  }
+`;
 
 export default UserMessage;

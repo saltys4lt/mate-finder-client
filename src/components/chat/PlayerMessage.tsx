@@ -1,7 +1,8 @@
 import React, { FC } from 'react';
 import styled from 'styled-components';
 import { Message } from '../../types/Message';
-
+import { toMessageTime } from '../../util/toMessageTime';
+import { messageToLink } from '../../util/MessageToLink';
 interface PlayerMessageProps {
   message: Message;
 }
@@ -10,9 +11,9 @@ const PlayerMessage: FC<PlayerMessageProps> = ({ message }) => {
   return (
     <MessageContainer>
       <MessageHeader>
-        <b>{message.nickname}</b> <span>{message.time}</span>
+        <b>{message.nickname}</b> <span>{toMessageTime(message.time)}</span>
       </MessageHeader>
-      <MessageText>{message.text}</MessageText>
+      <MessageText>{messageToLink(message.text)}</MessageText>
     </MessageContainer>
   );
 };
@@ -27,10 +28,22 @@ const MessageHeader = styled.div`
   display: flex;
   align-items: center;
   column-gap: 5px;
+  color: #d1d1d1;
+  margin-left: 5px;
 `;
 
 const MessageText = styled.p`
   background-color: #555;
+  padding: 5px 10px;
+  border-radius: 3px 5px 5px 3px;
+  max-width: 350px;
+
+  color: #dedede;
+
+  word-wrap: break-word;
+  a {
+    color: #d1d1d1;
+  }
 `;
 
 export default PlayerMessage;

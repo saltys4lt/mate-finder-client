@@ -1,7 +1,8 @@
 export interface Message {
-  userId: number;
+  id?: number;
   nickname: string;
-  chatId: string;
+  roomId: string;
   text: string;
   time: string;
+  checked: boolean;
 }

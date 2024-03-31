@@ -51,7 +51,7 @@ function App() {
     };
   }, []);
   const [loaded, setLoaded] = useState(false);
-
+  console.log(check);
   return (
     <BrowserRouter>
       <GlobalStyle />
