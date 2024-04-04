@@ -5,14 +5,53 @@ import MapsImages from '../../../consts/MapsImages';
 import { getAgeString } from '../../../util/getAgeString';
 import CommonButton from '../CommonButton';
 import { useNavigate } from 'react-router-dom';
-import { ioSocket } from '../../../api/webSockets/socket';
 
+import { RootState, useAppDispatch } from '../../../redux';
+import { changeChatState } from '../../../redux/modalSlice';
+import { useSelector } from 'react-redux';
+import { setCurrentChat } from '../../../redux/chatSlice';
+import { Chat } from '../../../types/Chat';
+import ClientUser from '../../../types/ClientUser';
 interface ListItemProps {
   player: Player;
 }
 
 const Cs2PlayerListItem: FC<ListItemProps> = ({ player }) => {
+  const user = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
+  const chats = useSelector((state: RootState) => state.chatReducer.chats);
+
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+
+  const handleChatOpen = () => {
+    dispatch(changeChatState(true));
+
+    const openedChat = {
+      roomId: user.id.toString() + player.id.toString(),
+      members: [
+        {
+          user_avatar: player.user_avatar,
+          nickname: player.nickname,
+          id: player.id,
+        },
+        {
+          avatar: user.user_avatar,
+          nickname: user.nickname,
+          id: user.id,
+        },
+      ],
+      messages: [],
+      team: false,
+    } as Chat;
+
+    const chat: Chat | undefined = chats?.find(
+      (chat) => chat.members.find((member) => member.id === user.id) && chat.members.find((member) => member.id === player.id),
+    );
+    if (chat) {
+      dispatch(setCurrentChat(chat));
+    } else dispatch(setCurrentChat(openedChat));
+  };
+
   return (
     <ListItemContainer>
       <PlayerInfo>
@@ -61,7 +100,8 @@ const Cs2PlayerListItem: FC<ListItemProps> = ({ player }) => {
         <CommonButton
           style={{ width: 'auto' }}
           onClick={() => {
-            ioSocket.emit('message', JSON.stringify({ lox: 1 }));
+            // ioSocket.emit('message', JSON.stringify({ lox: 1 }));
+            handleChatOpen();
           }}
         >
           Написать сообщение

@@ -16,7 +16,7 @@ const List: FC<ListContainerProps> = ({ purpose, data }) => {
       <ListContainerBackground>
         <ListContainer>
           {currentList ? (
-            currentList.map((player) => <Cs2PlayerListItem key={player.nickname} player={player} />)
+            currentList.map((player) => <Cs2PlayerListItem key={player.id} player={player} />)
           ) : (
             <h3 style={{ marginTop: '30px', textAlign: 'center', color: '#fff' }}>По вашему запрос ничего не найдено =\</h3>
           )}
