@@ -2,6 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Chat } from '../types/Chat';
 import { Message } from '../types/Message';
 import fetchChats from './chatThunks/fetchChats';
+import { ioSocket } from '../api/webSockets/socket';
 
 interface ChatInitialState {
   currentChat: Chat | null;
@@ -22,7 +23,7 @@ const chatSlice = createSlice({
   reducers: {
     setCurrentChat(state, action: PayloadAction<Chat>) {
       state.currentChat = action.payload;
-      console.log(action.payload);
+
       if (!state.chats.find((chat) => chat.roomId === action.payload.roomId)) {
         state.chats = [...state.chats, action.payload];
       }
@@ -32,7 +33,6 @@ const chatSlice = createSlice({
     },
     getMessage(state, action: PayloadAction<Message>) {
       const newMessage = action.payload;
-
       if (newMessage.roomId === state.currentChat?.roomId) {
         state.currentChat.messages.push(newMessage);
       }
@@ -43,13 +43,29 @@ const chatSlice = createSlice({
       }
     },
     getChat(state, action: PayloadAction<Chat>) {
-      state.chats = [...state.chats, action.payload];
+      const newChat = action.payload;
+
+      if (newChat.members[0].id.toString() + newChat.members[1].id.toString() === state.currentChat?.roomId) {
+        const newRoomIdRevert: string = newChat.members[0].id.toString() + newChat.members[1].id.toString();
+
+        state.currentChat = newChat;
+        state.chats = state.chats.map((chat) => (chat.roomId === newRoomIdRevert ? newChat : chat));
+        ioSocket.emit('readMessage', newChat.messages[0]);
+      } else if (newChat.members[1].id.toString() + newChat.members[0].id.toString() === state.currentChat?.roomId) {
+        const newRoomIdRevert: string = newChat.members[1].id.toString() + newChat.members[0].id.toString();
+
+        state.currentChat = newChat;
+        state.chats = state.chats.map((chat) => (chat.roomId === newRoomIdRevert ? newChat : chat));
+        ioSocket.emit('readMessage', newChat.messages[0]);
+      } else if (!state.chats.find((chat) => chat.roomId === newChat.roomId)) {
+        state.chats = [...state.chats, newChat];
+      }
     },
 
     updateMessage(state, action: PayloadAction<Message>) {
       const newMessage = action.payload;
       if (newMessage.roomId === state.currentChat?.roomId) {
-        state.currentChat.messages.map((message) => (message.id === newMessage.id ? newMessage : message));
+        state.currentChat.messages = state.currentChat.messages.map((message) => (message.id === newMessage.id ? newMessage : message));
       }
 
       state.chats = state.chats.map((chat) =>
@@ -71,8 +87,12 @@ const chatSlice = createSlice({
           return message;
         });
         state.chats = state.chats.map((chat) => (chat.roomId === roomId ? { ...chat, messages: updatedChatMessages } : chat));
-        state.currentChat.messages = updatedChatMessages;
+        state.currentChat = { ...state.currentChat, messages: updatedChatMessages };
       }
+    },
+    resetChats(state) {
+      state.currentChat = null;
+      state.chats = [];
     },
   },
   extraReducers: (builder) => {
@@ -89,6 +109,6 @@ const chatSlice = createSlice({
   },
 });
 
-export const { setChats, setCurrentChat, getMessage, getChat, updateChatMessages, updateMessage } = chatSlice.actions;
+export const { setChats, setCurrentChat, getMessage, getChat, updateChatMessages, updateMessage, resetChats } = chatSlice.actions;
 
 export default chatSlice.reducer;

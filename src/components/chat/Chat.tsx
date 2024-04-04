@@ -10,12 +10,12 @@ import UserMessage from './UserMessage';
 import PlayerMessage from './PlayerMessage';
 import { Message } from '../../types/Message';
 
-import { getChat, getMessage, setCurrentChat, updateChatMessages, updateMessage } from '../../redux/chatSlice';
+import { getChat, getMessage, resetChats, setCurrentChat, updateChatMessages, updateMessage } from '../../redux/chatSlice';
 import { Chat as IChat } from '../../types/Chat';
 import ClientUser from '../../types/ClientUser';
 import fetchChats from '../../redux/chatThunks/fetchChats';
 import { formatDate } from '../../util/formatDate';
-
+import SmsIcon from '@mui/icons-material/Sms';
 const Chat = () => {
   const isActive = useSelector((state: RootState) => state.modalReducer.chatIsActive);
   const chats: IChat[] = useSelector((state: RootState) => state.chatReducer.chats) as IChat[];
@@ -64,7 +64,7 @@ const Chat = () => {
         roomId: currentChat?.roomId as string,
         nickname: user?.nickname as string,
         text: message,
-        time: Date.now().toString(),
+        time: new Date(),
         checked: false,
       };
       setMessage('');
@@ -84,6 +84,7 @@ const Chat = () => {
     ioSocket.on('firstMessage', ({ chat, playerId }) => {
       if (playerId === user.id) {
         ioSocket.emit('join', chat.roomId);
+
         dispatch(getChat(chat));
         setTimeout(() => {
           if (messageContainer.current) {
@@ -93,7 +94,7 @@ const Chat = () => {
       }
     });
     ioSocket.on('getMessage', (value: Message) => {
-      if (value.roomId === currentChat?.roomId && value.nickname !== user.nickname) {
+      if (value.roomId === currentChat?.roomId && value.nickname !== user.nickname && isActive) {
         ioSocket.emit('readMessage', value);
       }
       dispatch(getMessage(value));
@@ -115,6 +116,8 @@ const Chat = () => {
     }
     ioSocket.emit('connection');
     return () => {
+      dispatch(resetChats());
+      dispatch(changeChatState(false));
       ioSocket.removeAllListeners();
     };
   }, []);
@@ -126,12 +129,13 @@ const Chat = () => {
   }, [chats]);
 
   useEffect(() => {
-    if (currentChat) {
+    if (currentChat || isActive) {
       ioSocket.removeListener('getMessage');
       ioSocket.on('getMessage', (value: Message) => {
-        if (value.roomId === currentChat?.roomId && value.nickname !== user.nickname) {
+        if (isActive && value.roomId === currentChat?.roomId && value.nickname !== user.nickname) {
           ioSocket.emit('readMessage', value);
         }
+
         dispatch(getMessage(value));
 
         setTimeout(() => {
@@ -141,7 +145,7 @@ const Chat = () => {
         });
       });
     }
-  }, [currentChat]);
+  }, [currentChat, isActive]);
 
   const uncheckedMessages = chats.reduce((acc, chat) => {
     const unreadMessages = chat.messages.filter((message) => !message.checked && message.nickname !== user.nickname);
@@ -194,7 +198,7 @@ const Chat = () => {
                       }
                       alt=''
                     />{' '}
-                    <span>{chat.members.find((member) => member.id !== user?.id)?.nickname}</span>
+                    <PartnerNickname>{chat.members.find((member) => member.id !== user?.id)?.nickname}</PartnerNickname>
                   </>
                 ) : (
                   <>team</>
@@ -202,7 +206,7 @@ const Chat = () => {
               </ChatListItem>
             ))
           ) : (
-            <>нету</>
+            <h3 style={{ textAlign: 'center', color: 'var(--main-text-color)' }}> У вас нет активных чатов</h3>
           )}
         </ChatList>
 
@@ -222,14 +226,23 @@ const Chat = () => {
                   <span>{currentChat.members.find((member) => member.id !== user?.id)?.nickname}</span>
                 </CurrentChatHeader>
                 <MessagesContainer ref={messageContainer}>
-                  {currentChat.messages.map((message, index, messages) => (
-                    <MessageComponent $isuser={message.nickname === user?.nickname ? '1' : ''} key={message.id}>
-                      {index !== 0 && new Date(+message.time).getDate() !== new Date(+messages[index - 1].time).getDate() && (
-                        <b style={{ textAlign: 'center', margin: '10px 0' }}>{formatDate(message.time)}</b>
-                      )}
-                      {message.nickname === user?.nickname ? <UserMessage message={message} /> : <PlayerMessage message={message} />}
-                    </MessageComponent>
-                  ))}
+                  {currentChat.messages.length === 0 ? (
+                    <p style={{ color: 'var(--main-text-color)', textAlign: 'center', marginTop: 20 }}>
+                      Это будет ваше первое сообщение для{' '}
+                      <span style={{ fontWeight: 700, color: '#f6f6f6', fontSize: 16 }}>
+                        {currentChat.members.find((member) => member.id !== user?.id)?.nickname}
+                      </span>
+                      <br /> Насладитесь моментом перед отправкой :3
+                    </p>
+                  ) : (
+                    currentChat.messages.map((message, index, messages) => (
+                      <MessageComponent $isuser={message.nickname === user?.nickname ? '1' : ''} key={message.id}>
+                        {((index !== 0 && new Date(message.time).getDate() !== new Date(messages[index - 1].time).getDate()) ||
+                          index === 0) && <b style={{ textAlign: 'center', margin: '10px 0' }}>{formatDate(message.time)}</b>}
+                        {message.nickname === user?.nickname ? <UserMessage message={message} /> : <PlayerMessage message={message} />}
+                      </MessageComponent>
+                    ))
+                  )}
                 </MessagesContainer>
                 <SendMessageContainer
                   onSubmit={(e) => {
@@ -241,7 +254,7 @@ const Chat = () => {
                     style={{ borderRadius: '5px 0 0 5px' }}
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    placeholder='Ваше сообщение...'
+                    placeholder='Сообщение'
                   />
                   <SendMessageButton type='submit'>
                     <img src='/images/message.png' alt='' />
@@ -252,7 +265,23 @@ const Chat = () => {
               <CurrentChatHeader>team</CurrentChatHeader>
             )
           ) : (
-            <>...</>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                flexDirection: 'column',
+                width: '100%',
+                height: '100%',
+                rowGap: '15px',
+                color: 'var(--main-text-color)',
+              }}
+            >
+              <div style={{ border: '2px solid var(--main-text-color)', borderRadius: '10px', padding: 20 }}>
+                <SmsIcon sx={{ fontSize: 30 }} />
+              </div>{' '}
+              <p>Чат не выбран</p>
+            </div>
           )}
         </CurrentChat>
       </OpenChat>
@@ -276,7 +305,8 @@ const ChatButtonInnerContainer = styled.div<{ $messages: number }>`
     color: #fff;
     right: -2px;
     top: -2px;
-    z-index: 10;
+    pointer-events: none;
+    z-index: 1;
   }
 `;
 
@@ -381,10 +411,14 @@ const ChatListItem = styled.div<{ selected: boolean; $messages: number }>`
     color: #fff;
     right: 0;
     top: 0;
-    z-index: 10;
+    z-index: 1;
   }
 `;
+const PartnerNickname = styled.span`
+  color: var(--main-text-color);
 
+  font-size: 18px;
+`;
 const CurrentChat = styled.div`
   width: 70%;
   height: 100%;

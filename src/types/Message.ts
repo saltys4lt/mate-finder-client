@@ -3,6 +3,6 @@ export interface Message {
   nickname: string;
   roomId: string;
   text: string;
-  time: string;
+  time: Date;
   checked: boolean;
 }

@@ -5,7 +5,11 @@ export const messageToLink = (message: string): React.ReactNode => {
   const isLink = message.match(urlRegex);
 
   if (isLink) {
-    return <a href={message}>{message}</a>;
+    return (
+      <a target='_blank' href={message}>
+        {message}
+      </a>
+    );
   } else {
     return message;
   }

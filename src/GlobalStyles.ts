@@ -1,6 +1,10 @@
 import { createGlobalStyle } from 'styled-components';
 
 const GlobalStyle = createGlobalStyle`
+  :root {
+    --main-text-color: #dedede;
+    --main-red-color: #8f2121;
+  }
 *{
   padding: 0;
   margin: 0;

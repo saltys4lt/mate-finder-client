@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { Message } from '../../types/Message';
 import { toMessageTime } from '../../util/toMessageTime';
 import { messageToLink } from '../../util/MessageToLink';
+import { Done, DoneAll } from '@mui/icons-material';
 interface MessageProps {
   message: Message;
 }
@@ -10,9 +11,17 @@ const UserMessage: FC<MessageProps> = ({ message }) => {
   return (
     <MessageContainer>
       <MessageHeader>
-        <b>Вы</b> <span>{toMessageTime(message.time)}</span>
+        <span>{toMessageTime(message.time)}</span>
       </MessageHeader>
-      <MessageText>{messageToLink(message.text)}</MessageText>
+      <MessageText>
+        {messageToLink(message.text)}
+
+        {message.checked ? (
+          <DoneAll style={{ position: 'absolute', fontSize: 18, right: '6px', bottom: '3px' }} />
+        ) : (
+          <Done style={{ position: 'absolute', fontSize: 18, right: '6px', bottom: '2px' }} />
+        )}
+      </MessageText>
     </MessageContainer>
   );
 };
@@ -33,11 +42,11 @@ const MessageHeader = styled.div`
 `;
 
 const MessageText = styled.p`
-  background-color: #8f2121;
-
+  background-color: var(--main-red-color);
+  position: relative;
   border-radius: 5px 3px 3px 5px;
-  padding: 5px 10px;
-  color: #dedede;
+  padding: 5px 10px 20px 10px;
+  color: var(--main-text-color);
   word-wrap: break-word;
 
   max-width: 350px;
