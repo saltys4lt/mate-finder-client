@@ -25,6 +25,20 @@ import UpdatedUserData from '../types/UpdatedUserData';
 import Swal from 'sweetalert2';
 import deleteCs2Data from '../redux/cs2Thunks/deleteCs2Data';
 import { changeGameProfileState } from '../redux/modalSlice';
+import defaultUserAvatar from '../assets/images/default-avatar.png';
+import editIcon from '../assets/images/edit.png';
+import linkIcon from '../assets/images/link.png';
+import groupInviteIcon from '../assets/images/group-invite.png';
+import closeCross from '../assets/images/close-cross.png';
+import confirmEditIcon from '../assets/images/confirm-edit.png';
+import editProfileIcon from '../assets/images/edit-profile.png';
+import FriendsIcon from '../assets/images/friends.png';
+import addFriendsIcon from '../assets/images/add-friend.png';
+import sendMessageIcon from '../assets/images/send-message.png';
+import cs2ProfilePicture from '../assets/images/cs2-profile-pic.jpeg';
+import valorantProfilePicture from '../assets/images/valorant-profile-pic.jpg';
+import dropDownArrow from '../assets/images/drop-down-arrow.png';
+import headerBg from '../assets/images/profile-bg.webp';
 
 const ProfilePage = () => {
   const dispatch = useAppDispatch();
@@ -150,7 +164,7 @@ const ProfilePage = () => {
   const profileAvatar = player
     ? profileUser.user_avatar
       ? profileUser.user_avatar
-      : '/images/default-avatar.png'
+      : defaultUserAvatar
     : updatedUserData.user_avatar
       ? updatedUserData.user_avatar
       : profileUser?.user_avatar;
@@ -166,7 +180,7 @@ const ProfilePage = () => {
               {editMode && (
                 <>
                   <ChangeAvatarButton onClick={openFileExplorer}>
-                    <ChangeAvatarButtonIcon src='/images/edit.png' alt='' />
+                    <ChangeAvatarButtonIcon src={editIcon} alt='' />
                   </ChangeAvatarButton>
                   <input
                     style={{ display: 'none' }}
@@ -205,12 +219,12 @@ const ProfilePage = () => {
                       setUrlTextCopied(true);
                     }}
                   >
-                    <img src='/images/link.png' alt='' />
+                    <img src={linkIcon} alt='' />
                     Скопировать ссылку
                   </CommonButton>
                   {player && (
                     <CommonButton>
-                      <img src='/images/group-invite.png' alt='' />
+                      <img src={groupInviteIcon} alt='' />
                       Пригласить в команду
                     </CommonButton>
                   )}
@@ -224,11 +238,11 @@ const ProfilePage = () => {
               (editMode ? (
                 <SocialButtons>
                   <CancelEditButton onClick={cancelEdit}>
-                    <img src='/images/close-cross.png' alt='' />
+                    <img src={closeCross} alt='' />
                     Отменить изменения
                   </CancelEditButton>
                   <ConfirmEditButton onClick={confirmEdit} disabled={!updatedUserData.description && !updatedUserData.user_avatar}>
-                    <img src='/images/confirm-edit.png' alt='' />
+                    <img src={confirmEditIcon} alt='' />
                     Подтвердить изменения
                   </ConfirmEditButton>
                 </SocialButtons>
@@ -239,7 +253,7 @@ const ProfilePage = () => {
                     setUpdatedUserData({ user_avatar: profileUser.user_avatar as string, description: profileUser.description as string });
                   }}
                 >
-                  <img src='/images/edit-profile.png' alt='' />
+                  <img src={editProfileIcon} alt='' />
                   Редактировать профиль
                 </EditProfileButton>
               ))}
@@ -248,23 +262,23 @@ const ProfilePage = () => {
                 {!player ? (
                   <>
                     <CommonButton>
-                      <img src='/images/friends.png' alt='' />
+                      <img src={FriendsIcon} alt='' />
                       Мои друзья
                     </CommonButton>
 
                     <CommonButton>
-                      <img src='/images/send-message.png' alt='' />
+                      <img src={sendMessageIcon} alt='' />
                       Мои сообщения
                     </CommonButton>
                   </>
                 ) : (
                   <>
                     <CommonButton>
-                      <img src='/images/add-friend.png' alt='' />
+                      <img src={addFriendsIcon} alt='' />
                       Добавить в друзья
                     </CommonButton>
                     <CommonButton>
-                      <img src='/images/send-message.png' alt='' />
+                      <img src={sendMessageIcon} alt='' />
                       Cообщение
                     </CommonButton>
                   </>
@@ -290,10 +304,10 @@ const ProfilePage = () => {
                       margin: 'auto',
                     }}
                   />
-                  <LoaderBackground bgColor='#333' borderRadius='0px' />
+                  <LoaderBackground bgcolor='#333' borderradius='0px' />
                 </>
               )}
-              <GameIcon src='/images/cs2-profile-pic.jpeg' />
+              <GameIcon src={cs2ProfilePicture} />
               <Cs2Stats>
                 {profileUser?.cs2_data ? (
                   <>
@@ -338,7 +352,7 @@ const ProfilePage = () => {
                       <GameContainerButtons>
                         <DropDown>
                           <GameContainerButton>
-                            Изменить <img src='/images/drop-down-arrow.png' alt='' />
+                            Изменить <img src={dropDownArrow} alt='' />
                           </GameContainerButton>
                           <DropDownContent>
                             <DropDownButton onClick={() => handleUpdateFaceitData(user?.cs2_data?.steamId as string)}>
@@ -361,7 +375,7 @@ const ProfilePage = () => {
               </Cs2Stats>
             </GameContainer>
             <GameContainer>
-              <GameIcon src='/images/valorant-profile-pic.jpg' />
+              <GameIcon src={valorantProfilePicture} />
               <ValorantStats>
                 {profileUser.valorant_data ? (
                   <></>
@@ -416,7 +430,7 @@ const ProfileHeader = styled.div`
     left: 0;
     width: 100%;
     height: 100%;
-    background-image: url('/images/profile-bg.webp');
+    background-image: url('${headerBg}');
     z-index: -1;
     background-position: center;
     background-size: cover;

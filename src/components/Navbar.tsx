@@ -7,7 +7,8 @@ import { RootState, useAppDispatch } from '../redux';
 import { changeLoginState, changeRegState } from '../redux/modalSlice';
 import { changeIsAuth } from '../redux/userSlice';
 import { useEffect, useState } from 'react';
-import { ioSocket } from '../api/webSockets/socket';
+import logoImg from '../assets/images/header1-logo.jpeg';
+import logout from '../assets/images/logout.png';
 
 const Navbar = () => {
   const dispatch = useAppDispatch();
@@ -52,7 +53,7 @@ const Navbar = () => {
           navigate('/');
         }}
       >
-        <LogoImage src='/images/header1-logo.jpeg' />
+        <LogoImage src={logoImg} />
         <LogoText>
           Squad
           <LogoTextSpan>Link</LogoTextSpan>
@@ -95,7 +96,7 @@ const Navbar = () => {
             <NavNickname>{user?.nickname}</NavNickname>
             <NavAvatar src={user?.user_avatar} />
           </NavProfile>
-          <Exit src='/images/logout.png' onClick={handleExit} />
+          <Exit src={logout} onClick={handleExit} />
         </AuthedNavbar>
       ) : (
         <AuthButtons>

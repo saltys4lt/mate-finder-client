@@ -1,5 +1,11 @@
 import Container from './Container';
 import styled from 'styled-components';
+import telegram from '../assets/images/telegram.png';
+import github from '../assets/images/github.png';
+import linkedin from '../assets/images/linkedin.png';
+import coffeeIcon from '../assets/images/coffee-cup.png';
+
+import footerLogo from '../assets/images/footer-logo.jpg';
 
 const Footer = () => {
   return (
@@ -11,27 +17,27 @@ const Footer = () => {
 
             <ContactsItem href='https://t.me/ahrisai' target='_blank'>
               <ContactsLink>@ahrisai</ContactsLink>
-              <ContactsIcon src='/images/telegram.png' />
+              <ContactsIcon src={telegram} />
             </ContactsItem>
 
             <ContactsItem href='https://github.com/ahrisai' target='_blank'>
               <ContactsLink>ahrisai</ContactsLink>
-              <ContactsIcon src='/images/github.png' />
+              <ContactsIcon src={github} />
             </ContactsItem>
 
             <ContactsItem href='https://www.linkedin.com/in/ilia-shpak-8b1524298/' target='_blank'>
               <ContactsLink>Ilia Shpak</ContactsLink>
-              <ContactsIcon src='/images/linkedin.png' />
+              <ContactsIcon src={linkedin} />
             </ContactsItem>
           </FooterColumn>
           <FooterColumn>
             <FooterTitle>If you don't need money lend me a cup of coffee plz :3 </FooterTitle>
             <ContactsItem href='https://www.buymeacoffee.com/ahrisai' target='_blank'>
               <ContactsLink>buymeacoffee.com/ahrisai</ContactsLink>
-              <ContactsIcon src='/images/coffee-cup.png' />
+              <CoffeeIcon src={coffeeIcon} />
             </ContactsItem>
           </FooterColumn>
-          <Logo src='/images/footer-logo.jpg' />
+          <Logo src={footerLogo} />
         </FooterContainer>
       </Container>
     </MainFooter>
@@ -61,15 +67,15 @@ const ContactsItem = styled.a`
   text-decoration: none;
   margin-left: 10px;
   margin-top: 10px;
+  &:hover span {
+    color: #979797;
+  }
 `;
 
 const ContactsLink = styled.span`
   text-decoration: none;
   font-size: 16px;
   color: #444;
-  &:hover {
-    color: #979797;
-  }
 `;
 
 const FooterTitle = styled.h3`
@@ -79,8 +85,12 @@ const FooterTitle = styled.h3`
 
 const ContactsIcon = styled.img`
   width: 20px;
+  filter: invert(0.5);
 `;
 
+const CoffeeIcon = styled.img`
+  width: 20px;
+`;
 const Logo = styled.img`
   height: 100px;
   border-radius: 5px;

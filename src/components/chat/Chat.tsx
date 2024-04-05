@@ -16,6 +16,11 @@ import ClientUser from '../../types/ClientUser';
 import fetchChats from '../../redux/chatThunks/fetchChats';
 import { formatDate } from '../../util/formatDate';
 import SmsIcon from '@mui/icons-material/Sms';
+import chatImg from '../../assets/images/chat.png';
+import closeCross from '../../assets/images/close-cross.png';
+import defaultUserAvatar from '../../assets/images/default-avatar.png';
+import sendMessageIcon from '../../assets/images/message.png';
+
 const Chat = () => {
   const isActive = useSelector((state: RootState) => state.modalReducer.chatIsActive);
   const chats: IChat[] = useSelector((state: RootState) => state.chatReducer.chats) as IChat[];
@@ -155,14 +160,14 @@ const Chat = () => {
   return fetchChatsStatus === 'pending' || fetchChatsStatus === 'idle' ? (
     <ChatButtonContainer>
       <ChatButton>
-        <img src='/images/chat.png' alt='' />
+        <img src={chatImg} alt='' />
       </ChatButton>
     </ChatButtonContainer>
   ) : !isActive ? (
     <ChatButtonContainer>
       <ChatButtonInnerContainer data-uncheked={uncheckedMessages} $messages={uncheckedMessages}>
         <ChatButton onClick={() => handleChangeChatState(true)}>
-          <img src='/images/chat.png' alt='' />
+          <img src={chatImg} alt='' />
         </ChatButton>
       </ChatButtonInnerContainer>
     </ChatButtonContainer>
@@ -170,7 +175,7 @@ const Chat = () => {
     <OpenChatContainer>
       <OpenChat>
         <CloseButton onClick={() => handleChangeChatState(false)}>
-          <img src='/images/close-cross.png' alt='' />
+          <img src={closeCross} alt='' />
         </CloseButton>
         <ChatList>
           {chats.length !== 0 ? (
@@ -194,7 +199,7 @@ const Chat = () => {
                       src={
                         chat.members.find((member) => member.id !== user?.id)?.user_avatar
                           ? chat.members.find((member) => member.id !== user?.id)?.user_avatar
-                          : '/images/default-user_avatar.png'
+                          : defaultUserAvatar
                       }
                       alt=''
                     />{' '}
@@ -219,7 +224,7 @@ const Chat = () => {
                     src={
                       currentChat.members.find((member) => member.id !== user?.id)?.user_avatar
                         ? currentChat.members.find((member) => member.id !== user?.id)?.user_avatar
-                        : '/images/default-user_avatar.png'
+                        : defaultUserAvatar
                     }
                     alt=''
                   />{' '}
@@ -257,7 +262,7 @@ const Chat = () => {
                     placeholder='Сообщение'
                   />
                   <SendMessageButton type='submit'>
-                    <img src='/images/message.png' alt='' />
+                    <img src={sendMessageIcon} alt='' />
                   </SendMessageButton>
                 </SendMessageContainer>
               </>

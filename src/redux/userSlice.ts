@@ -9,7 +9,7 @@ import refillCs2Data from './cs2Thunks/refillCs2Data';
 import updateCs2Data from './cs2Thunks/updateCs2Data';
 import updateUser from './userThunks/updateUser';
 import deleteCs2Data from './cs2Thunks/deleteCs2Data';
-
+import defaultUserAvatar from '../assets/images/default-avatar.png';
 interface UserState {
   user: ClientUser | null;
   isAuth: boolean;
@@ -101,7 +101,7 @@ const userSlice = createSlice({
       });
       if (action.payload) {
         state.checkUserStatus = 'fulfilled';
-        const userAvatar = action.payload.user_avatar ? action.payload.user_avatar : '/images/default-avatar.png';
+        const userAvatar = action.payload.user_avatar ? action.payload.user_avatar : defaultUserAvatar;
         state.user = { ...action.payload, user_avatar: userAvatar };
         state.isAuth = true;
       }
@@ -152,7 +152,7 @@ const userSlice = createSlice({
       console.log(action.payload);
       if (action.payload) {
         state.checkUserStatus = 'fulfilled';
-        const userAvatar = action.payload.user_avatar ? action.payload.user_avatar : '/images/default-avatar.png';
+        const userAvatar = action.payload.user_avatar ? action.payload.user_avatar : defaultUserAvatar;
         state.user = { ...action.payload, user_avatar: userAvatar };
         state.isAuth = true;
       }

@@ -5,6 +5,9 @@ import { RootState } from '../redux';
 import { useSelector } from 'react-redux';
 import Swal from 'sweetalert2';
 import ConfirmButton from './UI/ConfirmButton';
+import valorantLogo from '../assets/images/valorantLogo.png';
+import cs2Logo from '../assets/images/cs2-logo.png';
+
 const GameChoiceForm = () => {
   const [game, setGame] = useState<{ cs2: boolean; valorant: boolean }>({
     cs2: false,
@@ -38,11 +41,11 @@ const GameChoiceForm = () => {
       <h3>Choose a game</h3>
       <GamesContainer>
         <GameItem $isActive={String(game.valorant)} onClick={() => pickGame('valorant')}>
-          <GameIcon src='/images/valorantLogo.png' />
+          <GameIcon src={valorantLogo} />
           <p>Valorant</p>
         </GameItem>
         <GameItem $isActive={String(game.cs2)} onClick={() => pickGame('cs2')}>
-          <GameIcon src='/images/cs2-logo.png' />
+          <GameIcon src={cs2Logo} />
           <p>Counter-Strike 2</p>
         </GameItem>
       </GamesContainer>

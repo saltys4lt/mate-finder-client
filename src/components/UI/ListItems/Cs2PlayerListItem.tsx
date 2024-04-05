@@ -12,6 +12,7 @@ import { useSelector } from 'react-redux';
 import { setCurrentChat } from '../../../redux/chatSlice';
 import { Chat } from '../../../types/Chat';
 import ClientUser from '../../../types/ClientUser';
+import userDefaultAvatar from '../../../assets/images/default-avatar.png';
 interface ListItemProps {
   player: Player;
 }
@@ -64,7 +65,7 @@ const Cs2PlayerListItem: FC<ListItemProps> = ({ player }) => {
           </PlayerAge>
         </PlayerInfoHeader>
         <PlayerInfoInner>
-          <PlayerAvatar src={player.user_avatar ? player.user_avatar : '/images/default-avatar.png'} />
+          <PlayerAvatar src={player.user_avatar ? player.user_avatar : userDefaultAvatar} />
           <PlayerStats>
             <PlayerStatsText>
               ELO: <PlayerStatsTextSpan>{player.cs2_data?.elo}</PlayerStatsTextSpan>
