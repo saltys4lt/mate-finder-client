@@ -3,7 +3,7 @@ import StartPage from '../pages/StartPage';
 import Loader from '../components/Loader';
 import PlayersPage from '../pages/PlayersPage';
 import FriendsPage from '../pages/FriendsPage';
-import TeamCreatorPage from '../pages/TeamCreatorPage';
+import TeamCreationPage from '../pages/TeamCreationPage';
 import TeamsPage from '../pages/TeamsPage';
 import MatchesPage from '../pages/MatchesPage';
 import NewsPage from '../pages/NewsPage';
@@ -25,7 +25,7 @@ export const authorizedGameProfileRoutes = [
     path: '/team-creator',
     element: (
       <Suspense fallback={<Loader />}>
-        <TeamCreatorPage />
+        <TeamCreationPage />
       </Suspense>
     ),
   },
