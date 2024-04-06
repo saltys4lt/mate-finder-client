@@ -165,7 +165,7 @@ const Chat = () => {
     </ChatButtonContainer>
   ) : !isActive ? (
     <ChatButtonContainer>
-      <ChatButtonInnerContainer data-uncheked={uncheckedMessages} $messages={uncheckedMessages}>
+      <ChatButtonInnerContainer data-unchecked={uncheckedMessages} $messages={uncheckedMessages}>
         <ChatButton onClick={() => handleChangeChatState(true)}>
           <img src={chatImg} alt='' />
         </ChatButton>
@@ -181,7 +181,7 @@ const Chat = () => {
           {chats.length !== 0 ? (
             chats.map((chat) => (
               <ChatListItem
-                data-uncheked={chat.messages.reduce(
+                data-unchecked={chat.messages.reduce(
                   (acc, message) => (message.nickname !== user.nickname && !message.checked ? acc + 1 : acc),
                   0,
                 )}
@@ -299,7 +299,7 @@ const ChatButtonInnerContainer = styled.div<{ $messages: number }>`
   display: block;
 
   &::before {
-    content: ${(p) => (p.$messages != 0 ? 'attr(data-uncheked)' : '')};
+    content: ${(p) => (p.$messages != 0 ? 'attr(data-unchecked)' : '')};
     position: absolute;
     display: block;
     text-align: center;
@@ -319,6 +319,7 @@ const ChatButtonContainer = styled.div`
   position: fixed;
   bottom: 20px;
   right: 20px;
+  z-index: 1;
 `;
 
 const ChatButton = styled.button`
@@ -405,7 +406,7 @@ const ChatListItem = styled.div<{ selected: boolean; $messages: number }>`
   background-color: ${(p) => (p.selected ? '#838383' : 'transparent')};
 
   &::before {
-    content: ${(p) => (p.$messages != 0 ? 'attr(data-uncheked)' : '')};
+    content: ${(p) => (p.$messages != 0 ? 'attr(data-unchecked)' : '')};
     position: absolute;
     display: block;
     text-align: center;

@@ -1,3 +1,5 @@
+import Player from './Player';
+
 export default interface Team {
   game: 'cs2' | 'valorant';
   ownerId: number;
@@ -5,5 +7,5 @@ export default interface Team {
   avatar: string;
   description: string;
   public: boolean;
-  players: string[];
+  players: Player[];
 }

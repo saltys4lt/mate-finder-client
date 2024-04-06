@@ -4,6 +4,8 @@ import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 import ClientUser from '../../types/ClientUser';
 import { checkUserGameProfile } from '../../util/checkUserGameProfile';
+import valorantLogo from '../../assets/images/valorant-logo.png';
+import cs2Logo from '../../assets/images/cs2-logo.png';
 
 const CustomSelect = styled.div`
   position: relative;
@@ -67,8 +69,8 @@ interface Option {
 const FilterBarSelect: React.FC = () => {
   const [selectedOption, setSelectedOption] = useState<Option | null>(null);
   const [options, setOptions] = useState<Option[]>([
-    { value: 'cs2', label: 'Cs2', image: '/images/cs2-logo.png' },
-    { value: 'Valorant', label: 'Valorant', image: '/images/valorant-logo.png' },
+    { value: 'cs2', label: 'Cs2', image: cs2Logo },
+    { value: 'Valorant', label: 'Valorant', image: valorantLogo },
   ]);
 
   const [isOpen, setIsOpen] = useState(false);

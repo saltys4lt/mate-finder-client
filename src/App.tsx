@@ -59,7 +59,7 @@ function App() {
         <Loader />
       ) : (
         <AppContainer>
-          {check === 'fulfilled' && <>{(user?.cs2_data || user?.valorant_data) && <Chat />}</>}
+          {check === 'fulfilled' && <>{(user?.cs2_data?.roles.length !== 0 || user?.valorant_data) && <Chat />}</>}
 
           <Header />
           <AppRouter />
@@ -72,7 +72,7 @@ function App() {
 
 const AppContainer = styled.div`
   width: 100%;
-  height: 100%;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   justify-content: space-between;

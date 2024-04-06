@@ -19,7 +19,7 @@ import ConfirmButton from '../components/UI/ConfirmButton';
 import { customStyles, CustomOption, CustomSingleValue } from '../components/UI/MapsSelect';
 
 import checkUserIsAuth from '../redux/userThunks/checkUserIsAuth';
-
+import cs2CreationBg from '../assets/images/cs-creation-bg.webp';
 interface CreationDataValidation {
   isRolesValid: boolean;
   isMapsValid: boolean;
@@ -212,7 +212,7 @@ const CreationPageContainer = styled.div`
     left: 0;
     width: 100%;
     height: 100%;
-    background-image: url('/images/cs-creation-bg.webp');
+    background-image: url('${cs2CreationBg}');
     background-size: cover;
     background-repeat: no-repeat;
     filter: blur(10px);

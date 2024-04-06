@@ -21,7 +21,7 @@ export const CustomOption: React.FC<any> = ({ innerProps, label, data }) => (
       alt={label}
       style={{
         marginRight: '8px',
-        width: '100px',
+        width: '45px',
         height: '40px',
       }}
     />
@@ -30,14 +30,14 @@ export const CustomOption: React.FC<any> = ({ innerProps, label, data }) => (
 );
 
 export const CustomSingleValue: React.FC<any> = ({ innerProps, label, data }) => (
-  <SelectOption {...innerProps}>
+  <SelectOption style={{ marginTop: '-20px', alignItems: 'center' }} {...innerProps}>
     <img
       src={data.image}
       alt={label}
       style={{
         marginRight: '8px',
-        width: '100px',
-        height: '45px',
+        width: '40px',
+        height: '40px',
       }}
     />
     {label}
@@ -46,9 +46,7 @@ export const CustomSingleValue: React.FC<any> = ({ innerProps, label, data }) =>
 export const customStyles = {
   control: (baseStyles: any) => ({
     ...baseStyles,
-    marginTop: '-10px',
-    height: '50px',
-
+    marginTop: '40px',
     background: '#373737',
     boxShadow: '0',
     borderColor: '#484848',
@@ -63,7 +61,7 @@ export const customStyles = {
     color: '#fff',
     display: 'flex',
     flexDirection: 'column',
-
+    width: '300px',
     '& img': {
       borderRadius: '3px',
     },
@@ -87,8 +85,6 @@ export const customStyles = {
   }),
   singleValue: (baseStyles: any) => ({
     ...baseStyles,
-    height: '50px',
-
     background: '#fbfbfb',
     color: '#fff',
     display: 'flex',
