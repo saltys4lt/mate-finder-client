@@ -46,7 +46,7 @@ export const CustomSingleValue: React.FC<any> = ({ innerProps, label, data }) =>
 export const customStyles = {
   control: (baseStyles: any) => ({
     ...baseStyles,
-    marginTop: '-10px',
+    marginTop: '30px',
     height: '50px',
 
     background: '#373737',

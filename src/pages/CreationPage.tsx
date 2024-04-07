@@ -198,13 +198,13 @@ const CreationPage = () => {
 };
 
 const CreationPageContainer = styled.div`
+  padding-block: 70px;
   position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
   width: 100%;
-  height: 100vh;
-  overflow: hidden;
+
   &::before {
     content: '';
     position: absolute;
@@ -216,6 +216,7 @@ const CreationPageContainer = styled.div`
     background-size: cover;
     background-repeat: no-repeat;
     filter: blur(10px);
+    z-index: -1;
   }
 `;
 
