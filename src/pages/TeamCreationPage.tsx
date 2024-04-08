@@ -19,11 +19,20 @@ import cs2CreationBg from '../assets/images/cs-creation-bg.webp';
 import editIcon from '../assets/images/edit.png';
 import uploadTeamAvatar from '../api/uploadTeamAvatar';
 import Swal from 'sweetalert2';
-
+import Cs2PlayerRoles from '../consts/Cs2PlayerRoles';
+interface CreationDataValidation {
+  isRolesValid: boolean;
+}
 const TeamCreationPage = () => {
   const user = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
   const [availableGames, setAvailableGames] = useState<Option[]>(Games);
   const [avatarIsLoading, setAvatarIsLoading] = useState<boolean>(false);
+  const [ownerRole, setOwnerRole] = useState<string>('');
+  const [roles, setRoles] = useState<string[]>([]);
+  const [dataValidation, setDataValidation] = useState<CreationDataValidation>({
+    isRolesValid: true,
+  });
+
   const [team, setTeam] = useState<Team>({
     name: '',
     avatar: cs2Logo,
@@ -78,6 +87,26 @@ const TeamCreationPage = () => {
   const handleGameChange = (game: SingleValue<Option>) => {
     setGame(game);
   };
+  const rolePlayersState = (role: string) => {
+    if (role === ownerRole) return 'focus';
+    else return '';
+  };
+  const changePlayersRoles = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!dataValidation.isRolesValid) {
+      setDataValidation({ ...dataValidation, isRolesValid: true });
+    }
+    if (!roles.includes(e.target.value)) setRoles([...roles, e.target.value]);
+    else setRoles(roles.filter((role) => role !== e.target.value));
+  };
+
+  const changeOwnerRole = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setOwnerRole(e.target.value);
+  };
+
+  const ownerRoleState = (role: string) => {
+    return ownerRole === role ? 'active' : '';
+  };
+  console.log(ownerRole);
   useEffect(() => {
     if (checkUserGameProfile(user as ClientUser) === 2) {
       setGame({ image: '', label: 'Выберите игру', value: 'both' } as Option);
@@ -101,132 +130,170 @@ const TeamCreationPage = () => {
   return (
     <Main>
       <Container>
-        <InnerContainer>
-          <TeamLogoContainer>
-            <TeamData>
-              <TeamDataText>Логотип: </TeamDataText>
+        <MainContainer>
+          <TeamCreationTitle>Регистрация команды</TeamCreationTitle>
+          <hr style={{ marginTop: '-40px' }} />
+          <InnerContainer>
+            <TeamLogoContainer>
+              <TeamData>
+                <TeamDataText>Логотип: </TeamDataText>
 
-              <TeamLogo>
-                <TeamLogoImg loading={avatarIsLoading.toString()} src={team.avatar} />
-                <ChangeAvatarButton loading={avatarIsLoading.toString()} disabled={avatarIsLoading} onClick={openFileExplorer}>
-                  <ChangeAvatarButtonIcon src={editIcon} alt='' />
-                </ChangeAvatarButton>
-                {avatarIsLoading && (
-                  <CircularProgress
-                    color='error'
-                    size={'50px'}
-                    sx={{
-                      zIndex: 3,
-                      position: 'absolute',
-                      inset: '0',
-                      margin: 'auto',
+                <TeamLogo>
+                  <TeamLogoImg loading={avatarIsLoading.toString()} src={team.avatar} />
+                  <ChangeAvatarButton loading={avatarIsLoading.toString()} disabled={avatarIsLoading} onClick={openFileExplorer}>
+                    <ChangeAvatarButtonIcon src={editIcon} alt='' />
+                  </ChangeAvatarButton>
+                  {avatarIsLoading && (
+                    <CircularProgress
+                      color='error'
+                      size={'50px'}
+                      sx={{
+                        zIndex: 3,
+                        position: 'absolute',
+                        inset: '0',
+                        margin: 'auto',
+                      }}
+                    />
+                  )}
+                </TeamLogo>
+              </TeamData>
+
+              <input
+                style={{ display: 'none' }}
+                id='file__input'
+                className='file__upload__input'
+                type='file'
+                accept='image/png, image/jpeg, image/webp'
+                onChange={(e) => {
+                  uploadAvatar(e);
+                }}
+              />
+
+              <TeamData>
+                <TeamDataText>Название: </TeamDataText>
+                <CommonInput onChange={handleTeamNameChange} placeholder='...' value={team.name} style={{ maxWidth: '300px' }} />
+              </TeamData>
+              <TeamData>
+                <TeamDataText>Информация: </TeamDataText>
+                <DescriptionInput onChange={handleTeamDescChange} placeholder='Кто вы, что вы и зачем ' value={team.description} />
+              </TeamData>
+            </TeamLogoContainer>
+            <MainData>
+              <MainDataRow>
+                <TeamData>
+                  <TeamDataText>Игра</TeamDataText>
+                  <Select
+                    maxMenuHeight={130}
+                    isSearchable={false}
+                    styles={{
+                      ...customStyles,
+                      control: (base: any) => ({
+                        ...base,
+                        width: '300px',
+                        background: '#181818',
+                        boxShadow: '0',
+                        borderColor: '#484848',
+                        cursor: 'pointer',
+                        '&:hover': {
+                          borderColor: '#808080',
+                        },
+                      }),
                     }}
-                  />
-                )}
-              </TeamLogo>
-            </TeamData>
+                    options={availableGames}
+                    value={game}
+                    onChange={handleGameChange}
+                    components={{
+                      Option: CustomOption,
+                      SingleValue: CustomSingleValue,
+                    }}
+                    placeholder='Выбор игры'
+                  ></Select>
+                </TeamData>
 
-            <input
-              style={{ display: 'none' }}
-              id='file__input'
-              className='file__upload__input'
-              type='file'
-              accept='image/png, image/jpeg, image/webp'
-              onChange={(e) => {
-                uploadAvatar(e);
-              }}
-            />
-
-            <TeamData>
-              <TeamDataText>Название: </TeamDataText>
-              <CommonInput onChange={handleTeamNameChange} placeholder='...' value={team.name} style={{ maxWidth: '300px' }} />
-            </TeamData>
-            <TeamData>
-              <TeamDataText>Информация: </TeamDataText>
-              <DescriptionInput onChange={handleTeamDescChange} placeholder='Кто вы, что вы и зачем ' value={team.description} />
-            </TeamData>
-          </TeamLogoContainer>
-          <MainData>
-            <TeamData>
-              <TeamDataText>Игра</TeamDataText>
-              <Select
-                maxMenuHeight={130}
-                isSearchable={false}
-                styles={{
-                  ...customStyles,
-                  control: (base: any) => ({
-                    ...base,
-                    width: '300px',
-                    background: '#181818',
-                    boxShadow: '0',
-                    borderColor: '#484848',
-                    cursor: 'pointer',
-                    '&:hover': {
-                      borderColor: '#808080',
-                    },
-                  }),
-                }}
-                options={availableGames}
-                value={game}
-                onChange={handleGameChange}
-                components={{
-                  Option: CustomOption,
-                  SingleValue: CustomSingleValue,
-                }}
-                placeholder='Выбор игры'
-              ></Select>
-            </TeamData>
-
-            <TeamData>
-              <TeamDataText style={{ display: 'flex', columnGap: '5px', position: 'relative' }}>
-                <span>Публичная / Приватная:</span>
-                <ErrorOutlineContainer>
-                  <ErrorOutline />
-                  <TypeExplenation>
-                    Приватные команды не видны другим игрокам в глобальном поиске. Вы сможете собрать команду только приглашая игроков
-                    самостоятельно.
-                  </TypeExplenation>
-                </ErrorOutlineContainer>
-              </TeamDataText>
-              <RadioGroup
-                style={{ color: 'var(--main-text-color)' }}
-                row
-                defaultValue={'any'}
-                value={team.public}
-                onChange={(e) => handleTeamTypeChange(e)}
-              >
-                <FormControlLabel
-                  value='true'
-                  control={
-                    <Radio
-                      sx={{
-                        color: 'grey',
-                        '&.Mui-checked': {
-                          color: 'red',
-                        },
-                      }}
+                <TeamData>
+                  <TeamDataText style={{ display: 'flex', columnGap: '5px', position: 'relative' }}>
+                    <span>Публичная / Приватная:</span>
+                    <ErrorOutlineContainer>
+                      <ErrorOutline />
+                      <TypeExplenation>
+                        Приватные команды не видны другим игрокам в глобальном поиске. Вы сможете собрать команду только приглашая игроков
+                        самостоятельно.
+                      </TypeExplenation>
+                    </ErrorOutlineContainer>
+                  </TeamDataText>
+                  <RadioGroup
+                    style={{ color: 'var(--main-text-color)' }}
+                    row
+                    defaultValue={'any'}
+                    value={team.public}
+                    onChange={(e) => handleTeamTypeChange(e)}
+                  >
+                    <FormControlLabel
+                      value='true'
+                      control={
+                        <Radio
+                          sx={{
+                            color: 'grey',
+                            '&.Mui-checked': {
+                              color: 'red',
+                            },
+                          }}
+                        />
+                      }
+                      label='Публичная'
                     />
-                  }
-                  label='Публичная'
-                />
-                <FormControlLabel
-                  value='false'
-                  control={
-                    <Radio
-                      sx={{
-                        color: 'grey',
-                        '&.Mui-checked': {
-                          color: 'red',
-                        },
-                      }}
+                    <FormControlLabel
+                      value='false'
+                      control={
+                        <Radio
+                          sx={{
+                            color: 'grey',
+                            '&.Mui-checked': {
+                              color: 'red',
+                            },
+                          }}
+                        />
+                      }
+                      label='Приватная'
                     />
-                  }
-                  label='Приватная'
-                />
-              </RadioGroup>
-            </TeamData>
-          </MainData>
-        </InnerContainer>
+                  </RadioGroup>
+                </TeamData>
+              </MainDataRow>
+              <TeamData>
+                <TeamDataText>Ваша роль в команде:</TeamDataText>
+                <RolesContainer>
+                  {Cs2PlayerRoles.map((role, index) => (
+                    <RoleCard key={role.id}>
+                      <RoleCheckbox
+                        id={(index + 1).toString()}
+                        checked={ownerRole === role.name}
+                        type='radio'
+                        onChange={(e) => changeOwnerRole(e)}
+                        value={role.name}
+                      />
+                      <RoleLabel className={ownerRoleState(role.name)} htmlFor={(index + 1).toString()}>
+                        {role.name}
+                      </RoleLabel>
+                    </RoleCard>
+                  ))}
+                </RolesContainer>
+              </TeamData>
+              <TeamData>
+                <TeamDataText>В каких игроках вы нуждаетесь:</TeamDataText>
+                <RolesContainer>
+                  {Cs2PlayerRoles.filter((role) => role.name !== ownerRole).map((role, index) => (
+                    <RoleCard key={role.id + 1}>
+                      <RoleCheckbox id={(index + 2).toString()} type='checkbox' value={role.name} disabled={true} />
+                      <RoleLabel className={rolePlayersState(role.name)} htmlFor={(index + 2).toString()}>
+                        {role.name}
+                      </RoleLabel>
+                    </RoleCard>
+                  ))}
+                </RolesContainer>
+              </TeamData>
+            </MainData>
+          </InnerContainer>
+        </MainContainer>
       </Container>
     </Main>
   );
@@ -251,13 +318,26 @@ const Main = styled.main`
   }
 `;
 
-const InnerContainer = styled.div`
+const MainContainer = styled.div`
   background-color: #252525;
+  margin: 0 auto;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  row-gap: 50px;
+  border-radius: 15px;
+  padding: 30px 30px;
+`;
+
+const InnerContainer = styled.div`
   width: 100%;
   display: flex;
-  justify-content: space-around;
+  justify-content: space-between;
   border-radius: 15px;
-  padding: 25px;
+`;
+
+const TeamCreationTitle = styled.h2`
+  color: var(--main-text-color);
 `;
 
 const TeamLogoContainer = styled.div`
@@ -267,7 +347,14 @@ const TeamLogoContainer = styled.div`
 
   row-gap: 20px;
 `;
+const MainData = styled.div`
+  margin-top: 25px;
+  width: 65%;
+  display: flex;
+  flex-direction: column;
 
+  row-gap: 50px;
+`;
 const TeamLogo = styled.div`
   width: fit-content;
   position: relative;
@@ -303,13 +390,6 @@ const ChangeAvatarButtonIcon = styled.img`
   width: 20px;
   height: 20px;
   filter: invert(1);
-`;
-
-const MainData = styled.div`
-  width: 50%;
-  display: flex;
-  flex-direction: column;
-  row-gap: 20px;
 `;
 
 const TypeExplenation = styled.p`
@@ -364,5 +444,66 @@ const ErrorOutlineContainer = styled.div`
 `;
 
 const ErrorOutline = styled(ErrorOutlineIcon)``;
+
+const MainDataRow = styled.div`
+  width: 80%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+`;
+
+const RolesContainer = styled.div`
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  column-gap: 10px;
+  flex-wrap: wrap;
+`;
+
+const RoleCard = styled.div`
+  margin-top: 15px;
+
+  display: flex;
+  justify-content: center;
+`;
+
+const RoleCheckbox = styled.input`
+  display: none;
+`;
+
+const RoleLabel = styled.label`
+  border: 2px solid #565656;
+  background-color: #181818;
+  padding: 5px 10px;
+  border-radius: 7px;
+  display: block;
+  width: 130px;
+  text-align: center;
+  font-size: 16px;
+  color: #d1cfcf;
+  &:hover {
+    border-color: #fff;
+    cursor: pointer;
+  }
+
+  &.active {
+    border-color: #fff;
+    transform: scale(1.03);
+  }
+
+  &.focus {
+    opacity: 0.3;
+    border: 2px solid #565656;
+    &:hover {
+      cursor: auto;
+    }
+  }
+
+  user-select: none;
+  &:hover {
+    cursor: pointer;
+  }
+`;
 
 export default TeamCreationPage;
