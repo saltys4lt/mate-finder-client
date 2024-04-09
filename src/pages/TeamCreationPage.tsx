@@ -20,10 +20,12 @@ import editIcon from '../assets/images/edit.png';
 import uploadTeamAvatar from '../api/uploadTeamAvatar';
 import Swal from 'sweetalert2';
 import Cs2PlayerRoles from '../consts/Cs2PlayerRoles';
+import Cs2Role from '../types/Cs2Role';
 interface CreationDataValidation {
   isRolesValid: boolean;
 }
 const TeamCreationPage = () => {
+  const neededPlayers = Object.assign(Cs2PlayerRoles) as Cs2Role[];
   const user = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
   const [availableGames, setAvailableGames] = useState<Option[]>(Games);
   const [avatarIsLoading, setAvatarIsLoading] = useState<boolean>(false);
@@ -87,8 +89,10 @@ const TeamCreationPage = () => {
   const handleGameChange = (game: SingleValue<Option>) => {
     setGame(game);
   };
+
   const rolePlayersState = (role: string) => {
-    if (role === ownerRole) return 'focus';
+    if (roles.includes(role)) return 'active';
+    if (role === ownerRole || !ownerRole) return 'focus';
     else return '';
   };
   const changePlayersRoles = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -98,7 +102,7 @@ const TeamCreationPage = () => {
     if (!roles.includes(e.target.value)) setRoles([...roles, e.target.value]);
     else setRoles(roles.filter((role) => role !== e.target.value));
   };
-
+  console.log(roles);
   const changeOwnerRole = (e: React.ChangeEvent<HTMLInputElement>) => {
     setOwnerRole(e.target.value);
   };
@@ -106,7 +110,7 @@ const TeamCreationPage = () => {
   const ownerRoleState = (role: string) => {
     return ownerRole === role ? 'active' : '';
   };
-  console.log(ownerRole);
+
   useEffect(() => {
     if (checkUserGameProfile(user as ClientUser) === 2) {
       setGame({ image: '', label: 'Выберите игру', value: 'both' } as Option);
@@ -281,10 +285,16 @@ const TeamCreationPage = () => {
               <TeamData>
                 <TeamDataText>В каких игроках вы нуждаетесь:</TeamDataText>
                 <RolesContainer>
-                  {Cs2PlayerRoles.filter((role) => role.name !== ownerRole).map((role, index) => (
-                    <RoleCard key={role.id + 1}>
-                      <RoleCheckbox id={(index + 2).toString()} type='checkbox' value={role.name} disabled={true} />
-                      <RoleLabel className={rolePlayersState(role.name)} htmlFor={(index + 2).toString()}>
+                  {Cs2PlayerRoles.map((role, index) => (
+                    <RoleCard key={role.id}>
+                      <RoleCheckbox
+                        id={(index + 10).toString()}
+                        onChange={(e) => changePlayersRoles(e)}
+                        value={role.name}
+                        type='checkbox'
+                        disabled={role.name === ownerRole || !ownerRole}
+                      />
+                      <RoleLabel className={rolePlayersState(role.name)} htmlFor={(index + 10).toString()}>
                         {role.name}
                       </RoleLabel>
                     </RoleCard>
