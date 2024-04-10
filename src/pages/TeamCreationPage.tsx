@@ -6,7 +6,7 @@ import Team from '../types/Team';
 import { useSelector } from 'react-redux';
 import { RootState, useAppDispatch } from '../redux';
 import ClientUser from '../types/ClientUser';
-
+import { useSpring, animated } from '@react-spring/web';
 import CommonInput from '../components/UI/CommonInput';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import { CircularProgress, FormControlLabel, Radio, RadioGroup } from '@mui/material';
@@ -20,17 +20,18 @@ import editIcon from '../assets/images/edit.png';
 import uploadTeamAvatar from '../api/uploadTeamAvatar';
 import Swal from 'sweetalert2';
 import Cs2PlayerRoles from '../consts/Cs2PlayerRoles';
-import Cs2Role from '../types/Cs2Role';
+import ConfirmButton from '../components/UI/ConfirmButton';
 interface CreationDataValidation {
   isRolesValid: boolean;
 }
 const TeamCreationPage = () => {
-  const neededPlayers = Object.assign(Cs2PlayerRoles) as Cs2Role[];
   const user = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
   const [availableGames, setAvailableGames] = useState<Option[]>(Games);
   const [avatarIsLoading, setAvatarIsLoading] = useState<boolean>(false);
   const [ownerRole, setOwnerRole] = useState<string>('');
+  const [creationStep, setCreationStep] = useState<number>(1);
   const [roles, setRoles] = useState<string[]>([]);
+
   const [dataValidation, setDataValidation] = useState<CreationDataValidation>({
     isRolesValid: true,
   });
@@ -131,59 +132,35 @@ const TeamCreationPage = () => {
     document.getElementById('file__input')?.click();
   };
 
+  const firstStep = useSpring({
+    opacity: creationStep === 1 ? 1 : 0,
+    from: { opacity: 0 },
+  });
+
+  const secondStep = useSpring({
+    opacity: creationStep === 2 ? 1 : 0,
+    from: { opacity: 0 },
+  });
+
+  const thirdStep = useSpring({
+    opacity: creationStep === 3 ? 1 : 0,
+    from: { opacity: 0 },
+  });
+
+  const fourthStep = useSpring({
+    opacity: creationStep === 4 ? 1 : 0,
+    from: { opacity: 0 },
+  });
+
   return (
     <Main>
       <Container>
         <MainContainer>
           <TeamCreationTitle>Регистрация команды</TeamCreationTitle>
-          <hr style={{ marginTop: '-40px' }} />
+          <hr style={{ marginTop: '-40px', width: '100%' }} />
           <InnerContainer>
-            <TeamLogoContainer>
-              <TeamData>
-                <TeamDataText>Логотип: </TeamDataText>
-
-                <TeamLogo>
-                  <TeamLogoImg loading={avatarIsLoading.toString()} src={team.avatar} />
-                  <ChangeAvatarButton loading={avatarIsLoading.toString()} disabled={avatarIsLoading} onClick={openFileExplorer}>
-                    <ChangeAvatarButtonIcon src={editIcon} alt='' />
-                  </ChangeAvatarButton>
-                  {avatarIsLoading && (
-                    <CircularProgress
-                      color='error'
-                      size={'50px'}
-                      sx={{
-                        zIndex: 3,
-                        position: 'absolute',
-                        inset: '0',
-                        margin: 'auto',
-                      }}
-                    />
-                  )}
-                </TeamLogo>
-              </TeamData>
-
-              <input
-                style={{ display: 'none' }}
-                id='file__input'
-                className='file__upload__input'
-                type='file'
-                accept='image/png, image/jpeg, image/webp'
-                onChange={(e) => {
-                  uploadAvatar(e);
-                }}
-              />
-
-              <TeamData>
-                <TeamDataText>Название: </TeamDataText>
-                <CommonInput onChange={handleTeamNameChange} placeholder='...' value={team.name} style={{ maxWidth: '300px' }} />
-              </TeamData>
-              <TeamData>
-                <TeamDataText>Информация: </TeamDataText>
-                <DescriptionInput onChange={handleTeamDescChange} placeholder='Кто вы, что вы и зачем ' value={team.description} />
-              </TeamData>
-            </TeamLogoContainer>
-            <MainData>
-              <MainDataRow>
+            {creationStep === 1 && (
+              <GameAndStatus style={firstStep}>
                 <TeamData>
                   <TeamDataText>Игра</TeamDataText>
                   <Select
@@ -262,8 +239,57 @@ const TeamCreationPage = () => {
                     />
                   </RadioGroup>
                 </TeamData>
-              </MainDataRow>
-              <TeamData>
+              </GameAndStatus>
+            )}
+            {creationStep === 2 && (
+              <TeamLogoContainer style={secondStep}>
+                <TeamData>
+                  <TeamDataText>Логотип: </TeamDataText>
+
+                  <TeamLogo>
+                    <TeamLogoImg loading={avatarIsLoading.toString()} src={team.avatar} />
+                    <ChangeAvatarButton loading={avatarIsLoading.toString()} disabled={avatarIsLoading} onClick={openFileExplorer}>
+                      <ChangeAvatarButtonIcon src={editIcon} alt='' />
+                    </ChangeAvatarButton>
+                    {avatarIsLoading && (
+                      <CircularProgress
+                        color='error'
+                        size={'50px'}
+                        sx={{
+                          zIndex: 3,
+                          position: 'absolute',
+                          inset: '0',
+                          margin: 'auto',
+                        }}
+                      />
+                    )}
+                  </TeamLogo>
+                </TeamData>
+
+                <input
+                  style={{ display: 'none' }}
+                  id='file__input'
+                  className='file__upload__input'
+                  type='file'
+                  accept='image/png, image/jpeg, image/webp'
+                  onChange={(e) => {
+                    uploadAvatar(e);
+                  }}
+                />
+                <NameAndDesc>
+                  <TeamData>
+                    <TeamDataText>Название: </TeamDataText>
+                    <CommonInput onChange={handleTeamNameChange} placeholder='...' value={team.name} style={{ maxWidth: '250px' }} />
+                  </TeamData>
+                  <TeamData>
+                    <TeamDataText>Информация: </TeamDataText>
+                    <DescriptionInput onChange={handleTeamDescChange} placeholder='Кто вы, что вы и зачем ' value={team.description} />
+                  </TeamData>
+                </NameAndDesc>
+              </TeamLogoContainer>
+            )}
+            {creationStep === 3 && (
+              <RolesData style={thirdStep}>
                 <TeamDataText>Ваша роль в команде:</TeamDataText>
                 <RolesContainer>
                   {Cs2PlayerRoles.map((role, index) => (
@@ -281,8 +307,10 @@ const TeamCreationPage = () => {
                     </RoleCard>
                   ))}
                 </RolesContainer>
-              </TeamData>
-              <TeamData>
+              </RolesData>
+            )}
+            {creationStep === 4 && (
+              <RolesData style={fourthStep}>
                 <TeamDataText>В каких игроках вы нуждаетесь:</TeamDataText>
                 <RolesContainer>
                   {Cs2PlayerRoles.map((role, index) => (
@@ -300,8 +328,26 @@ const TeamCreationPage = () => {
                     </RoleCard>
                   ))}
                 </RolesContainer>
-              </TeamData>
-            </MainData>
+              </RolesData>
+            )}
+            <StepButtons>
+              {creationStep !== 1 && (
+                <ConfirmButton
+                  onClick={() => {
+                    setCreationStep((prev) => prev - 1);
+                  }}
+                >
+                  Назад
+                </ConfirmButton>
+              )}
+              <ConfirmButton
+                onClick={() => {
+                  setCreationStep((prev) => prev + 1);
+                }}
+              >
+                Далее
+              </ConfirmButton>
+            </StepButtons>
           </InnerContainer>
         </MainContainer>
       </Container>
@@ -331,40 +377,38 @@ const Main = styled.main`
 const MainContainer = styled.div`
   background-color: #252525;
   margin: 0 auto;
-  width: 90%;
+  width: 50%;
   display: flex;
   flex-direction: column;
+  align-items: center;
   row-gap: 50px;
   border-radius: 15px;
   padding: 30px 30px;
+  height: 530px;
+  overflow: hidden;
 `;
 
 const InnerContainer = styled.div`
   width: 100%;
+  height: 100%;
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  border-radius: 15px;
+  flex-direction: column;
+  row-gap: 50px;
 `;
 
 const TeamCreationTitle = styled.h2`
   color: var(--main-text-color);
 `;
 
-const TeamLogoContainer = styled.div`
-  width: 30%;
+const TeamLogoContainer = styled(animated.div)`
+  width: 100%;
+  height: 100%;
   display: flex;
-  flex-direction: column;
-
-  row-gap: 20px;
+  justify-content: space-around;
 `;
-const MainData = styled.div`
-  margin-top: 25px;
-  width: 65%;
-  display: flex;
-  flex-direction: column;
 
-  row-gap: 50px;
-`;
 const TeamLogo = styled.div`
   width: fit-content;
   position: relative;
@@ -402,6 +446,21 @@ const ChangeAvatarButtonIcon = styled.img`
   filter: invert(1);
 `;
 
+const GameAndStatus = styled(animated.div)`
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  align-items: center;
+`;
+
+const NameAndDesc = styled.div`
+  width: 55%;
+  display: flex;
+  flex-direction: column;
+  row-gap: 30px;
+`;
+
 const TypeExplenation = styled.p`
   display: none;
   width: 200px;
@@ -420,10 +479,16 @@ const TeamDataText = styled.h4`
   font-size: 18px;
   color: var(--main-text-color);
 `;
-const TeamData = styled.div`
+
+const TeamData = styled(animated.div)`
   display: flex;
   row-gap: 10px;
+
   flex-direction: column;
+`;
+
+const RolesData = styled(TeamData)`
+  align-items: center;
 `;
 
 const DescriptionInput = styled.textarea`
@@ -434,7 +499,7 @@ const DescriptionInput = styled.textarea`
 
   background-color: #181818;
 
-  min-height: 220px;
+  min-height: 150px;
   border-radius: 5px;
   border: 2px solid #565656;
 
@@ -455,18 +520,17 @@ const ErrorOutlineContainer = styled.div`
 
 const ErrorOutline = styled(ErrorOutlineIcon)``;
 
-const MainDataRow = styled.div`
-  width: 80%;
+const StepButtons = styled.div`
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
+  column-gap: 30px;
 `;
 
 const RolesContainer = styled.div`
   display: flex;
-  width: 100%;
+  width: 90%;
   justify-content: center;
+
   column-gap: 10px;
   flex-wrap: wrap;
 `;
