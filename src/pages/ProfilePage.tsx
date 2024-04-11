@@ -24,7 +24,7 @@ import updateUser from '../redux/userThunks/updateUser';
 import UpdatedUserData from '../types/UpdatedUserData';
 import Swal from 'sweetalert2';
 import deleteCs2Data from '../redux/cs2Thunks/deleteCs2Data';
-import { changeGameProfileState } from '../redux/modalSlice';
+import { changeChatState, changeGameProfileState } from '../redux/modalSlice';
 import defaultUserAvatar from '../assets/images/default-avatar.png';
 import editIcon from '../assets/images/edit.png';
 import linkIcon from '../assets/images/link.png';
@@ -39,17 +39,20 @@ import cs2ProfilePicture from '../assets/images/cs2-profile-pic.jpeg';
 import valorantProfilePicture from '../assets/images/valorant-profile-pic.jpg';
 import dropDownArrow from '../assets/images/drop-down-arrow.png';
 import headerBg from '../assets/images/profile-bg.webp';
-
+import { setCurrentChat } from '../redux/chatSlice';
+import { Chat } from '../types/Chat';
 const ProfilePage = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const nickname = useParams().nickname;
-  const user = useSelector((state: RootState) => state.userReducer.user);
-  const player = useSelector((root: RootState) => root.playerReducer.player);
+  const user = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
+  const player = useSelector((root: RootState) => root.playerReducer.player) as Player;
 
   const playerError = useSelector((root: RootState) => root.playerReducer.fetchPlayerByNameError);
   const updateFaceitStatus = useSelector((root: RootState) => root.userReducer.updateCs2DataStatus);
   const deleteCs2Status = useSelector((root: RootState) => root.userReducer.deleteCs2Status);
+  const chats = useSelector((root: RootState) => root.chatReducer.chats);
+
   const [profileUser, setProfileUser] = useState<ClientUser | Player | null>(null);
   const [editMode, setEditMode] = useState<boolean>(false);
   const [urlTextCopied, setUrlTextCopied] = useState<boolean>(false);
@@ -160,7 +163,34 @@ const ProfilePage = () => {
       }
     });
   };
+  const handleChatOpen = () => {
+    dispatch(changeChatState(true));
 
+    const openedChat = {
+      roomId: user.id.toString() + player.id.toString(),
+      members: [
+        {
+          user_avatar: player.user_avatar,
+          nickname: player.nickname,
+          id: player.id,
+        },
+        {
+          avatar: user.user_avatar,
+          nickname: user.nickname,
+          id: user.id,
+        },
+      ],
+      messages: [],
+      team: false,
+    } as Chat;
+
+    const chat: Chat | undefined = chats?.find(
+      (chat) => chat.members.find((member) => member.id === user.id) && chat.members.find((member) => member.id === player.id),
+    );
+    if (chat) {
+      dispatch(setCurrentChat(chat));
+    } else dispatch(setCurrentChat(openedChat));
+  };
   const profileAvatar = player
     ? profileUser.user_avatar
       ? profileUser.user_avatar
@@ -168,7 +198,7 @@ const ProfilePage = () => {
     : updatedUserData.user_avatar
       ? updatedUserData.user_avatar
       : profileUser?.user_avatar;
-  console.log(profileUser);
+
   return (
     <>
       <Modal />
@@ -266,7 +296,7 @@ const ProfilePage = () => {
                       Мои друзья
                     </CommonButton>
 
-                    <CommonButton>
+                    <CommonButton onClick={() => dispatch(changeChatState(true))}>
                       <img src={sendMessageIcon} alt='' />
                       Мои сообщения
                     </CommonButton>
@@ -277,7 +307,7 @@ const ProfilePage = () => {
                       <img src={addFriendsIcon} alt='' />
                       Добавить в друзья
                     </CommonButton>
-                    <CommonButton>
+                    <CommonButton onClick={handleChatOpen}>
                       <img src={sendMessageIcon} alt='' />
                       Cообщение
                     </CommonButton>

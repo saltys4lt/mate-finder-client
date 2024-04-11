@@ -106,6 +106,7 @@ const TeamCreationPage = () => {
   console.log(roles);
   const changeOwnerRole = (e: React.ChangeEvent<HTMLInputElement>) => {
     setOwnerRole(e.target.value);
+    if (roles.includes(e.target.value)) setRoles(roles.filter((role) => role !== e.target.value));
   };
 
   const ownerRoleState = (role: string) => {
@@ -163,32 +164,41 @@ const TeamCreationPage = () => {
               <GameAndStatus style={firstStep}>
                 <TeamData>
                   <TeamDataText>Игра</TeamDataText>
-                  <Select
-                    maxMenuHeight={130}
-                    isSearchable={false}
-                    styles={{
-                      ...customStyles,
-                      control: (base: any) => ({
-                        ...base,
-                        width: '300px',
-                        background: '#181818',
-                        boxShadow: '0',
-                        borderColor: '#484848',
-                        cursor: 'pointer',
-                        '&:hover': {
-                          borderColor: '#808080',
-                        },
-                      }),
-                    }}
-                    options={availableGames}
-                    value={game}
-                    onChange={handleGameChange}
-                    components={{
-                      Option: CustomOption,
-                      SingleValue: CustomSingleValue,
-                    }}
-                    placeholder='Выбор игры'
-                  ></Select>
+                  <div style={{ display: 'flex', alignItems: 'center', columnGap: '5px', color: 'var(--main-text-color)' }}>
+                    <Select
+                      maxMenuHeight={130}
+                      isSearchable={false}
+                      styles={{
+                        ...customStyles,
+                        control: (base: any) => ({
+                          ...base,
+                          width: '300px',
+                          background: '#181818',
+                          boxShadow: '0',
+                          borderColor: '#484848',
+                          cursor: 'pointer',
+                          '&:hover': {
+                            borderColor: '#808080',
+                          },
+                        }),
+                      }}
+                      options={availableGames}
+                      value={game}
+                      onChange={handleGameChange}
+                      components={{
+                        Option: CustomOption,
+                        SingleValue: CustomSingleValue,
+                      }}
+                      placeholder='Выбор игры'
+                    ></Select>
+                    <ErrorOutlineContainer>
+                      <ErrorOutline />
+                      <GameExplenation>
+                        Список достпуных игр зависит от ваших игровых профелей. Если вы не регистрировали профиль с какой-то игрой, то и
+                        создать команду с этой игрой нельзя.
+                      </GameExplenation>
+                    </ErrorOutlineContainer>
+                  </div>
                 </TeamData>
 
                 <TeamData>
@@ -475,6 +485,20 @@ const TypeExplenation = styled.p`
   box-shadow: 0px 1px 10px #333333;
 `;
 
+const GameExplenation = styled(TypeExplenation)`
+  display: none;
+  width: 200px;
+  font-size: 14px;
+  font-weight: 400;
+  position: absolute;
+  top: -13em;
+  right: -10em;
+  background-color: #333333;
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0px 1px 10px #333333;
+`;
+
 const TeamDataText = styled.h4`
   font-size: 18px;
   color: var(--main-text-color);
@@ -528,7 +552,7 @@ const StepButtons = styled.div`
 
 const RolesContainer = styled.div`
   display: flex;
-  width: 90%;
+  width: 80%;
   justify-content: center;
 
   column-gap: 10px;
