@@ -85,9 +85,9 @@ const userSlice = createSlice({
       state.fetchUserStatus = 'fulfilled';
       const Toast = Swal.mixin({
         toast: true,
-        position: 'bottom-end',
+        position: 'bottom-start',
         showConfirmButton: false,
-        timer: 3000,
+        timer: 2500,
         timerProgressBar: true,
         didOpen: (toast) => {
           toast.onmouseenter = Swal.stopTimer;
@@ -96,8 +96,8 @@ const userSlice = createSlice({
       });
       Toast.fire({
         icon: 'success',
-        title: 'Signed in successfully',
-        text: `Welcome, ${action.payload.nickname}`,
+        title: 'Успешный вход!',
+        text: `Добро пожаловать, ${action.payload.nickname}`,
       });
       if (action.payload) {
         state.checkUserStatus = 'fulfilled';
@@ -111,10 +111,10 @@ const userSlice = createSlice({
       state.fetchUserError = action.payload as string;
       Swal.fire({
         icon: 'error',
-        title: 'Login Failure',
+        title: 'Ошибка входа',
         text: state.fetchUserError,
         showConfirmButton: true,
-        confirmButtonText: 'Get It',
+        confirmButtonText: 'Понял',
       });
     });
 
@@ -125,10 +125,10 @@ const userSlice = createSlice({
       state.createUserStatus = 'fulfilled';
       Swal.fire({
         icon: 'success',
-        title: `Registration Successful`,
-        text: `User ${action.payload} was created`,
+        title: `Успех!`,
+        text: `Пользователь ${action.payload} создан`,
         showConfirmButton: false,
-        timer: 1500,
+        timer: 2000,
       });
     });
     builder.addCase(createUser.rejected, (state, action) => {
@@ -137,7 +137,7 @@ const userSlice = createSlice({
 
       Swal.fire({
         icon: 'error',
-        title: 'Registration Failure',
+        title: 'Ошибка регистрации!',
         text: state.createUserError,
         showConfirmButton: true,
         timer: 3000,
@@ -185,7 +185,7 @@ const userSlice = createSlice({
         Toast.fire({
           icon: 'success',
           title: 'Ура!',
-          text: `Ваш игровой профиль по CS2 успешно создан!`,
+          text: `Ваш игровой профиль для Counter-Strike 2 успешно создан!`,
         });
       }
     });

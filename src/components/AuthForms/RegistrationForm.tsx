@@ -68,36 +68,36 @@ const RegistrationForm = () => {
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <FormContainer>
-        <h3>Registration</h3>
+        <h3>Регистрация</h3>
         <TextField
           {...register('nickname', {
-            required: { value: true, message: 'nickname is required' },
-            maxLength: { value: 10, message: 'max length is 10' },
-            minLength: { value: 3, message: 'min length is 3' },
+            required: { value: true, message: 'Логин обязателен' },
+            maxLength: { value: 10, message: 'Максимум 10 символов' },
+            minLength: { value: 3, message: 'Минимум 3 символа' },
           })}
           size='small'
-          label='Nickname'
+          label='Логин'
           color='secondary'
           variant='filled'
         ></TextField>
-        {errors.nickname?.type === 'required' && <ErrorAlert role='alert'>Nickname is required</ErrorAlert>}
-        {errors.nickname?.type === 'maxLength' && <ErrorAlert role='alert'>Max length is 10</ErrorAlert>}
-        {errors.nickname?.type === 'minLength' && <ErrorAlert role='alert'>Min length is 3</ErrorAlert>}
+        {errors.nickname?.type === 'required' && <ErrorAlert role='alert'>{errors.nickname.message}</ErrorAlert>}
+        {errors.nickname?.type === 'maxLength' && <ErrorAlert role='alert'>{errors.nickname.message}</ErrorAlert>}
+        {errors.nickname?.type === 'minLength' && <ErrorAlert role='alert'>{errors.nickname.message}</ErrorAlert>}
 
         <TextField
           {...register('email', {
             required: true,
             pattern: {
               value: /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/,
-              message: 'Incorrect email',
+              message: 'Неверный формат почты',
             },
           })}
           size='small'
-          label='Email'
+          label='Почта'
           color='secondary'
           variant='filled'
         ></TextField>
-        {errors.email?.type === 'required' && <ErrorAlert role='alert'>Email is required</ErrorAlert>}
+        {errors.email?.type === 'required' && <ErrorAlert role='alert'>Почта обязательна</ErrorAlert>}
         {errors.email?.type === 'pattern' && <ErrorAlert role='alert'>{errors.email.message}</ErrorAlert>}
 
         <TextField
@@ -108,36 +108,40 @@ const RegistrationForm = () => {
             minLength: 6,
           })}
           size='small'
-          label='Password'
+          label='Пароль'
           color='secondary'
           variant='filled'
         ></TextField>
-        {errors.password?.type === 'required' && <ErrorAlert role='alert'>Password is required</ErrorAlert>}
-        {errors.password?.type === 'maxLength' && <ErrorAlert role='alert'>Max length is 15</ErrorAlert>}
-        {errors.password?.type === 'minLength' && <ErrorAlert role='alert'>Min length is 6</ErrorAlert>}
+        {errors.password?.type === 'required' && <ErrorAlert role='alert'>Пароль обязателен</ErrorAlert>}
+        {errors.password?.type === 'maxLength' && <ErrorAlert role='alert'>Максимум 15 символов</ErrorAlert>}
+        {errors.password?.type === 'minLength' && <ErrorAlert role='alert'>Минимум 6 символов</ErrorAlert>}
         <DatePicker
           format='DD/MM/YYYY'
-          label='Birthday'
+          label='Дата рождения'
           value={birthday}
           onChange={(date) => {
             setBirthday(date);
             setValue('birthday', date as Dayjs);
           }}
         />
-        {birthday && dayjs().year() - birthday.year() < 10 ? <ErrorAlert role='alert'>Min age is 12</ErrorAlert> : ''}
+        {birthday && dayjs().year() - birthday.year() < 10 ? <ErrorAlert role='alert'>Минимальный возрост 12 лет</ErrorAlert> : ''}
 
         <RadioGroup row defaultValue={'male'}>
-          <FormControlLabel value='male' control={<Radio color='secondary' {...register('gender', { required: true })} />} label='Male' />
+          <FormControlLabel
+            value='male'
+            control={<Radio color='secondary' {...register('gender', { required: true })} />}
+            label='Мужской'
+          />
           <FormControlLabel
             value='female'
             control={<Radio color='secondary' {...register('gender', { required: true })} />}
-            label='Female'
+            label='Женский'
           />
         </RadioGroup>
-        {errors.gender?.type === 'required' && <ErrorAlert role='alert'>Gender is required</ErrorAlert>}
+        {errors.gender?.type === 'required' && <ErrorAlert role='alert'>Пол обязателен</ErrorAlert>}
         <FormButtons>
-          <RegButton type='submit'>Get started</RegButton>
-          <LoginButton onClick={switchToLogin}>Have an account</LoginButton>
+          <RegButton type='submit'>Начнем</RegButton>
+          <LoginButton onClick={switchToLogin}>Уже есть аккаунт</LoginButton>
         </FormButtons>
       </FormContainer>
     </form>
@@ -187,7 +191,8 @@ const LoginButton = styled.button`
   padding: 5px 15px;
   border-radius: 3px;
   transition: all 0.2s ease-in-out;
-
+  background-color: #e1e1e1;
+  border: 1px solid #969696;
   &:hover {
     background-color: #c3c3c3;
     transform: scale(1.05);

@@ -51,7 +51,7 @@ function App() {
     };
   }, []);
   const [loaded, setLoaded] = useState(false);
-  console.log(check);
+
   return (
     <BrowserRouter>
       <GlobalStyle />
@@ -59,7 +59,7 @@ function App() {
         <Loader />
       ) : (
         <AppContainer>
-          {check === 'fulfilled' && <>{(user?.cs2_data?.roles.length !== 0 || user?.valorant_data) && <Chat />}</>}
+          {(user?.cs2_data && user.cs2_data.roles.length !== 0) || user?.valorant_data ? <Chat /> : ''}
 
           <Header />
           <AppRouter />

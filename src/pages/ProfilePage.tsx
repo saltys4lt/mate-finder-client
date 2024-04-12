@@ -156,7 +156,8 @@ const ProfilePage = () => {
       showCancelButton: true,
       confirmButtonColor: '#d33',
       cancelButtonColor: '#a4a4a4',
-      confirmButtonText: 'Leave',
+      confirmButtonText: 'Подтвердить',
+      cancelButtonText: 'Отмена',
     }).then((result) => {
       if (result.isConfirmed) {
         dispatch(deleteCs2Data());
@@ -204,118 +205,127 @@ const ProfilePage = () => {
       <Modal />
       <ProfileHeader>
         <Container>
-          <MainDataContainer>
-            <ProfileAvatarContainer>
-              <ProfileAvatar $avatarIsLoading={avatarIsLoading} src={profileAvatar} alt='' />
-              {editMode && (
-                <>
-                  <ChangeAvatarButton onClick={openFileExplorer}>
-                    <ChangeAvatarButtonIcon src={editIcon} alt='' />
-                  </ChangeAvatarButton>
-                  <input
-                    style={{ display: 'none' }}
-                    id='file__input'
-                    className='file__upload__input'
-                    type='file'
-                    accept='image/png, image/jpeg'
-                    onChange={(e) => {
-                      uploadAvatar(e);
-                    }}
-                  />
-                </>
-              )}
-              {avatarIsLoading && (
-                <CircularProgress
-                  color='error'
-                  size={'50px'}
-                  sx={{
-                    zIndex: 3,
-                    position: 'absolute',
-                    inset: '0',
-                    margin: 'auto',
-                  }}
-                />
-              )}
-            </ProfileAvatarContainer>
-            <UserDataContainer>
-              <UserData>
-                <UserNickname>{profileUser?.nickname}</UserNickname>
-                <UserAge>Возраст: {dateToUserAge(profileUser?.birthday as string)}</UserAge>
-
-                <UserDataButtons>
-                  <CommonButton
-                    onClick={() => {
-                      copyCurrentUrl();
-                      setUrlTextCopied(true);
-                    }}
-                  >
-                    <img src={linkIcon} alt='' />
-                    Скопировать ссылку
-                  </CommonButton>
-                  {player && (
-                    <CommonButton>
-                      <img src={groupInviteIcon} alt='' />
-                      Пригласить в команду
-                    </CommonButton>
+          {!profileUser ? (
+            <></>
+          ) : (
+            <>
+              <MainDataContainer>
+                <ProfileAvatarContainer>
+                  <ProfileAvatar $avatarIsLoading={avatarIsLoading} src={profileAvatar} alt='' />
+                  {editMode && (
+                    <>
+                      <ChangeAvatarButton onClick={openFileExplorer}>
+                        <ChangeAvatarButtonIcon src={editIcon} alt='' />
+                      </ChangeAvatarButton>
+                      <input
+                        style={{ display: 'none' }}
+                        id='file__input'
+                        className='file__upload__input'
+                        type='file'
+                        accept='image/png, image/jpeg'
+                        onChange={(e) => {
+                          uploadAvatar(e);
+                        }}
+                      />
+                    </>
                   )}
-                  {urlTextCopied && <CopyUrlText>Ссылка скопирована!</CopyUrlText>}
-                </UserDataButtons>
-              </UserData>
-            </UserDataContainer>
-          </MainDataContainer>
-          <FooterUserData>
-            {!player &&
-              (editMode ? (
-                <SocialButtons>
-                  <CancelEditButton onClick={cancelEdit}>
-                    <img src={closeCross} alt='' />
-                    Отменить изменения
-                  </CancelEditButton>
-                  <ConfirmEditButton onClick={confirmEdit} disabled={!updatedUserData.description && !updatedUserData.user_avatar}>
-                    <img src={confirmEditIcon} alt='' />
-                    Подтвердить изменения
-                  </ConfirmEditButton>
-                </SocialButtons>
-              ) : (
-                <EditProfileButton
-                  onClick={() => {
-                    setEditMode(!editMode);
-                    setUpdatedUserData({ user_avatar: profileUser.user_avatar as string, description: profileUser.description as string });
-                  }}
-                >
-                  <img src={editProfileIcon} alt='' />
-                  Редактировать профиль
-                </EditProfileButton>
-              ))}
-            {!editMode && (
-              <SocialButtons>
-                {!player ? (
-                  <>
-                    <CommonButton>
-                      <img src={FriendsIcon} alt='' />
-                      Мои друзья
-                    </CommonButton>
+                  {avatarIsLoading && (
+                    <CircularProgress
+                      color='error'
+                      size={'50px'}
+                      sx={{
+                        zIndex: 3,
+                        position: 'absolute',
+                        inset: '0',
+                        margin: 'auto',
+                      }}
+                    />
+                  )}
+                </ProfileAvatarContainer>
+                <UserDataContainer>
+                  <UserData>
+                    <UserNickname>{profileUser?.nickname}</UserNickname>
+                    <UserAge>Возраст: {dateToUserAge(profileUser?.birthday as string)}</UserAge>
 
-                    <CommonButton onClick={() => dispatch(changeChatState(true))}>
-                      <img src={sendMessageIcon} alt='' />
-                      Мои сообщения
-                    </CommonButton>
-                  </>
-                ) : (
-                  <>
-                    <CommonButton>
-                      <img src={addFriendsIcon} alt='' />
-                      Добавить в друзья
-                    </CommonButton>
-                    <CommonButton onClick={handleChatOpen}>
-                      <img src={sendMessageIcon} alt='' />
-                      Cообщение
-                    </CommonButton>
-                  </>
+                    <UserDataButtons>
+                      <CommonButton
+                        onClick={() => {
+                          copyCurrentUrl();
+                          setUrlTextCopied(true);
+                        }}
+                      >
+                        <img src={linkIcon} alt='' />
+                        Скопировать ссылку
+                      </CommonButton>
+                      {player && (
+                        <CommonButton>
+                          <img src={groupInviteIcon} alt='' />
+                          Пригласить в команду
+                        </CommonButton>
+                      )}
+                      {urlTextCopied && <CopyUrlText>Ссылка скопирована!</CopyUrlText>}
+                    </UserDataButtons>
+                  </UserData>
+                </UserDataContainer>
+              </MainDataContainer>
+              <FooterUserData>
+                {!player &&
+                  (editMode ? (
+                    <SocialButtons>
+                      <CancelEditButton onClick={cancelEdit}>
+                        <img src={closeCross} alt='' />
+                        Отменить изменения
+                      </CancelEditButton>
+                      <ConfirmEditButton onClick={confirmEdit} disabled={!updatedUserData.description && !updatedUserData.user_avatar}>
+                        <img src={confirmEditIcon} alt='' />
+                        Подтвердить изменения
+                      </ConfirmEditButton>
+                    </SocialButtons>
+                  ) : (
+                    <EditProfileButton
+                      onClick={() => {
+                        setEditMode(!editMode);
+                        setUpdatedUserData({
+                          user_avatar: profileUser.user_avatar as string,
+                          description: profileUser.description as string,
+                        });
+                      }}
+                    >
+                      <img src={editProfileIcon} alt='' />
+                      Редактировать профиль
+                    </EditProfileButton>
+                  ))}
+                {!editMode && (
+                  <SocialButtons>
+                    {!player ? (
+                      <>
+                        <CommonButton>
+                          <img src={FriendsIcon} alt='' />
+                          Мои друзья
+                        </CommonButton>
+
+                        <CommonButton onClick={() => dispatch(changeChatState(true))}>
+                          <img src={sendMessageIcon} alt='' />
+                          Мои сообщения
+                        </CommonButton>
+                      </>
+                    ) : (
+                      <>
+                        <CommonButton>
+                          <img src={addFriendsIcon} alt='' />
+                          Добавить в друзья
+                        </CommonButton>
+                        <CommonButton onClick={handleChatOpen}>
+                          <img src={sendMessageIcon} alt='' />
+                          Cообщение
+                        </CommonButton>
+                      </>
+                    )}
+                  </SocialButtons>
                 )}
-              </SocialButtons>
-            )}
-          </FooterUserData>
+              </FooterUserData>
+            </>
+          )}
         </Container>
       </ProfileHeader>
       <Container>

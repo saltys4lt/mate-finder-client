@@ -1,16 +1,16 @@
-import React, { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { RootState, useAppDispatch } from '../../redux';
 import { changeChatState } from '../../redux/modalSlice';
 import { ioSocket } from '../../api/webSockets/socket';
-
+import { useNavigate } from 'react-router-dom';
 import CommonInput from '../UI/CommonInput';
 import UserMessage from './UserMessage';
 import PlayerMessage from './PlayerMessage';
 import { Message } from '../../types/Message';
 
-import { getChat, getMessage, resetChats, setCurrentChat, updateChatMessages, updateMessage } from '../../redux/chatSlice';
+import { getChat, getMessage, setCurrentChat, updateChatMessages, updateMessage } from '../../redux/chatSlice';
 import { Chat as IChat } from '../../types/Chat';
 import ClientUser from '../../types/ClientUser';
 import fetchChats from '../../redux/chatThunks/fetchChats';
@@ -26,7 +26,7 @@ const Chat = () => {
   const chats: IChat[] = useSelector((state: RootState) => state.chatReducer.chats) as IChat[];
   const fetchChatsStatus = useSelector((state: RootState) => state.chatReducer.fetchChatsStatus);
   const currentChat = useSelector((state: RootState) => state.chatReducer.currentChat);
-
+  const navigate = useNavigate();
   const user: ClientUser = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
   const messageContainer = useRef<HTMLDivElement>(null);
   const [message, setMessage] = useState<string>('');
@@ -121,7 +121,6 @@ const Chat = () => {
     }
     ioSocket.emit('connection');
     return () => {
-      dispatch(resetChats());
       dispatch(changeChatState(false));
       ioSocket.removeAllListeners();
     };
@@ -219,7 +218,11 @@ const Chat = () => {
           {currentChat ? (
             !currentChat.team ? (
               <>
-                <CurrentChatHeader>
+                <CurrentChatHeader
+                  onClick={() => {
+                    navigate(`/profile/${currentChat.members.find((member) => member.id !== user?.id)?.nickname}`);
+                  }}
+                >
                   <img
                     src={
                       currentChat.members.find((member) => member.id !== user?.id)?.user_avatar
@@ -446,6 +449,10 @@ const CurrentChatHeader = styled.div`
     border-radius: 50%;
 
     border: 2px solid;
+    cursor: pointer;
+  }
+  span {
+    cursor: pointer;
   }
 `;
 

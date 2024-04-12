@@ -54,7 +54,11 @@ const Cs2PlayerListItem: FC<ListItemProps> = ({ player }) => {
   };
 
   return (
-    <ListItemContainer>
+    <ListItemContainer
+      onClick={() => {
+        navigate(`/profile/${player.nickname}`);
+      }}
+    >
       <PlayerInfo>
         <PlayerInfoHeader>
           <PlayerLvl src={player.cs2_data?.lvlImg} />
@@ -100,8 +104,8 @@ const Cs2PlayerListItem: FC<ListItemProps> = ({ player }) => {
       <ListItemsButtons>
         <CommonButton
           style={{ width: 'auto' }}
-          onClick={() => {
-            // ioSocket.emit('message', JSON.stringify({ lox: 1 }));
+          onClick={(e) => {
+            e.stopPropagation();
             handleChatOpen();
           }}
         >
@@ -112,7 +116,7 @@ const Cs2PlayerListItem: FC<ListItemProps> = ({ player }) => {
             navigate(`/profile/${player.nickname}`);
           }}
         >
-          Открыть профиль
+          Добавить в друзья
         </CommonButton>
       </ListItemsButtons>
     </ListItemContainer>
@@ -128,6 +132,22 @@ const ListItemContainer = styled.div`
   padding: 15px 10px;
   background-color: #1f1f1f;
   border-radius: 5px;
+  &:hover {
+    cursor: pointer;
+    opacity: 0.7;
+  }
+  animation: fadeInOut 0.3s ease-in-out;
+  @keyframes fadeInOut {
+    0% {
+      opacity: 0;
+      transform: translateY(40px);
+    }
+
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 `;
 
 const PlayerAvatar = styled.img`

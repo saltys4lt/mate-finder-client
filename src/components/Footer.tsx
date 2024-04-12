@@ -13,7 +13,7 @@ const Footer = () => {
       <Container>
         <FooterContainer>
           <FooterColumn>
-            <FooterTitle>Contact Me</FooterTitle>
+            <FooterTitle>Контакты</FooterTitle>
 
             <ContactsItem href='https://t.me/ahrisai' target='_blank'>
               <ContactsLink>@ahrisai</ContactsLink>
@@ -31,7 +31,7 @@ const Footer = () => {
             </ContactsItem>
           </FooterColumn>
           <FooterColumn>
-            <FooterTitle>If you don't need money lend me a cup of coffee plz :3 </FooterTitle>
+            <FooterTitle>Если денег не жалко, то подкинь на кофе :3 </FooterTitle>
             <ContactsItem href='https://www.buymeacoffee.com/ahrisai' target='_blank'>
               <ContactsLink>buymeacoffee.com/ahrisai</ContactsLink>
               <CoffeeIcon src={coffeeIcon} />

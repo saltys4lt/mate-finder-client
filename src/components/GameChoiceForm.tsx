@@ -38,7 +38,7 @@ const GameChoiceForm = () => {
 
   return (
     <ModalContainer>
-      <h3>Choose a game</h3>
+      <h3>Выбор игры</h3>
       <GamesContainer>
         <GameItem $isActive={String(game.valorant)} onClick={() => pickGame('valorant')}>
           <GameIcon src={valorantLogo} />
@@ -50,7 +50,7 @@ const GameChoiceForm = () => {
         </GameItem>
       </GamesContainer>
 
-      <ConfirmButton onClick={handleConfirm}>Confirm</ConfirmButton>
+      <ConfirmButton onClick={handleConfirm}>Подтвердить</ConfirmButton>
       <AttentionText>
         <span>Важно!</span> Ваш steam обязательно должен быть привязан к faceit, а также на этом аккаунте должно быть сыграно миннимум 3
         игры

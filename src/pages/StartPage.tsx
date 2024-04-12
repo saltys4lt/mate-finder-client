@@ -20,24 +20,24 @@ const StartPage = () => {
       <Main>
         <ContentContainer>
           <Content>
-            <ContentTitle>your new gameplay begins here</ContentTitle>
+            <ContentTitle>новый геймплей начинается здесь</ContentTitle>
             <div style={{ marginTop: '80px' }}>
               <SubContent>
-                <SubContentRed>Discover</SubContentRed> your gaming companions
+                <SubContentRed>Находи</SubContentRed> нужных людей
                 <ContentIcon src={matesIcon}></ContentIcon>
               </SubContent>
               <SubContent>
-                <SubContentRed>Unite</SubContentRed> with a team
+                <SubContentRed>Объединяйся</SubContentRed> с ними
                 <ContentIcon src={uniteIcon}></ContentIcon>
               </SubContent>
 
               <SubContent>
                 {' '}
-                <SubContentRed>Improve</SubContentRed> your game skills!
+                <SubContentRed>Выводи</SubContentRed> свой скилл на новый уровень!
                 <ContentIcon src={improveIcon}></ContentIcon>
               </SubContent>
             </div>
-            <StartButton onClick={openRegModal}>Let's start</StartButton>
+            <StartButton onClick={openRegModal}>Начать сейчас</StartButton>
           </Content>
         </ContentContainer>
       </Main>
