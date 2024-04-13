@@ -352,7 +352,7 @@ const OpenChatContainer = styled.div`
   background-color: #434343;
   width: 900px;
   height: 400px;
-  z-index: 10;
+  z-index: 11;
 `;
 const OpenChat = styled.div`
   width: 100%;

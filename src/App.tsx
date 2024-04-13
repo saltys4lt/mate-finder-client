@@ -12,6 +12,7 @@ import Footer from './components/Footer';
 import Header from './components/Header';
 import styled from 'styled-components';
 import Chat from './components/chat/Chat';
+import RequestsList from './components/RequestsList';
 
 function App() {
   const token = Cookies.get('token');
@@ -60,6 +61,11 @@ function App() {
       ) : (
         <AppContainer>
           {(user?.cs2_data && user.cs2_data.roles.length !== 0) || user?.valorant_data ? <Chat /> : ''}
+          {(user?.cs2_data && user.cs2_data.roles.length !== 0) || (user?.valorant_data && user.receivedRequests.length !== 0) ? (
+            <RequestsList />
+          ) : (
+            ''
+          )}
 
           <Header />
           <AppRouter />

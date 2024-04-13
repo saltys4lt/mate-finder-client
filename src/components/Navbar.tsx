@@ -15,6 +15,7 @@ const Navbar = () => {
   const dispatch = useAppDispatch();
 
   const user = useSelector((state: RootState) => state.userReducer.user);
+  console.log(user);
   const isAuth = useSelector((state: RootState) => state.userReducer.isAuth);
   const [isGameProfileExist, setIsGameProfileExist] = useState<boolean>(false);
   useEffect(() => {

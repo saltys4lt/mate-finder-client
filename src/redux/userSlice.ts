@@ -10,6 +10,9 @@ import updateCs2Data from './cs2Thunks/updateCs2Data';
 import updateUser from './userThunks/updateUser';
 import deleteCs2Data from './cs2Thunks/deleteCs2Data';
 import defaultUserAvatar from '../assets/images/default-avatar.png';
+import { FriendRequest } from '../types/friendRequest';
+import fetchUserFriendsData from './userThunks/fetchUserFriendsData';
+import { UserFriendsData } from '../types/userFriendsData';
 interface UserState {
   user: ClientUser | null;
   isAuth: boolean;
@@ -75,6 +78,24 @@ const userSlice = createSlice({
     },
     setUpdateFaceitStatus(state, action) {
       state.updateCs2DataStatus = action.payload;
+    },
+    setUserFriends(state, action: PayloadAction<ClientUser[]>) {
+      const user = state.user;
+      if (user) {
+        user.friends = action.payload;
+      }
+    },
+    setUserReceivedFriendRequests(state, action: PayloadAction<FriendRequest[]>) {
+      const user = state.user;
+      if (user) {
+        user.receivedRequests = action.payload;
+      }
+    },
+    setUserSentFriendRequests(state, action: PayloadAction<FriendRequest[]>) {
+      const user = state.user;
+      if (user) {
+        user.sentRequests = action.payload;
+      }
     },
   },
   extraReducers: (builder) => {
@@ -149,7 +170,6 @@ const userSlice = createSlice({
       state.checkUserStatus = 'pending';
     });
     builder.addCase(checkUserIsAuth.fulfilled, (state, action: PayloadAction<ClientUser | undefined>) => {
-      console.log(action.payload);
       if (action.payload) {
         state.checkUserStatus = 'fulfilled';
         const userAvatar = action.payload.user_avatar ? action.payload.user_avatar : defaultUserAvatar;
@@ -241,9 +261,27 @@ const userSlice = createSlice({
     builder.addCase(deleteCs2Data.rejected, (state) => {
       state.updateUserStatus = 'rejected';
     });
+
+    //user friends
+    builder.addCase(fetchUserFriendsData.fulfilled, (state, action: PayloadAction<UserFriendsData>) => {
+      if (state.user) {
+        state.user.friends = action.payload.friends;
+        state.user.receivedRequests = action.payload.receivedRequests;
+        state.user.sentRequests = action.payload.sentRequests;
+      }
+    });
   },
 });
 
-export const { resetUserStatus, changeIsAuth, setPendingForCheck, setGameCreationActive, setUpdateFaceitStatus } = userSlice.actions;
+export const {
+  resetUserStatus,
+  changeIsAuth,
+  setPendingForCheck,
+  setGameCreationActive,
+  setUpdateFaceitStatus,
+  setUserSentFriendRequests,
+  setUserFriends,
+  setUserReceivedFriendRequests,
+} = userSlice.actions;
 
 export default userSlice.reducer;

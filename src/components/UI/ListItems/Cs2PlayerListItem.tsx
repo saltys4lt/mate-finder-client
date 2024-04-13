@@ -13,6 +13,11 @@ import { setCurrentChat } from '../../../redux/chatSlice';
 import { Chat } from '../../../types/Chat';
 import ClientUser from '../../../types/ClientUser';
 import userDefaultAvatar from '../../../assets/images/default-avatar.png';
+import { sendFriendRequest } from '../../../api/friendsRequests/sendFriendRequest';
+import { setUserSentFriendRequests } from '../../../redux/userSlice';
+import sendedFriendReq from '../../../assets/images/sended-friend-req.png';
+import sendMessage from '../../../assets/images/send-message.png';
+
 interface ListItemProps {
   player: Player;
 }
@@ -23,7 +28,11 @@ const Cs2PlayerListItem: FC<ListItemProps> = ({ player }) => {
 
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-
+  const sendRequest = async (playerId: number) => {
+    await sendFriendRequest({ fromUserId: user.id, toUserId: playerId }).then((res) => {
+      dispatch(setUserSentFriendRequests(res));
+    });
+  };
   const handleChatOpen = () => {
     dispatch(changeChatState(true));
 
@@ -102,22 +111,34 @@ const Cs2PlayerListItem: FC<ListItemProps> = ({ player }) => {
         </MapsContainer>
       </PlayerInfo>
       <ListItemsButtons>
-        <CommonButton
-          style={{ width: 'auto' }}
+        <Cs2ItemButton
           onClick={(e) => {
             e.stopPropagation();
             handleChatOpen();
           }}
         >
-          Написать сообщение
-        </CommonButton>
-        <CommonButton
-          onClick={() => {
-            navigate(`/profile/${player.nickname}`);
-          }}
-        >
-          Добавить в друзья
-        </CommonButton>
+          <img src={sendMessage} alt='' />
+          Сообщение
+        </Cs2ItemButton>
+        {user.sentRequests.find((req) => req.fromUserId === user.id && req.toUserId === player.id) ? (
+          <Cs2ItemButton
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
+          >
+            <img src={sendedFriendReq} alt='' />
+            Запрос отправлен
+          </Cs2ItemButton>
+        ) : (
+          <Cs2ItemButton
+            onClick={(e) => {
+              e.stopPropagation();
+              sendRequest(player.id);
+            }}
+          >
+            Добавить в друзья
+          </Cs2ItemButton>
+        )}
       </ListItemsButtons>
     </ListItemContainer>
   );
@@ -134,7 +155,7 @@ const ListItemContainer = styled.div`
   border-radius: 5px;
   &:hover {
     cursor: pointer;
-    opacity: 0.7;
+    opacity: 0.9;
   }
   animation: fadeInOut 0.3s ease-in-out;
   @keyframes fadeInOut {
@@ -149,7 +170,12 @@ const ListItemContainer = styled.div`
     }
   }
 `;
-
+const Cs2ItemButton = styled(CommonButton)`
+  &:hover {
+    opacity: 1;
+    background-color: #2b2b2b;
+  }
+`;
 const PlayerAvatar = styled.img`
   width: 100px;
   height: 100px;

@@ -30,6 +30,8 @@ import editIcon from '../assets/images/edit.png';
 import linkIcon from '../assets/images/link.png';
 import groupInviteIcon from '../assets/images/group-invite.png';
 import closeCross from '../assets/images/close-cross.png';
+import sendedFriendReq from '../assets/images/sended-friend-req.png';
+
 import confirmEditIcon from '../assets/images/confirm-edit.png';
 import editProfileIcon from '../assets/images/edit-profile.png';
 import FriendsIcon from '../assets/images/friends.png';
@@ -41,6 +43,8 @@ import dropDownArrow from '../assets/images/drop-down-arrow.png';
 import headerBg from '../assets/images/profile-bg.webp';
 import { setCurrentChat } from '../redux/chatSlice';
 import { Chat } from '../types/Chat';
+import { sendFriendRequest } from '../api/friendsRequests/sendFriendRequest';
+import { setUserSentFriendRequests } from '../redux/userSlice';
 const ProfilePage = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -192,6 +196,11 @@ const ProfilePage = () => {
       dispatch(setCurrentChat(chat));
     } else dispatch(setCurrentChat(openedChat));
   };
+  const sendRequest = async (playerId: number) => {
+    await sendFriendRequest({ fromUserId: user.id, toUserId: playerId }).then((res) => {
+      dispatch(setUserSentFriendRequests(res));
+    });
+  };
   const profileAvatar = player
     ? profileUser.user_avatar
       ? profileUser.user_avatar
@@ -311,10 +320,24 @@ const ProfilePage = () => {
                       </>
                     ) : (
                       <>
-                        <CommonButton>
-                          <img src={addFriendsIcon} alt='' />
-                          Добавить в друзья
-                        </CommonButton>
+                        {user.sentRequests.find((req) => req.fromUserId === user.id && req.toUserId === player.id) ? (
+                          <CommonButton>
+                            <img src={sendedFriendReq} alt='' />
+                            Заявка отправлена
+                          </CommonButton>
+                        ) : (
+                          <CommonButton>
+                            <img
+                              src={addFriendsIcon}
+                              alt=''
+                              onClick={() => {
+                                sendRequest(player.id);
+                              }}
+                            />
+                            Добавить в друзья
+                          </CommonButton>
+                        )}
+
                         <CommonButton onClick={handleChatOpen}>
                           <img src={sendMessageIcon} alt='' />
                           Cообщение
