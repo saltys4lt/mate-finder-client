@@ -10,9 +10,9 @@ import updateCs2Data from './cs2Thunks/updateCs2Data';
 import updateUser from './userThunks/updateUser';
 import deleteCs2Data from './cs2Thunks/deleteCs2Data';
 import defaultUserAvatar from '../assets/images/default-avatar.png';
-import { FriendRequest } from '../types/friendRequest';
+import { FriendRequestWithAction } from '../types/friendRequest';
 import fetchUserFriendsData from './userThunks/fetchUserFriendsData';
-import { UserFriendsData } from '../types/userFriendsData';
+import { UserFriendsData } from '../types/UserFriendsData';
 interface UserState {
   user: ClientUser | null;
   isAuth: boolean;
@@ -79,22 +79,37 @@ const userSlice = createSlice({
     setUpdateFaceitStatus(state, action) {
       state.updateCs2DataStatus = action.payload;
     },
-    setUserFriends(state, action: PayloadAction<ClientUser[]>) {
-      const user = state.user;
-      if (user) {
-        user.friends = action.payload;
+    setUserFriends(state, action: PayloadAction<ClientUser>) {
+      if (state.user) {
+        state.user.friends.push(action.payload);
+        const isUserReceived = state.user.receivedRequests.find((req) => req.fromUser.nickname === action.payload.nickname);
+        if (isUserReceived) {
+          state.user.receivedRequests = state.user.receivedRequests.filter((req) => req.fromUser.nickname !== action.payload.nickname);
+        } else {
+          state.user.sentRequests = state.user.sentRequests.filter((req) => req.fromUser.nickname !== action.payload.nickname);
+        }
       }
     },
-    setUserReceivedFriendRequests(state, action: PayloadAction<FriendRequest[]>) {
-      const user = state.user;
-      if (user) {
-        user.receivedRequests = action.payload;
+    setUserReceivedFriendRequests(state, action: PayloadAction<FriendRequestWithAction>) {
+      if (state.user) {
+        if (action.payload.denied === -1) {
+          state.user.receivedRequests.push(action.payload.req);
+        } else {
+          const fr = action.payload.req;
+          console.log();
+          state.user = { ...state.user, receivedRequests: state.user.receivedRequests.filter((req) => req.fromUserId !== fr.fromUserId) };
+        }
       }
     },
-    setUserSentFriendRequests(state, action: PayloadAction<FriendRequest[]>) {
-      const user = state.user;
-      if (user) {
-        user.sentRequests = action.payload;
+    setUserSentFriendRequests(state, action: PayloadAction<FriendRequestWithAction>) {
+      if (state.user) {
+        if (action.payload.denied === -1) {
+          state.user.sentRequests.push(action.payload.req);
+        } else {
+          const fr = action.payload.req;
+
+          state.user = { ...state.user, sentRequests: state.user.sentRequests.filter((req) => req.toUserId !== fr.toUserId) };
+        }
       }
     },
   },

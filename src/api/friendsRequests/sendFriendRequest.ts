@@ -1,10 +1,6 @@
-import axios from 'axios';
-import { FriendRequest } from '../../types/friendRequest';
-const URL = import.meta.env.VITE_BASE_URL;
+import { ioSocket } from '../webSockets/socket';
 
-export const sendFriendRequest = async (request: { fromUserId: number; toUserId: number }): Promise<FriendRequest[]> => {
-  const data = await axios.post(`${URL}/friendRequest`, request, { withCredentials: true }).then((res) => {
-    return res.data;
-  });
-  return data;
+export const sendFriendRequest = (request: { fromUserId: number; toUserId: number }) => {
+  console.log('232');
+  ioSocket.emit('friendRequest', request);
 };

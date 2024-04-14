@@ -14,9 +14,10 @@ import { Chat } from '../../../types/Chat';
 import ClientUser from '../../../types/ClientUser';
 import userDefaultAvatar from '../../../assets/images/default-avatar.png';
 import { sendFriendRequest } from '../../../api/friendsRequests/sendFriendRequest';
-import { setUserSentFriendRequests } from '../../../redux/userSlice';
+import addFriendIcon from '../../../assets/images/add-friend.png';
 import sendedFriendReq from '../../../assets/images/sended-friend-req.png';
 import sendMessage from '../../../assets/images/send-message.png';
+import inFriendsIcon from '../../../assets/images/in-friends-icon.png';
 
 interface ListItemProps {
   player: Player;
@@ -28,10 +29,8 @@ const Cs2PlayerListItem: FC<ListItemProps> = ({ player }) => {
 
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const sendRequest = async (playerId: number) => {
-    await sendFriendRequest({ fromUserId: user.id, toUserId: playerId }).then((res) => {
-      dispatch(setUserSentFriendRequests(res));
-    });
+  const sendRequest = (playerId: number) => {
+    sendFriendRequest({ fromUserId: user.id, toUserId: playerId });
   };
   const handleChatOpen = () => {
     dispatch(changeChatState(true));
@@ -76,6 +75,12 @@ const Cs2PlayerListItem: FC<ListItemProps> = ({ player }) => {
           <PlayerAge>
             {getAgeString(player.age)}, пол: {player.gender === 'male' ? 'Мужской' : 'Женский'}
           </PlayerAge>
+          {user.friends.find((friend) => friend.id === player.id) && (
+            <InFriendLabel>
+              <img src={inFriendsIcon} alt='' />
+              Ваш друг
+            </InFriendLabel>
+          )}
         </PlayerInfoHeader>
         <PlayerInfoInner>
           <PlayerAvatar src={player.user_avatar ? player.user_avatar : userDefaultAvatar} />
@@ -118,8 +123,9 @@ const Cs2PlayerListItem: FC<ListItemProps> = ({ player }) => {
           }}
         >
           <img src={sendMessage} alt='' />
-          Сообщение
+          Написать сообщение
         </Cs2ItemButton>
+
         {user.sentRequests.find((req) => req.fromUserId === user.id && req.toUserId === player.id) ? (
           <Cs2ItemButton
             onClick={(e) => {
@@ -129,6 +135,17 @@ const Cs2PlayerListItem: FC<ListItemProps> = ({ player }) => {
             <img src={sendedFriendReq} alt='' />
             Запрос отправлен
           </Cs2ItemButton>
+        ) : user.receivedRequests.find((req) => req.toUserId === user.id && req.fromUserId === player.id) ? (
+          <Cs2ItemButton
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
+          >
+            <img src={sendedFriendReq} alt='' />
+            Ждет вашего ответа
+          </Cs2ItemButton>
+        ) : user.friends.find((friend) => friend.id === player.id) ? (
+          <></>
         ) : (
           <Cs2ItemButton
             onClick={(e) => {
@@ -136,6 +153,7 @@ const Cs2PlayerListItem: FC<ListItemProps> = ({ player }) => {
               sendRequest(player.id);
             }}
           >
+            <img src={addFriendIcon} alt='' />
             Добавить в друзья
           </Cs2ItemButton>
         )}
@@ -146,10 +164,11 @@ const Cs2PlayerListItem: FC<ListItemProps> = ({ player }) => {
 
 const ListItemContainer = styled.div`
   display: flex;
+
   align-items: center;
   column-gap: 20px;
   width: 100%;
-
+  justify-content: space-between;
   padding: 15px 10px;
   background-color: #1f1f1f;
   border-radius: 5px;
@@ -170,6 +189,12 @@ const ListItemContainer = styled.div`
     }
   }
 `;
+const InFriendLabel = styled(CommonButton)`
+  &:hover {
+    background-color: #181818;
+    border-color: #565656;
+  }
+`;
 const Cs2ItemButton = styled(CommonButton)`
   &:hover {
     opacity: 1;
@@ -188,7 +213,7 @@ const PlayerInfoInner = styled.div`
   column-gap: 20px;
 `;
 const PlayerInfo = styled.div`
-  width: 100%;
+  width: 60%;
   display: flex;
   flex-direction: column;
 `;
@@ -270,7 +295,7 @@ const Maps = styled(Roles)`
 `;
 
 const ListItemsButtons = styled.div`
-  width: 30%;
+  width: 35%;
   display: flex;
   flex-direction: column;
   align-items: center;

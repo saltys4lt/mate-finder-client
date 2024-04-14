@@ -61,11 +61,7 @@ function App() {
       ) : (
         <AppContainer>
           {(user?.cs2_data && user.cs2_data.roles.length !== 0) || user?.valorant_data ? <Chat /> : ''}
-          {(user?.cs2_data && user.cs2_data.roles.length !== 0) || (user?.valorant_data && user.receivedRequests.length !== 0) ? (
-            <RequestsList />
-          ) : (
-            ''
-          )}
+          {(user?.cs2_data && user.cs2_data.roles.length !== 0) || user?.valorant_data ? <RequestsList /> : ''}
 
           <Header />
           <AppRouter />

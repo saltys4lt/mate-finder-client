@@ -8,3 +8,8 @@ export interface FriendRequest {
   fromUser: ClientUser;
   toUser: ClientUser;
 }
+
+export interface FriendRequestWithAction {
+  req: FriendRequest;
+  denied: 0 | 1 | -1;
+}

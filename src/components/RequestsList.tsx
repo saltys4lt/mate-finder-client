@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import requestIcon from '../assets/images/friends.png';
 import closeCross from '../assets/images/close-cross.png';
@@ -7,64 +7,145 @@ import { useSelector } from 'react-redux';
 import { RootState, useAppDispatch } from '../redux';
 import ClientUser from '../types/ClientUser';
 import { changeReqsState } from '../redux/modalSlice';
+import CommonButton from './UI/CommonButton';
+import { friendRequestAnswer } from '../api/friendsRequests/friendRequestAnswer';
+import { setUserFriends, setUserReceivedFriendRequests, setUserSentFriendRequests } from '../redux/userSlice';
+import { ioSocket } from '../api/webSockets/socket';
+import { FriendRequest } from '../types/friendRequest';
+import { useNavigate } from 'react-router-dom';
 const RequestsList = () => {
-  const { receivedRequests, sentRequests } = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
+  const { receivedRequests, sentRequests, id } = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
   const isActive = useSelector((state: RootState) => state.modalReducer.requestsIsActive);
   const dispatch = useAppDispatch();
   const [reqsType, setReqsType] = useState<'players' | 'teams'>('players');
-  const [isMyReqsOpen, setIsMyReqsOpen] = useState<boolean>(false);
 
-  return (
-    receivedRequests.length > 0 && (
-      <>
-        {isActive ? (
-          <OpenRequestsContainer>
-            <OpenRequests>
-              <CloseButton
+  const navigate = useNavigate();
+  useEffect(() => {
+    ioSocket.on('friendRequest', (req: FriendRequest) => {
+      dispatch(setUserSentFriendRequests({ req, denied: -1 }));
+    });
+    ioSocket.on('friendRequestAction', ({ req, friend }) => {
+      if (req.toUserId === id) {
+        if (friend) {
+          console.log(friend);
+          dispatch(setUserFriends(friend));
+        } else {
+          dispatch(setUserReceivedFriendRequests({ req: req, denied: 1 }));
+        }
+      }
+      return;
+    });
+    ioSocket.on('friendRequestToUser', (req: FriendRequest) => {
+      if (req.toUserId === id) {
+        dispatch(setUserReceivedFriendRequests({ req: req, denied: -1 }));
+      }
+      return;
+    });
+    ioSocket.on('friendRequestActionToUser', ({ req, friend }) => {
+      if (req.fromUserId === id) {
+        if (friend) {
+          console.log(friend);
+
+          dispatch(setUserFriends(friend));
+        } else {
+          dispatch(setUserSentFriendRequests({ req: req, denied: 1 }));
+        }
+      }
+      return;
+    });
+    return () => {
+      dispatch(changeReqsState(false));
+    };
+  }, []);
+
+  return receivedRequests.length > 0 || sentRequests.length > 0 ? (
+    <>
+      {isActive ? (
+        <OpenRequestsContainer>
+          <OpenRequests>
+            <CloseButton
+              onClick={() => {
+                dispatch(changeReqsState(false));
+              }}
+            >
+              <img src={closeCross} alt='' />
+            </CloseButton>
+            <ReqsHeader>Заявки</ReqsHeader>
+            <ReqsType>
+              <ReqName
                 onClick={() => {
-                  dispatch(changeReqsState(false));
+                  if (reqsType !== 'players') setReqsType('players');
                 }}
+                data-reqs={receivedRequests.length}
+                $friendsReqs={receivedRequests.length}
+                $selected={reqsType === 'players'}
               >
-                <img src={closeCross} alt='' />
-              </CloseButton>
-              <ReqsHeader>Заявки</ReqsHeader>
-              <ReqsType>
-                <ReqName
-                  onClick={() => {
-                    if (reqsType !== 'players') setReqsType('players');
-                  }}
-                  data-reqs={receivedRequests.length}
-                  $friendsReqs={receivedRequests.length}
-                  $selected={reqsType === 'players'}
-                >
-                  Игроки
-                </ReqName>
-                <ReqName
-                  onClick={() => {
-                    if (reqsType !== 'teams') setReqsType('teams');
-                  }}
-                  $selected={reqsType === 'teams'}
-                >
-                  Команды
-                </ReqName>
-              </ReqsType>
-            </OpenRequests>
-          </OpenRequestsContainer>
-        ) : (
-          <RequestsButtonContainer
-            onClick={() => {
-              dispatch(changeReqsState(true));
-            }}
-          >
-            <RequestsButtonInnerContainer data-reqs={receivedRequests.length} $requests={receivedRequests.length}>
-              <RequestsButton>
-                <img src={requestIcon} alt='' />
-              </RequestsButton>
-            </RequestsButtonInnerContainer>
-          </RequestsButtonContainer>
-        )}
-      </>
-    )
+                Игроки
+              </ReqName>
+              <ReqName
+                onClick={() => {
+                  if (reqsType !== 'teams') setReqsType('teams');
+                }}
+                $selected={reqsType === 'teams'}
+              >
+                Команды
+              </ReqName>
+            </ReqsType>
+            <ReqsList>
+              {reqsType === 'players' ? (
+                <>
+                  {receivedRequests.map((req) => (
+                    <ReqItem
+                      key={req.id}
+                      onClick={() => {
+                        navigate(`/profile/${req.fromUser.nickname}`);
+                        dispatch(changeReqsState(false));
+                      }}
+                    >
+                      <img src={req.fromUser.user_avatar} alt='' />
+                      <span>{req.fromUser.nickname}</span>
+                      <CommonButton
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          friendRequestAnswer({ accept: true, requestId: req.id as number });
+                        }}
+                      >
+                        Принять
+                      </CommonButton>
+                      <CommonButton
+                        onClick={(e) => {
+                          e.stopPropagation();
+
+                          friendRequestAnswer({ accept: false, requestId: req.id as number });
+                        }}
+                      >
+                        Отклонить
+                      </CommonButton>
+                    </ReqItem>
+                  ))}
+                </>
+              ) : (
+                <>team</>
+              )}
+            </ReqsList>
+          </OpenRequests>
+        </OpenRequestsContainer>
+      ) : (
+        <RequestsButtonContainer
+          onClick={() => {
+            dispatch(changeReqsState(true));
+          }}
+        >
+          <RequestsButtonInnerContainer data-reqs={receivedRequests.length} $requests={receivedRequests.length}>
+            <RequestsButton>
+              <img src={requestIcon} alt='' />
+            </RequestsButton>
+          </RequestsButtonInnerContainer>
+        </RequestsButtonContainer>
+      )}
+    </>
+  ) : (
+    <></>
   );
 };
 
@@ -194,6 +275,35 @@ const ReqName = styled.span<{ $selected: boolean; $friendsReqs?: number; $teamsR
     top: -2px;
     pointer-events: none;
     z-index: 1;
+  }
+`;
+
+const ReqsList = styled.div`
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  row-gap: 10px;
+`;
+
+const ReqItem = styled.div`
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  width: 100%;
+  img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid #111;
+  }
+  span {
+    color: var(--main-text-color);
+  }
+  &:hover {
+    background-color: #595959;
+    cursor: pointer;
   }
 `;
 

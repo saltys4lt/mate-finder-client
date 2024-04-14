@@ -2,7 +2,7 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 
 import axios from 'axios';
 
-import { UserFriendsData } from '../../types/userFriendsData';
+import { UserFriendsData } from '../../types/UserFriendsData';
 
 const baseUrl = import.meta.env.VITE_BASE_URL;
 

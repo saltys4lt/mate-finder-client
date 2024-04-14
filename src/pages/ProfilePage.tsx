@@ -31,6 +31,7 @@ import linkIcon from '../assets/images/link.png';
 import groupInviteIcon from '../assets/images/group-invite.png';
 import closeCross from '../assets/images/close-cross.png';
 import sendedFriendReq from '../assets/images/sended-friend-req.png';
+import inFriendsIcon from '../assets/images/in-friends-icon.png';
 
 import confirmEditIcon from '../assets/images/confirm-edit.png';
 import editProfileIcon from '../assets/images/edit-profile.png';
@@ -44,7 +45,6 @@ import headerBg from '../assets/images/profile-bg.webp';
 import { setCurrentChat } from '../redux/chatSlice';
 import { Chat } from '../types/Chat';
 import { sendFriendRequest } from '../api/friendsRequests/sendFriendRequest';
-import { setUserSentFriendRequests } from '../redux/userSlice';
 const ProfilePage = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -196,10 +196,8 @@ const ProfilePage = () => {
       dispatch(setCurrentChat(chat));
     } else dispatch(setCurrentChat(openedChat));
   };
-  const sendRequest = async (playerId: number) => {
-    await sendFriendRequest({ fromUserId: user.id, toUserId: playerId }).then((res) => {
-      dispatch(setUserSentFriendRequests(res));
-    });
+  const sendRequest = (playerId: number) => {
+    sendFriendRequest({ fromUserId: user.id, toUserId: playerId });
   };
   const profileAvatar = player
     ? profileUser.user_avatar
@@ -325,15 +323,27 @@ const ProfilePage = () => {
                             <img src={sendedFriendReq} alt='' />
                             Заявка отправлена
                           </CommonButton>
+                        ) : user.receivedRequests.find((req) => req.toUserId === user.id && req.fromUserId === player.id) ? (
+                          <InFriendLabel
+                            onClick={(e) => {
+                              e.stopPropagation();
+                            }}
+                          >
+                            <img src={sendedFriendReq} alt='' />
+                            Ждет вашего ответа
+                          </InFriendLabel>
+                        ) : user.friends.find((friend) => friend.id === player.id) ? (
+                          <InFriendLabel>
+                            <img src={inFriendsIcon} alt='' />
+                            Ваш друг
+                          </InFriendLabel>
                         ) : (
-                          <CommonButton>
-                            <img
-                              src={addFriendsIcon}
-                              alt=''
-                              onClick={() => {
-                                sendRequest(player.id);
-                              }}
-                            />
+                          <CommonButton
+                            onClick={() => {
+                              sendRequest(player.id);
+                            }}
+                          >
+                            <img src={addFriendsIcon} alt='' />
                             Добавить в друзья
                           </CommonButton>
                         )}
@@ -606,7 +616,12 @@ const SocialButtons = styled.div`
   padding: 10px 0;
   flex-wrap: wrap;
 `;
-
+const InFriendLabel = styled(CommonButton)`
+  &:hover {
+    background-color: #181818;
+    border-color: #565656;
+  }
+`;
 const ProfileMainContainer = styled.div`
   width: 100%;
   display: flex;
