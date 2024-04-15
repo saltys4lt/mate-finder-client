@@ -7,29 +7,43 @@ interface SearchBarProps {
   inputValue: string;
   inputFunc: (e: ChangeEvent<HTMLInputElement>) => void;
   buttonFunc: () => void;
+  buttonWidth?: string;
+  inputWidth?: string;
+  ComponentHeight?: string;
 }
 
-const SearchBar: FC<SearchBarProps> = ({ inputPlaceholder, inputValue, buttonText, inputFunc, buttonFunc }) => {
+const SearchBar: FC<SearchBarProps> = ({
+  inputPlaceholder,
+  inputValue,
+  buttonText,
+  inputFunc,
+  buttonFunc,
+  buttonWidth,
+  inputWidth,
+  ComponentHeight,
+}) => {
   return (
-    <SearchBarContainer>
-      <SearchInput placeholder={inputPlaceholder} onChange={(e) => inputFunc(e)} value={inputValue ? inputValue : ''} />
-      <SearchButton onClick={buttonFunc}>{buttonText}</SearchButton>
+    <SearchBarContainer $height={ComponentHeight}>
+      <SearchInput $width={inputWidth} placeholder={inputPlaceholder} onChange={(e) => inputFunc(e)} value={inputValue ? inputValue : ''} />
+      <SearchButton $width={buttonWidth} onClick={buttonFunc}>
+        {buttonText}
+      </SearchButton>
     </SearchBarContainer>
   );
 };
 
-const SearchBarContainer = styled.div`
+const SearchBarContainer = styled.div<{ $height?: string }>`
   background-color: #2f2f2f;
   width: 100%;
-  height: 45px;
+  height: ${(p) => (p.$height ? p.$height : '45px')};
   border-radius: 5px;
   display: flex;
   align-items: center;
   overflow: hidden;
 `;
 
-const SearchInput = styled.input`
-  width: 90%;
+const SearchInput = styled.input<{ $width?: string }>`
+  width: ${(p) => (p.$width ? p.$width : '90%')};
   height: 95%;
   border: 0;
   font-family: montserrat;
@@ -39,8 +53,9 @@ const SearchInput = styled.input`
   }
 `;
 
-const SearchButton = styled.button`
-  width: 10%;
+const SearchButton = styled.button<{ $width?: string }>`
+  width: ${(p) => (p.$width ? p.$width : '10%')};
+
   height: 95%;
   border: 0;
   font-family: montserrat;

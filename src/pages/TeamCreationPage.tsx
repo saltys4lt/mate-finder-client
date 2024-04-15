@@ -21,10 +21,15 @@ import uploadTeamAvatar from '../api/uploadTeamAvatar';
 import Swal from 'sweetalert2';
 import Cs2PlayerRoles from '../consts/Cs2PlayerRoles';
 import ConfirmButton from '../components/UI/ConfirmButton';
+import CommonButton from '../components/UI/CommonButton';
+import friendsInviteIcon from '../assets/images/friends.png';
+import { changeFriendsInviteModalState } from '../redux/modalSlice';
+import FriendsInviteModal from '../components/FriendsInviteModal';
 interface CreationDataValidation {
   isRolesValid: boolean;
 }
 const TeamCreationPage = () => {
+  const dispatch = useAppDispatch();
   const user = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
   const [availableGames, setAvailableGames] = useState<Option[]>(Games);
   const [avatarIsLoading, setAvatarIsLoading] = useState<boolean>(false);
@@ -155,6 +160,7 @@ const TeamCreationPage = () => {
 
   return (
     <Main>
+      <FriendsInviteModal />
       <Container>
         <MainContainer>
           <TeamCreationTitle>Регистрация команды</TeamCreationTitle>
@@ -338,6 +344,14 @@ const TeamCreationPage = () => {
                     </RoleCard>
                   ))}
                 </RolesContainer>
+                <InviteFriendsButton
+                  onClick={() => {
+                    dispatch(changeFriendsInviteModalState(true));
+                  }}
+                >
+                  <img src={friendsInviteIcon} alt='' />
+                  Пригласить друзей
+                </InviteFriendsButton>
               </RolesData>
             )}
             <StepButtons>
@@ -512,7 +526,15 @@ const TeamData = styled(animated.div)`
 `;
 
 const RolesData = styled(TeamData)`
+  display: flex;
+  flex-direction: column;
   align-items: center;
+`;
+
+const InviteFriendsButton = styled(CommonButton)`
+  font-size: 20px;
+  text-align: center;
+  margin-top: 50px;
 `;
 
 const DescriptionInput = styled.textarea`

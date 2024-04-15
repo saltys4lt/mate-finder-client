@@ -6,6 +6,7 @@ interface ModalInitialState {
   gameChoiceIsActive: boolean;
   chatIsActive: boolean;
   requestsIsActive: boolean;
+  friendsInviteModalIsActive: boolean;
 }
 
 const initialState: ModalInitialState = {
@@ -14,6 +15,7 @@ const initialState: ModalInitialState = {
   gameChoiceIsActive: false,
   chatIsActive: false,
   requestsIsActive: false,
+  friendsInviteModalIsActive: false,
 };
 
 const modalSlice = createSlice({
@@ -36,9 +38,13 @@ const modalSlice = createSlice({
     changeReqsState(state, action: PayloadAction<boolean>) {
       state.requestsIsActive = action.payload;
     },
+    changeFriendsInviteModalState(state, action: PayloadAction<boolean>) {
+      state.friendsInviteModalIsActive = action.payload;
+    },
   },
 });
 
-export const { changeLoginState, changeRegState, changeGameProfileState, changeChatState, changeReqsState } = modalSlice.actions;
+export const { changeLoginState, changeRegState, changeGameProfileState, changeChatState, changeReqsState, changeFriendsInviteModalState } =
+  modalSlice.actions;
 
 export default modalSlice.reducer;
