@@ -160,7 +160,7 @@ const TeamCreationPage = () => {
 
   return (
     <Main>
-      <FriendsInviteModal />
+      <FriendsInviteModal roles={roles} />
       <Container>
         <MainContainer>
           <TeamCreationTitle>Регистрация команды</TeamCreationTitle>
@@ -409,7 +409,6 @@ const MainContainer = styled.div`
   border-radius: 15px;
   padding: 30px 30px;
   height: 530px;
-  overflow: hidden;
 `;
 
 const InnerContainer = styled.div`

@@ -86,7 +86,7 @@ const userSlice = createSlice({
         if (isUserReceived) {
           state.user.receivedRequests = state.user.receivedRequests.filter((req) => req.fromUser.nickname !== action.payload.nickname);
         } else {
-          state.user.sentRequests = state.user.sentRequests.filter((req) => req.fromUser.nickname !== action.payload.nickname);
+          state.user.sentRequests = state.user.sentRequests.filter((req) => req.toUser.nickname !== action.payload.nickname);
         }
       }
     },

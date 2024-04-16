@@ -39,6 +39,10 @@ const modalSlice = createSlice({
       state.requestsIsActive = action.payload;
     },
     changeFriendsInviteModalState(state, action: PayloadAction<boolean>) {
+      if (action.payload) {
+        document.documentElement.style.overflowY = 'hidden';
+      } else document.documentElement.style.overflowY = 'visible';
+
       state.friendsInviteModalIsActive = action.payload;
     },
   },

@@ -251,7 +251,10 @@ const ProfilePage = () => {
                 </ProfileAvatarContainer>
                 <UserDataContainer>
                   <UserData>
-                    <UserNickname>{profileUser?.nickname}</UserNickname>
+                    <UserNickname>
+                      {profileUser?.nickname}
+                      <UserGender>, Пол: {profileUser?.gender === 'female' ? 'Женский' : 'Мужской'}</UserGender>
+                    </UserNickname>
                     <UserAge>Возраст: {dateToUserAge(profileUser?.birthday as string)}</UserAge>
 
                     <UserDataButtons>
@@ -510,6 +513,9 @@ const ProfileHeader = styled.div`
     background-repeat: no-repeat;
     filter: blur(5px);
   }
+  @media (max-width: 650px) {
+    min-height: 330px;
+  }
 `;
 
 const MainDataContainer = styled.div`
@@ -554,10 +560,12 @@ const ProfileAvatar = styled.img<{ $avatarIsLoading: boolean }>`
   border-radius: 50%;
   width: 160px;
   height: 160px;
+
   border: 4px solid #2b2b2b;
   box-shadow: 0px 3px 15px 10px rgba(0, 0, 0, 0.6);
   position: relative;
   opacity: ${(p) => (p.$avatarIsLoading ? '0.4' : '1')};
+  object-fit: cover;
 `;
 
 const UserDataContainer = styled.div`
@@ -588,6 +596,12 @@ const UserNickname = styled.h5`
   color: #fff;
 `;
 
+const UserGender = styled.span`
+  font-weight: 400;
+  font-size: 17px;
+  color: #cdcdcd;
+`;
+
 const UserAge = styled.p`
   font-size: 17px;
   color: #ccc8c8;
@@ -601,6 +615,7 @@ const UserDataButtons = styled.div`
   column-gap: 15px;
   flex-wrap: wrap;
 `;
+
 const FooterUserData = styled.div`
   margin-top: 10px;
   width: 100%;

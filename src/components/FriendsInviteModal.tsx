@@ -1,5 +1,6 @@
-import React, { ChangeEvent } from 'react';
+import { FC, ChangeEvent } from 'react';
 import styled from 'styled-components';
+import { useNavigate } from 'react-router-dom';
 import { RootState, useAppDispatch } from '../redux';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -8,19 +9,37 @@ import { changeFriendsInviteModalState } from '../redux/modalSlice';
 import closeCross from '../assets/images/close-cross.png';
 import SearchBar from './SearchBar';
 import CommonButton from './UI/CommonButton';
+import dropDownIcon from '../assets/images/drop-down-arrow.png';
 
 interface ModalStatus {
   $active: string;
 }
-const FriendsInviteModal = () => {
+
+interface FriendsInviteModalProps {
+  roles: string[];
+}
+
+const FriendsInviteModal: FC<FriendsInviteModalProps> = ({ roles }) => {
+  const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [currentFriends, setCurrentFriends] = useState<ClientUser[]>([]);
   const friends = useSelector((state: RootState) => (state.userReducer.user as ClientUser).friends);
   const friendsState = useSelector((state: RootState) => state.modalReducer.friendsInviteModalIsActive);
   const handleChangeSearchBar = (e: ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   };
-  const handleSearch = () => {};
+  useEffect(() => {
+    setCurrentFriends(friends);
+  }, []);
+
+  const handleSearch = () => {
+    if (searchQuery) {
+      setCurrentFriends(friends.filter((friend) => friend.nickname.includes(searchQuery)));
+    } else {
+      setCurrentFriends(friends);
+    }
+  };
   return (
     <ModalContainer $active={String(friendsState)}>
       <Content>
@@ -29,13 +48,25 @@ const FriendsInviteModal = () => {
           <CloseCross
             src={closeCross}
             onClick={() => {
-              document.documentElement.style.overflowY = 'visible';
               dispatch(changeFriendsInviteModalState(false));
             }}
           />
           {friends.length === 0 ? (
             <>
-              <FriendsInviteTitle>Ваш список друзей пуст ={'('}</FriendsInviteTitle>
+              <FriendsInviteTitle>
+                Ваш список друзей пуст <span style={{ color: '#000000' }}>😥</span>
+              </FriendsInviteTitle>
+              <SearchFriendsText>
+                Но найти их можно{' '}
+                <span
+                  onClick={() => {
+                    dispatch(changeFriendsInviteModalState(false));
+                    navigate('/players');
+                  }}
+                >
+                  тут
+                </span>
+              </SearchFriendsText>
             </>
           ) : (
             <>
@@ -51,13 +82,28 @@ const FriendsInviteModal = () => {
                 ComponentHeight='30px'
               />
               <FriendsList>
-                {friends.map((friend) => (
-                  <FriendsListItem key={friend.nickname}>
-                    <img src={friend.user_avatar} alt='' />
-                    <span>{friend.nickname}</span>
-                    <CommonButton>Пригласить на роль</CommonButton>
-                  </FriendsListItem>
-                ))}
+                {currentFriends.length !== 0 ? (
+                  currentFriends.map((friend) => (
+                    <FriendsListItem key={friend.nickname}>
+                      <img src={friend.cs2_data?.lvlImg} alt='' />
+                      <img src={friend.user_avatar} alt='' />
+                      <span>{friend.nickname}</span>
+                      <DropDown>
+                        <CommonButton>
+                          Пригласить на роль
+                          <img src={dropDownIcon} alt='' />
+                        </CommonButton>
+                        <DropDownContent>
+                          {roles.map((role) => (
+                            <DropDownButton>{role}</DropDownButton>
+                          ))}
+                        </DropDownContent>
+                      </DropDown>
+                    </FriendsListItem>
+                  ))
+                ) : (
+                  <FriendsInviteTitle>Мы не нашли друзей с таким ником</FriendsInviteTitle>
+                )}
               </FriendsList>
             </>
           )}
@@ -84,7 +130,7 @@ const ModalContainer = styled.div<ModalStatus>`
   align-items: center;
   pointer-events: ${(p) => (p.$active == 'false' ? 'none' : 'all')};
   transition: opacity 0.2s ease-in-out;
-  z-index: 2;
+  z-index: 1;
 `;
 
 const Content = styled.div`
@@ -95,7 +141,7 @@ const Content = styled.div`
   padding: 20px;
   border-radius: 12px;
   background-color: #393939;
-  min-width: 400px;
+  width: 430px;
   min-height: 200px;
 
   max-height: 600px;
@@ -151,7 +197,7 @@ const FriendsListItem = styled.div`
   column-gap: 10px;
   padding: 5px 3px;
   background-color: #323232;
-  img {
+  > img {
     width: 40px;
     height: 40px;
     border-radius: 50%;
@@ -160,4 +206,43 @@ const FriendsListItem = styled.div`
     font-size: 16px;
     color: var(--main-text-color);
   }
+`;
+const DropDownContent = styled.div`
+  border-radius: 5px;
+  width: 100%;
+  position: absolute;
+  display: none;
+  z-index: 2;
+  border-radius: 3px 3px 5px 5px;
+  top: 30px;
+  box-shadow: 0px 4px 15px #d8702f;
+  overflow: hidden;
+`;
+const DropDown = styled.div`
+  position: relative;
+
+  &:hover ${DropDownContent} {
+    display: block;
+  }
+`;
+
+const DropDownButton = styled(CommonButton)`
+  width: 100%;
+  border-radius: 0px;
+  border: 0;
+  &:hover {
+    color: aliceblue;
+    background-color: #232323;
+  }
+`;
+
+const SearchFriendsText = styled.p`
+  font-size: 14px;
+  color: var(--main-text-color);
+  > span {
+    text-decoration: underline;
+    font-size: 20px;
+    color: aliceblue();
+  }
+  cursor: pointer;
 `;
