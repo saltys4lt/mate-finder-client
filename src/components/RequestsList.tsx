@@ -292,9 +292,10 @@ const ReqItem = styled.div`
   align-items: center;
   justify-content: space-around;
   width: 100%;
-  img {
+  > img {
     width: 40px;
     height: 40px;
+    object-fit: cover;
     border-radius: 50%;
     border: 1px solid #111;
   }

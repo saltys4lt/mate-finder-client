@@ -31,7 +31,7 @@ const FriendsInviteModal: FC<FriendsInviteModalProps> = ({ roles }) => {
   };
   useEffect(() => {
     setCurrentFriends(friends);
-  }, []);
+  }, [friends]);
 
   const handleSearch = () => {
     if (searchQuery) {
@@ -84,22 +84,56 @@ const FriendsInviteModal: FC<FriendsInviteModalProps> = ({ roles }) => {
               <FriendsList>
                 {currentFriends.length !== 0 ? (
                   currentFriends.map((friend) => (
-                    <FriendsListItem key={friend.nickname}>
-                      <img src={friend.cs2_data?.lvlImg} alt='' />
-                      <img src={friend.user_avatar} alt='' />
-                      <span>{friend.nickname}</span>
-                      <DropDown>
-                        <CommonButton>
-                          Пригласить на роль
-                          <img src={dropDownIcon} alt='' />
-                        </CommonButton>
-                        <DropDownContent>
-                          {roles.map((role) => (
-                            <DropDownButton>{role}</DropDownButton>
-                          ))}
-                        </DropDownContent>
-                      </DropDown>
-                    </FriendsListItem>
+                    <>
+                      <FriendsListItem key={friend.nickname}>
+                        <img src={friend.cs2_data?.lvlImg} alt='' />
+                        <img src={friend.user_avatar} alt='' />
+                        <span>{friend.nickname}</span>
+                        <DropDown>
+                          <CommonButton>
+                            Пригласить на роль
+                            <img src={dropDownIcon} alt='' />
+                          </CommonButton>
+                          <DropDownContent>
+                            {roles.map((role) => (
+                              <DropDownButton key={role}>{role}</DropDownButton>
+                            ))}
+                          </DropDownContent>
+                        </DropDown>
+                      </FriendsListItem>
+                      <FriendsListItem key={friend.nickname}>
+                        <img src={friend.cs2_data?.lvlImg} alt='' />
+                        <img src={friend.user_avatar} alt='' />
+                        <span>{friend.nickname}</span>
+                        <DropDown>
+                          <CommonButton>
+                            Пригласить на роль
+                            <img src={dropDownIcon} alt='' />
+                          </CommonButton>
+                          <DropDownContent>
+                            {roles.map((role) => (
+                              <DropDownButton key={role}>{role}</DropDownButton>
+                            ))}
+                          </DropDownContent>
+                        </DropDown>
+                      </FriendsListItem>
+                      <FriendsListItem key={friend.nickname}>
+                        <img src={friend.cs2_data?.lvlImg} alt='' />
+                        <img src={friend.user_avatar} alt='' />
+                        <span>{friend.nickname}</span>
+                        <DropDown>
+                          <CommonButton>
+                            Пригласить на роль
+                            <img src={dropDownIcon} alt='' />
+                          </CommonButton>
+                          <DropDownContent>
+                            {roles.map((role) => (
+                              <DropDownButton key={role}>{role}</DropDownButton>
+                            ))}
+                          </DropDownContent>
+                        </DropDown>
+                      </FriendsListItem>
+                    </>
                   ))
                 ) : (
                   <FriendsInviteTitle>Мы не нашли друзей с таким ником</FriendsInviteTitle>
@@ -134,7 +168,6 @@ const ModalContainer = styled.div<ModalStatus>`
 `;
 
 const Content = styled.div`
-  overflow: hidden;
   position: relative;
   display: flex;
   align-items: center;
@@ -186,7 +219,8 @@ const FriendsList = styled.div`
   row-gap: 15px;
   border-radius: 10px;
   padding: 5px;
-  overflow: auto;
+
+  overflow-y: scroll;
 `;
 
 const FriendsListItem = styled.div`
@@ -194,19 +228,22 @@ const FriendsListItem = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  column-gap: 10px;
+  justify-content: space-between;
   padding: 5px 3px;
+  position: relative;
   background-color: #323232;
   > img {
     width: 40px;
     height: 40px;
     border-radius: 50%;
+    object-fit: cover;
   }
   span {
     font-size: 16px;
     color: var(--main-text-color);
   }
 `;
+
 const DropDownContent = styled.div`
   border-radius: 5px;
   width: 100%;
@@ -214,15 +251,16 @@ const DropDownContent = styled.div`
   display: none;
   z-index: 2;
   border-radius: 3px 3px 5px 5px;
-  top: 30px;
+  top: 0px;
   box-shadow: 0px 4px 15px #d8702f;
   overflow: hidden;
 `;
+
 const DropDown = styled.div`
   position: relative;
 
   &:hover ${DropDownContent} {
-    display: block;
+    display: flex;
   }
 `;
 
@@ -242,7 +280,7 @@ const SearchFriendsText = styled.p`
   > span {
     text-decoration: underline;
     font-size: 20px;
-    color: aliceblue();
+    color: aliceblue;
   }
   cursor: pointer;
 `;

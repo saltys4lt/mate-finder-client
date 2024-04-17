@@ -401,6 +401,8 @@ const ChatListItem = styled.div<{ selected: boolean; $messages: number }>`
   img {
     border-radius: 50%;
     width: 40px;
+    height: 40px;
+    object-fit: cover;
   }
   &:hover {
     cursor: pointer;
@@ -446,6 +448,8 @@ const CurrentChatHeader = styled.div`
   font-size: 20px;
   img {
     width: 50px;
+    height: 50px;
+    object-fit: cover;
     border-radius: 50%;
 
     border: 2px solid;
