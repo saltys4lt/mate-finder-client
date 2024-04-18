@@ -160,7 +160,7 @@ const TeamCreationPage = () => {
 
   return (
     <Main>
-      <FriendsInviteModal roles={roles} />
+      <FriendsInviteModal roles={roles} ownerRole={ownerRole} />
       <Container>
         <MainContainer>
           <TeamCreationTitle>Регистрация команды</TeamCreationTitle>

@@ -9,7 +9,9 @@ import { changeFriendsInviteModalState } from '../redux/modalSlice';
 import closeCross from '../assets/images/close-cross.png';
 import SearchBar from './SearchBar';
 import CommonButton from './UI/CommonButton';
-import dropDownIcon from '../assets/images/drop-down-arrow.png';
+import groupInviteIcon from '../assets/images/group-invite.png';
+import Cs2PlayerRoles from '../consts/Cs2PlayerRoles';
+import ConfirmButton from './UI/ConfirmButton';
 
 interface ModalStatus {
   $active: string;
@@ -17,15 +19,25 @@ interface ModalStatus {
 
 interface FriendsInviteModalProps {
   roles: string[];
+  ownerRole: string;
 }
 
-const FriendsInviteModal: FC<FriendsInviteModalProps> = ({ roles }) => {
+interface SelectedFriend {
+  nickname: string;
+  user_avatar: string;
+  role?: string;
+}
+
+const FriendsInviteModal: FC<FriendsInviteModalProps> = ({ roles, ownerRole }) => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [currentFriends, setCurrentFriends] = useState<ClientUser[]>([]);
+
   const friends = useSelector((state: RootState) => (state.userReducer.user as ClientUser).friends);
   const friendsState = useSelector((state: RootState) => state.modalReducer.friendsInviteModalIsActive);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [currentFriends, setCurrentFriends] = useState<ClientUser[]>([]);
+  const [selectedFriend, setSelectedFriend] = useState<SelectedFriend | null>(null);
+  const [otherRoles, setOtherRoles] = useState<string[]>([]);
   const handleChangeSearchBar = (e: ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   };
@@ -33,12 +45,31 @@ const FriendsInviteModal: FC<FriendsInviteModalProps> = ({ roles }) => {
     setCurrentFriends(friends);
   }, [friends]);
 
+  useEffect(() => {
+    setOtherRoles(
+      Cs2PlayerRoles.filter((role) => !roles.find((neededRole) => neededRole === role.name))
+        .filter((role) => role.name !== ownerRole)
+        .map((role) => role.name),
+    );
+  }, [roles]);
+
   const handleSearch = () => {
     if (searchQuery) {
       setCurrentFriends(friends.filter((friend) => friend.nickname.includes(searchQuery)));
     } else {
       setCurrentFriends(friends);
     }
+  };
+
+  const changeSelectedFriendRole = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSelectedFriend({ ...(selectedFriend as SelectedFriend), role: e.target.value });
+  };
+
+  const selectedFriendRoleState = (role: string) => {
+    return selectedFriend?.role === role ? 'active' : '';
+  };
+  const backFromSelectedFriend = () => {
+    setSelectedFriend(null);
   };
   return (
     <ModalContainer $active={String(friendsState)}>
@@ -68,6 +99,31 @@ const FriendsInviteModal: FC<FriendsInviteModalProps> = ({ roles }) => {
                 </span>
               </SearchFriendsText>
             </>
+          ) : selectedFriend ? (
+            <SelectedFriendContainer>
+              <SelectedFriendTitle>
+                <span>Выберите роль для</span>
+                <div>
+                  <img src={selectedFriend.user_avatar} alt='' />
+                  <span>{selectedFriend.nickname}</span>
+                </div>
+              </SelectedFriendTitle>
+              <RolesContainer>
+                {otherRoles.map((role, index) => (
+                  <RoleCard key={role}>
+                    <RoleCheckbox id={(index + 10).toString()} onChange={(e) => changeSelectedFriendRole(e)} value={role} type='checkbox' />
+                    <RoleLabel className={selectedFriendRoleState(role)} htmlFor={(index + 10).toString()}>
+                      {role}
+                    </RoleLabel>
+                  </RoleCard>
+                ))}
+              </RolesContainer>
+              <StepButtons>
+                <StepButton onClick={backFromSelectedFriend}>отмена</StepButton>
+
+                <StepButton onClick={() => {}}>Подтвердить</StepButton>
+              </StepButtons>
+            </SelectedFriendContainer>
           ) : (
             <>
               <FriendsInviteTitle>Ваши друзья</FriendsInviteTitle>
@@ -84,56 +140,23 @@ const FriendsInviteModal: FC<FriendsInviteModalProps> = ({ roles }) => {
               <FriendsList>
                 {currentFriends.length !== 0 ? (
                   currentFriends.map((friend) => (
-                    <>
-                      <FriendsListItem key={friend.nickname}>
-                        <img src={friend.cs2_data?.lvlImg} alt='' />
-                        <img src={friend.user_avatar} alt='' />
-                        <span>{friend.nickname}</span>
-                        <DropDown>
-                          <CommonButton>
-                            Пригласить на роль
-                            <img src={dropDownIcon} alt='' />
-                          </CommonButton>
-                          <DropDownContent>
-                            {roles.map((role) => (
-                              <DropDownButton key={role}>{role}</DropDownButton>
-                            ))}
-                          </DropDownContent>
-                        </DropDown>
-                      </FriendsListItem>
-                      <FriendsListItem key={friend.nickname}>
-                        <img src={friend.cs2_data?.lvlImg} alt='' />
-                        <img src={friend.user_avatar} alt='' />
-                        <span>{friend.nickname}</span>
-                        <DropDown>
-                          <CommonButton>
-                            Пригласить на роль
-                            <img src={dropDownIcon} alt='' />
-                          </CommonButton>
-                          <DropDownContent>
-                            {roles.map((role) => (
-                              <DropDownButton key={role}>{role}</DropDownButton>
-                            ))}
-                          </DropDownContent>
-                        </DropDown>
-                      </FriendsListItem>
-                      <FriendsListItem key={friend.nickname}>
-                        <img src={friend.cs2_data?.lvlImg} alt='' />
-                        <img src={friend.user_avatar} alt='' />
-                        <span>{friend.nickname}</span>
-                        <DropDown>
-                          <CommonButton>
-                            Пригласить на роль
-                            <img src={dropDownIcon} alt='' />
-                          </CommonButton>
-                          <DropDownContent>
-                            {roles.map((role) => (
-                              <DropDownButton key={role}>{role}</DropDownButton>
-                            ))}
-                          </DropDownContent>
-                        </DropDown>
-                      </FriendsListItem>
-                    </>
+                    <FriendsListItem key={friend.nickname}>
+                      <img src={friend.cs2_data?.lvlImg} alt='' />
+                      <img src={friend.user_avatar} alt='' />
+                      <span>{friend.nickname}</span>
+
+                      <CommonButton
+                        onClick={() => {
+                          setSelectedFriend({
+                            nickname: friend.nickname,
+                            user_avatar: friend.user_avatar as string,
+                          });
+                        }}
+                      >
+                        Пригласить
+                        <img src={groupInviteIcon} alt='' />
+                      </CommonButton>
+                    </FriendsListItem>
                   ))
                 ) : (
                   <FriendsInviteTitle>Мы не нашли друзей с таким ником</FriendsInviteTitle>
@@ -170,7 +193,7 @@ const ModalContainer = styled.div<ModalStatus>`
 const Content = styled.div`
   position: relative;
   display: flex;
-  align-items: center;
+
   padding: 20px;
   border-radius: 12px;
   background-color: #393939;
@@ -219,8 +242,7 @@ const FriendsList = styled.div`
   row-gap: 15px;
   border-radius: 10px;
   padding: 5px;
-
-  overflow-y: scroll;
+  overflow-y: auto;
 `;
 
 const FriendsListItem = styled.div`
@@ -229,9 +251,10 @@ const FriendsListItem = styled.div`
   align-items: center;
   justify-content: center;
   justify-content: space-between;
-  padding: 5px 3px;
+  padding: 5px 25px;
   position: relative;
   background-color: #323232;
+  border-radius: 5px;
   > img {
     width: 40px;
     height: 40px;
@@ -244,36 +267,6 @@ const FriendsListItem = styled.div`
   }
 `;
 
-const DropDownContent = styled.div`
-  border-radius: 5px;
-  width: 100%;
-  position: absolute;
-  display: none;
-  z-index: 2;
-  border-radius: 3px 3px 5px 5px;
-  top: 0px;
-  box-shadow: 0px 4px 15px #d8702f;
-  overflow: hidden;
-`;
-
-const DropDown = styled.div`
-  position: relative;
-
-  &:hover ${DropDownContent} {
-    display: flex;
-  }
-`;
-
-const DropDownButton = styled(CommonButton)`
-  width: 100%;
-  border-radius: 0px;
-  border: 0;
-  &:hover {
-    color: aliceblue;
-    background-color: #232323;
-  }
-`;
-
 const SearchFriendsText = styled.p`
   font-size: 14px;
   color: var(--main-text-color);
@@ -283,4 +276,95 @@ const SearchFriendsText = styled.p`
     color: aliceblue;
   }
   cursor: pointer;
+`;
+const SelectedFriendContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-around;
+  width: 100%;
+  height: 300px;
+`;
+const SelectedFriendTitle = styled(FriendsInviteTitle)`
+  > div {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    justify-content: center;
+    column-gap: 10px;
+    > span {
+      font-size: 18px;
+      font-weight: 400;
+    }
+    > img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+  }
+`;
+const StepButtons = styled.div`
+  display: flex;
+  align-items: center;
+  column-gap: 30px;
+`;
+
+const RolesContainer = styled.div`
+  display: flex;
+  width: 100%;
+  justify-content: center;
+
+  column-gap: 10px;
+  flex-wrap: wrap;
+`;
+
+const RoleCard = styled.div`
+  margin-top: 15px;
+
+  display: flex;
+  justify-content: center;
+`;
+
+const RoleCheckbox = styled.input`
+  display: none;
+`;
+
+const RoleLabel = styled.label`
+  border: 2px solid #565656;
+  background-color: #181818;
+  padding: 5px 10px;
+  border-radius: 7px;
+  display: block;
+  width: 130px;
+  text-align: center;
+  font-size: 16px;
+  color: #d1cfcf;
+  &:hover {
+    border-color: #fff;
+    cursor: pointer;
+  }
+
+  &.active {
+    border-color: #fff;
+    transform: scale(1.03);
+  }
+
+  &.focus {
+    opacity: 0.3;
+    border: 2px solid #565656;
+    &:hover {
+      cursor: auto;
+    }
+  }
+
+  user-select: none;
+  &:hover {
+    cursor: pointer;
+  }
+`;
+
+const StepButton = styled(ConfirmButton)`
+  font-size: 16px;
 `;
