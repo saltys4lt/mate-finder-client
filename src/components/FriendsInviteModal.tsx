@@ -46,6 +46,7 @@ const FriendsInviteModal: FC<FriendsInviteModalProps> = ({ roles, ownerRole }) =
   }, [friends]);
 
   useEffect(() => {
+    console.log('sddsds');
     setOtherRoles(
       Cs2PlayerRoles.filter((role) => !roles.find((neededRole) => neededRole === role.name))
         .filter((role) => role.name !== ownerRole)
@@ -71,6 +72,11 @@ const FriendsInviteModal: FC<FriendsInviteModalProps> = ({ roles, ownerRole }) =
   const backFromSelectedFriend = () => {
     setSelectedFriend(null);
   };
+  const addOrDeleteRole = (selectedRole: string) => {
+    if (otherRoles.includes(selectedRole)) {
+      setOtherRoles(otherRoles.filter((role) => role !== selectedRole));
+    } else setOtherRoles([...otherRoles, selectedRole]);
+  };
   return (
     <ModalContainer $active={String(friendsState)}>
       <Content>
@@ -80,6 +86,9 @@ const FriendsInviteModal: FC<FriendsInviteModalProps> = ({ roles, ownerRole }) =
             src={closeCross}
             onClick={() => {
               dispatch(changeFriendsInviteModalState(false));
+              setTimeout(() => {
+                setSelectedFriend(null);
+              }, 300);
             }}
           />
           {friends.length === 0 ? (
@@ -111,8 +120,8 @@ const FriendsInviteModal: FC<FriendsInviteModalProps> = ({ roles, ownerRole }) =
               <RolesContainer>
                 {otherRoles.map((role, index) => (
                   <RoleCard key={role}>
-                    <RoleCheckbox id={(index + 10).toString()} onChange={(e) => changeSelectedFriendRole(e)} value={role} type='checkbox' />
-                    <RoleLabel className={selectedFriendRoleState(role)} htmlFor={(index + 10).toString()}>
+                    <RoleCheckbox id={(index + 20).toString()} onChange={(e) => changeSelectedFriendRole(e)} value={role} type='checkbox' />
+                    <RoleLabel className={selectedFriendRoleState(role)} htmlFor={(index + 20).toString()}>
                       {role}
                     </RoleLabel>
                   </RoleCard>
