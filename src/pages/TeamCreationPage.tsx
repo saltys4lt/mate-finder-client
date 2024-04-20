@@ -23,11 +23,13 @@ import Cs2PlayerRoles from '../consts/Cs2PlayerRoles';
 import ConfirmButton from '../components/UI/ConfirmButton';
 import CommonButton from '../components/UI/CommonButton';
 import friendsInviteIcon from '../assets/images/friends.png';
-import { changeFriendsInviteModalState } from '../redux/modalSlice';
+import { changeFriendsInviteModalState, changeInvitedFriendsModalState } from '../redux/modalSlice';
 import FriendsInviteModal from '../components/FriendsInviteModal';
+import { FriendWithRole } from '../types/FriendWithRole';
 interface CreationDataValidation {
   isRolesValid: boolean;
 }
+
 const TeamCreationPage = () => {
   const dispatch = useAppDispatch();
   const user = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
@@ -36,7 +38,7 @@ const TeamCreationPage = () => {
   const [ownerRole, setOwnerRole] = useState<string>('');
   const [creationStep, setCreationStep] = useState<number>(1);
   const [roles, setRoles] = useState<string[]>([]);
-
+  const [invitedFriends, setInvitedFriends] = useState<FriendWithRole[]>([]);
   const [dataValidation, setDataValidation] = useState<CreationDataValidation>({
     isRolesValid: true,
   });
@@ -97,20 +99,50 @@ const TeamCreationPage = () => {
   };
 
   const rolePlayersState = (role: string) => {
-    if (roles.includes(role)) return 'active';
-    if (role === ownerRole || !ownerRole) return 'focus';
+    if (roles.includes(role) && !invitedFriends.find((friend) => friend.role === role)) return 'active';
+    if (role === ownerRole || !ownerRole || invitedFriends.find((friend) => friend.role === role)) return 'focus';
     else return '';
   };
   const changePlayersRoles = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!dataValidation.isRolesValid) {
-      setDataValidation({ ...dataValidation, isRolesValid: true });
-    }
+    // if (!dataValidation.isRolesValid) {
+    //   setDataValidation({ ...dataValidation, isRolesValid: true });
+    // }
     if (!roles.includes(e.target.value)) setRoles([...roles, e.target.value]);
     else setRoles(roles.filter((role) => role !== e.target.value));
   };
   console.log(roles);
   const changeOwnerRole = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setOwnerRole(e.target.value);
+    const invitedFriend = invitedFriends.find((friend) => friend.role === e.target.value);
+    if (invitedFriend) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Уверены?',
+
+        html: `
+  <div style="background-color: #f0f0f0; border-radius: 10px; padding: 10px;">
+  <p>Если вы выберите эту роль, то приглашение для <strong>${invitedFriend.nickname}</strong> будет отменено</p>
+  <div style="margin-top:10px; display: flex; column-gap:15px; justify-content:center; align-items: center; width:100%">
+    <img src="${invitedFriend.user_avatar}" alt="Аватар" style="border-radius: 50%; width: 70px; height: 70px; object-fit:cover;">
+    <div style="margin-top: 10px;">${invitedFriend.nickname}</div>
+  </div>
+</div>
+  `,
+
+        confirmButtonText: 'Да',
+        confirmButtonColor: '#b42020',
+        showCancelButton: true,
+        cancelButtonText: 'Отмена',
+      }).then((res) => {
+        if (res.isConfirmed) {
+          setOwnerRole(e.target.value);
+
+          setInvitedFriends(invitedFriends.filter((friend) => friend.id !== invitedFriend.id));
+        } else {
+          return;
+        }
+      });
+    } else setOwnerRole(e.target.value);
+    console.log('сделало');
     if (roles.includes(e.target.value)) setRoles(roles.filter((role) => role !== e.target.value));
   };
 
@@ -160,7 +192,13 @@ const TeamCreationPage = () => {
 
   return (
     <Main>
-      <FriendsInviteModal roles={roles} ownerRole={ownerRole} />
+      <FriendsInviteModal
+        roles={roles}
+        ownerRole={ownerRole}
+        invitedFriends={invitedFriends}
+        setInvitedFriends={setInvitedFriends}
+        setRoles={setRoles}
+      />
       <Container>
         <MainContainer>
           <TeamCreationTitle>Регистрация команды</TeamCreationTitle>
@@ -336,7 +374,9 @@ const TeamCreationPage = () => {
                         onChange={(e) => changePlayersRoles(e)}
                         value={role.name}
                         type='checkbox'
-                        disabled={role.name === ownerRole || !ownerRole}
+                        disabled={
+                          role.name === ownerRole || !ownerRole || invitedFriends.find((friend) => friend.role === role.name) ? true : false
+                        }
                       />
                       <RoleLabel className={rolePlayersState(role.name)} htmlFor={(index + 10).toString()}>
                         {role.name}
@@ -345,6 +385,7 @@ const TeamCreationPage = () => {
                   ))}
                 </RolesContainer>
                 <InviteFriendsButton
+                  disabled={roles.length === 4}
                   onClick={() => {
                     dispatch(changeFriendsInviteModalState(true));
                   }}
@@ -352,6 +393,15 @@ const TeamCreationPage = () => {
                   <img src={friendsInviteIcon} alt='' />
                   Пригласить друзей
                 </InviteFriendsButton>
+                {invitedFriends.length !== 0 && (
+                  <InvitedFriendsButton
+                    onClick={() => {
+                      dispatch(changeInvitedFriendsModalState(true));
+                    }}
+                  >
+                    Приглашенные <div>{invitedFriends.length}</div>
+                  </InvitedFriendsButton>
+                )}
               </RolesData>
             )}
             <StepButtons>
@@ -418,7 +468,6 @@ const InnerContainer = styled.div`
   align-items: center;
   justify-content: space-between;
   flex-direction: column;
-  row-gap: 50px;
 `;
 
 const TeamCreationTitle = styled.h2`
@@ -625,4 +674,19 @@ const RoleLabel = styled.label`
   }
 `;
 
+const InvitedFriendsButton = styled(CommonButton)`
+  position: relative;
+  border-color: var(--main-red-color);
+  > div {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: var(--main-red-color);
+    text-align: center;
+    color: var(--main-text-color);
+    top: -10px;
+    right: -10px;
+  }
+`;
 export default TeamCreationPage;

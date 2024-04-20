@@ -1,58 +1,66 @@
-import { FC, ChangeEvent } from 'react';
+import { FC, ChangeEvent, useLayoutEffect } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { RootState, useAppDispatch } from '../redux';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import ClientUser from '../types/ClientUser';
-import { changeFriendsInviteModalState } from '../redux/modalSlice';
+import { changeFriendsInviteModalState, changeInvitedFriendsModalState } from '../redux/modalSlice';
 import closeCross from '../assets/images/close-cross.png';
 import SearchBar from './SearchBar';
 import CommonButton from './UI/CommonButton';
 import groupInviteIcon from '../assets/images/group-invite.png';
+import cancelInviteIcon from '../assets/images/cancel-invite.png';
+
 import Cs2PlayerRoles from '../consts/Cs2PlayerRoles';
 import ConfirmButton from './UI/ConfirmButton';
+import { FriendWithRole } from '../types/FriendWithRole';
 
 interface ModalStatus {
   $active: string;
 }
 
 interface FriendsInviteModalProps {
-  roles: string[];
   ownerRole: string;
+  invitedFriends: FriendWithRole[];
+  setInvitedFriends: (friends: FriendWithRole[]) => void;
+  roles: string[];
+  setRoles: (role: string[]) => void;
 }
 
-interface SelectedFriend {
-  nickname: string;
-  user_avatar: string;
-  role?: string;
-}
-
-const FriendsInviteModal: FC<FriendsInviteModalProps> = ({ roles, ownerRole }) => {
+const FriendsInviteModal: FC<FriendsInviteModalProps> = ({ roles, ownerRole, invitedFriends, setInvitedFriends, setRoles }) => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-
+  const [isActive, setIsActive] = useState<boolean>(false);
   const friends = useSelector((state: RootState) => (state.userReducer.user as ClientUser).friends);
   const friendsState = useSelector((state: RootState) => state.modalReducer.friendsInviteModalIsActive);
+  const invitedFriendsState = useSelector((state: RootState) => state.modalReducer.invitedFriendsModalIsActive);
+
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [currentFriends, setCurrentFriends] = useState<ClientUser[]>([]);
-  const [selectedFriend, setSelectedFriend] = useState<SelectedFriend | null>(null);
+  const [selectedFriend, setSelectedFriend] = useState<FriendWithRole | null>(null);
   const [otherRoles, setOtherRoles] = useState<string[]>([]);
   const handleChangeSearchBar = (e: ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   };
+
   useEffect(() => {
     setCurrentFriends(friends);
   }, [friends]);
 
+  useLayoutEffect(() => {
+    if (friendsState || invitedFriendsState) {
+      setIsActive(true);
+    }
+  }, [friendsState, invitedFriendsState]);
+
   useEffect(() => {
-    console.log('sddsds');
     setOtherRoles(
       Cs2PlayerRoles.filter((role) => !roles.find((neededRole) => neededRole === role.name))
         .filter((role) => role.name !== ownerRole)
         .map((role) => role.name),
     );
-  }, [roles]);
+  }, [roles, ownerRole]);
 
   const handleSearch = () => {
     if (searchQuery) {
@@ -63,7 +71,7 @@ const FriendsInviteModal: FC<FriendsInviteModalProps> = ({ roles, ownerRole }) =
   };
 
   const changeSelectedFriendRole = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSelectedFriend({ ...(selectedFriend as SelectedFriend), role: e.target.value });
+    setSelectedFriend({ ...(selectedFriend as FriendWithRole), role: e.target.value });
   };
 
   const selectedFriendRoleState = (role: string) => {
@@ -72,105 +80,163 @@ const FriendsInviteModal: FC<FriendsInviteModalProps> = ({ roles, ownerRole }) =
   const backFromSelectedFriend = () => {
     setSelectedFriend(null);
   };
-  const addOrDeleteRole = (selectedRole: string) => {
-    if (otherRoles.includes(selectedRole)) {
-      setOtherRoles(otherRoles.filter((role) => role !== selectedRole));
-    } else setOtherRoles([...otherRoles, selectedRole]);
+
+  const addInvitedFriend = () => {
+    setInvitedFriends([...(invitedFriends as FriendWithRole[]), selectedFriend as FriendWithRole]);
+    setRoles([...roles, selectedFriend?.role as string]);
+    setSelectedFriend(null);
+    if (roles.length === 3) {
+      dispatch(changeFriendsInviteModalState(false));
+      setIsActive(false);
+    }
   };
+
   return (
-    <ModalContainer $active={String(friendsState)}>
+    <ModalContainer $active={String(isActive)}>
       <Content>
         <InnerContent>
           {' '}
           <CloseCross
             src={closeCross}
             onClick={() => {
-              dispatch(changeFriendsInviteModalState(false));
+              setIsActive(false);
+              if (invitedFriendsState) {
+                setTimeout(() => {
+                  dispatch(changeInvitedFriendsModalState(false));
+                }, 300);
+              } else {
+                setTimeout(() => {
+                  dispatch(changeFriendsInviteModalState(false));
+                }, 300);
+              }
+
               setTimeout(() => {
                 setSelectedFriend(null);
               }, 300);
             }}
           />
-          {friends.length === 0 ? (
+          {invitedFriendsState && (
             <>
-              <FriendsInviteTitle>
-                Ваш список друзей пуст <span style={{ color: '#000000' }}>😥</span>
-              </FriendsInviteTitle>
-              <SearchFriendsText>
-                Но найти их можно{' '}
-                <span
-                  onClick={() => {
-                    dispatch(changeFriendsInviteModalState(false));
-                    navigate('/players');
-                  }}
-                >
-                  тут
-                </span>
-              </SearchFriendsText>
-            </>
-          ) : selectedFriend ? (
-            <SelectedFriendContainer>
-              <SelectedFriendTitle>
-                <span>Выберите роль для</span>
-                <div>
-                  <img src={selectedFriend.user_avatar} alt='' />
-                  <span>{selectedFriend.nickname}</span>
-                </div>
-              </SelectedFriendTitle>
-              <RolesContainer>
-                {otherRoles.map((role, index) => (
-                  <RoleCard key={role}>
-                    <RoleCheckbox id={(index + 20).toString()} onChange={(e) => changeSelectedFriendRole(e)} value={role} type='checkbox' />
-                    <RoleLabel className={selectedFriendRoleState(role)} htmlFor={(index + 20).toString()}>
-                      {role}
-                    </RoleLabel>
-                  </RoleCard>
-                ))}
-              </RolesContainer>
-              <StepButtons>
-                <StepButton onClick={backFromSelectedFriend}>отмена</StepButton>
-
-                <StepButton onClick={() => {}}>Подтвердить</StepButton>
-              </StepButtons>
-            </SelectedFriendContainer>
-          ) : (
-            <>
-              <FriendsInviteTitle>Ваши друзья</FriendsInviteTitle>
-              <SearchBar
-                inputFunc={handleChangeSearchBar}
-                inputValue={searchQuery}
-                buttonWidth='30%'
-                inputWidth='70%'
-                inputPlaceholder='Никнейм друга'
-                buttonText='Поиск'
-                buttonFunc={handleSearch}
-                ComponentHeight='30px'
-              />
-              <FriendsList>
-                {currentFriends.length !== 0 ? (
-                  currentFriends.map((friend) => (
+              {invitedFriends.length === 0 ? (
+                <>
+                  <FriendsInviteTitle>Вы отменили все приглашенния</FriendsInviteTitle>
+                </>
+              ) : (
+                <FriendsList>
+                  {invitedFriends.map((friend, _, arr) => (
                     <FriendsListItem key={friend.nickname}>
-                      <img src={friend.cs2_data?.lvlImg} alt='' />
                       <img src={friend.user_avatar} alt='' />
                       <span>{friend.nickname}</span>
+                      <span>{friend.role as string}</span>
 
                       <CommonButton
                         onClick={() => {
-                          setSelectedFriend({
-                            nickname: friend.nickname,
-                            user_avatar: friend.user_avatar as string,
-                          });
+                          setInvitedFriends(arr.filter((arrItem) => arrItem.nickname !== friend.nickname));
+                          setRoles(roles.filter((role) => role !== (friend.role as string)));
                         }}
                       >
-                        Пригласить
-                        <img src={groupInviteIcon} alt='' />
+                        Отменить
+                        <img src={cancelInviteIcon} alt='' />
                       </CommonButton>
                     </FriendsListItem>
-                  ))
-                ) : (
-                  <FriendsInviteTitle>Мы не нашли друзей с таким ником</FriendsInviteTitle>
-                )}
-              </FriendsList>
+                  ))}
+                </FriendsList>
+              )}
+            </>
+          )}
+          {friendsState && (
+            <>
+              {friends.length === 0 ? (
+                <>
+                  <FriendsInviteTitle>
+                    Ваш список друзей пуст <span style={{ color: '#000000' }}>😥</span>
+                  </FriendsInviteTitle>
+                  <SearchFriendsText>
+                    Но найти их можно{' '}
+                    <span
+                      onClick={() => {
+                        dispatch(changeFriendsInviteModalState(false));
+                        navigate('/players');
+                      }}
+                    >
+                      тут
+                    </span>
+                  </SearchFriendsText>
+                </>
+              ) : selectedFriend ? (
+                <SelectedFriendContainer>
+                  <SelectedFriendTitle>
+                    <span>Выберите роль для</span>
+                    <div>
+                      <img src={selectedFriend.user_avatar} alt='' />
+                      <span>{selectedFriend.nickname}</span>
+                    </div>
+                  </SelectedFriendTitle>
+                  <RolesContainer>
+                    {otherRoles.map((role, index) => (
+                      <RoleCard key={role}>
+                        <RoleCheckbox
+                          id={(index + 20).toString()}
+                          onChange={(e) => changeSelectedFriendRole(e)}
+                          value={role}
+                          type='checkbox'
+                        />
+                        <RoleLabel className={selectedFriendRoleState(role)} htmlFor={(index + 20).toString()}>
+                          {role}
+                        </RoleLabel>
+                      </RoleCard>
+                    ))}
+                  </RolesContainer>
+                  <StepButtons>
+                    <StepButton onClick={backFromSelectedFriend}>отмена</StepButton>
+
+                    <StepButton onClick={addInvitedFriend}>Подтвердить</StepButton>
+                  </StepButtons>
+                </SelectedFriendContainer>
+              ) : (
+                <>
+                  <FriendsInviteTitle>Ваши друзья</FriendsInviteTitle>
+                  <SearchBar
+                    inputFunc={handleChangeSearchBar}
+                    inputValue={searchQuery}
+                    buttonWidth='30%'
+                    inputWidth='70%'
+                    inputPlaceholder='Никнейм друга'
+                    buttonText='Поиск'
+                    buttonFunc={handleSearch}
+                    ComponentHeight='30px'
+                  />
+                  <FriendsList>
+                    {currentFriends.length !== 0 ? (
+                      currentFriends.map(
+                        (friend) =>
+                          !invitedFriends.find((invFriend) => invFriend.nickname === friend.nickname) && (
+                            <FriendsListItem key={friend.nickname}>
+                              <img src={friend.cs2_data?.lvlImg} alt='' />
+                              <img src={friend.user_avatar} alt='' />
+                              <span>{friend.nickname}</span>
+
+                              <CommonButton
+                                onClick={() => {
+                                  setSelectedFriend({
+                                    id: friend.id,
+                                    nickname: friend.nickname,
+                                    user_avatar: friend.user_avatar as string,
+                                  });
+                                }}
+                              >
+                                Пригласить
+                                <img src={groupInviteIcon} alt='' />
+                              </CommonButton>
+                            </FriendsListItem>
+                          ),
+                      )
+                    ) : (
+                      <FriendsInviteTitle>Мы не нашли друзей с таким ником</FriendsInviteTitle>
+                    )}
+                  </FriendsList>
+                </>
+              )}
             </>
           )}
         </InnerContent>
