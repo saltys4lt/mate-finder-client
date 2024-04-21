@@ -365,34 +365,61 @@ const TeamCreationPage = () => {
             )}
             {creationStep === 4 && (
               <RolesData style={fourthStep}>
-                <TeamDataText>В каких игроках вы нуждаетесь:</TeamDataText>
+                <div style={{ display: 'flex', columnGap: '10px', alignItems: 'center', color: '#fff' }}>
+                  <TeamDataText>В каких игроках вы нуждаетесь:</TeamDataText>
+                  <ErrorOutlineContainer>
+                    <ErrorOutline />
+                    <GameExplenation style={{ top: '-7em', right: '-12em' }}>
+                      Эти позиции будут отображены в поиске команд и на странице вашей команды как те, в которых вы нуждаетесь.
+                    </GameExplenation>
+                  </ErrorOutlineContainer>
+                </div>
+
                 <RolesContainer>
                   {Cs2PlayerRoles.map((role, index) => (
-                    <RoleCard key={role.id}>
-                      <RoleCheckbox
-                        id={(index + 10).toString()}
-                        onChange={(e) => changePlayersRoles(e)}
-                        value={role.name}
-                        type='checkbox'
-                        disabled={
-                          role.name === ownerRole || !ownerRole || invitedFriends.find((friend) => friend.role === role.name) ? true : false
-                        }
-                      />
-                      <RoleLabel className={rolePlayersState(role.name)} htmlFor={(index + 10).toString()}>
-                        {role.name}
-                      </RoleLabel>
-                    </RoleCard>
+                    <RoleLableContainer key={role.id}>
+                      <RoleCard key={role.id}>
+                        <RoleCheckbox
+                          id={(index + 10).toString()}
+                          onChange={(e) => changePlayersRoles(e)}
+                          value={role.name}
+                          type='checkbox'
+                          disabled={
+                            role.name === ownerRole || !ownerRole || invitedFriends.find((friend) => friend.role === role.name)
+                              ? true
+                              : false
+                          }
+                        />
+                        <RoleLabel className={rolePlayersState(role.name)} htmlFor={(index + 10).toString()}>
+                          {role.name}
+                        </RoleLabel>
+                      </RoleCard>
+                      {role.name === ownerRole && <span>Вы</span>}
+                      {invitedFriends.length !== 0 &&
+                        role.name === (invitedFriends.find((friend) => friend.role === role.name)?.role as string) && (
+                          <img src={invitedFriends.find((friend) => friend.role === role.name)?.user_avatar as string} />
+                        )}
+                    </RoleLableContainer>
                   ))}
                 </RolesContainer>
-                <InviteFriendsButton
-                  disabled={roles.length === 4}
-                  onClick={() => {
-                    dispatch(changeFriendsInviteModalState(true));
-                  }}
-                >
-                  <img src={friendsInviteIcon} alt='' />
-                  Пригласить друзей
-                </InviteFriendsButton>
+                <div style={{ display: 'flex', columnGap: '10px', alignItems: 'center', color: '#fff', marginTop: 50 }}>
+                  <InviteFriendsButton
+                    disabled={roles.length === 4}
+                    onClick={() => {
+                      dispatch(changeFriendsInviteModalState(true));
+                    }}
+                  >
+                    <img src={friendsInviteIcon} alt='' />
+                    Пригласить друзей
+                  </InviteFriendsButton>
+                  <ErrorOutlineContainer>
+                    <ErrorOutline />
+                    <GameExplenation style={{ top: '-6em' }}>
+                      Роль для друга можно выбрать только из оставшихся ролей сверху.
+                    </GameExplenation>
+                  </ErrorOutlineContainer>
+                </div>
+
                 {invitedFriends.length !== 0 && (
                   <InvitedFriendsButton
                     onClick={() => {
@@ -539,8 +566,8 @@ const TypeExplenation = styled.p`
   font-size: 14px;
   font-weight: 400;
   position: absolute;
-  top: -10em;
-  right: -10em;
+  top: -140px;
+  right: -160px;
   background-color: #333333;
   padding: 10px;
   border-radius: 5px;
@@ -582,7 +609,6 @@ const RolesData = styled(TeamData)`
 const InviteFriendsButton = styled(CommonButton)`
   font-size: 20px;
   text-align: center;
-  margin-top: 50px;
 `;
 
 const DescriptionInput = styled.textarea`
@@ -639,7 +665,32 @@ const RoleCard = styled.div`
 const RoleCheckbox = styled.input`
   display: none;
 `;
+const RoleLableContainer = styled.div`
+  position: relative;
+  > img {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    object-fit: cover;
+    border-radius: 50%;
 
+    top: -1px;
+    right: -1px;
+    transition: transform 0.1s ease-in-out;
+  }
+
+  > img:hover {
+    transform: scale(1.2);
+  }
+  > span {
+    position: absolute;
+    top: 3px;
+    left: 50%;
+    transform: translate(-50%, -50%);
+
+    color: var(--main-text-color);
+  }
+`;
 const RoleLabel = styled.label`
   border: 2px solid #565656;
   background-color: #181818;
@@ -650,6 +701,7 @@ const RoleLabel = styled.label`
   text-align: center;
   font-size: 16px;
   color: #d1cfcf;
+
   &:hover {
     border-color: #fff;
     cursor: pointer;
