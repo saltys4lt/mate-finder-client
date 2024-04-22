@@ -120,6 +120,10 @@ const FriendsInviteModal: FC<FriendsInviteModalProps> = ({ roles, ownerRole, inv
               {invitedFriends.length === 0 ? (
                 <>
                   <FriendsInviteTitle>Вы отменили все приглашенния</FriendsInviteTitle>
+                  {setTimeout(() => {
+                    setIsActive(false);
+                    changeInvitedFriendsModalState(false);
+                  }, 1500)}
                 </>
               ) : (
                 <FriendsList>

@@ -26,6 +26,7 @@ import friendsInviteIcon from '../assets/images/friends.png';
 import { changeFriendsInviteModalState, changeInvitedFriendsModalState } from '../redux/modalSlice';
 import FriendsInviteModal from '../components/FriendsInviteModal';
 import { FriendWithRole } from '../types/FriendWithRole';
+import ReactDOMServer from 'react-dom/server';
 interface CreationDataValidation {
   isRolesValid: boolean;
 }
@@ -49,8 +50,9 @@ const TeamCreationPage = () => {
     game: 'cs2',
     description: '',
     public: true,
-    ownerId: user.id,
+    owner: user.nickname,
     players: [],
+    neededRoles: [],
   });
   const [game, setGame] = useState<SingleValue<Option>>();
   const uploadAvatar = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -63,6 +65,7 @@ const TeamCreationPage = () => {
         text: 'Ваш файл превышает размер в 500 кб',
         confirmButtonText: 'Понятно',
       });
+      setAvatarIsLoading(false);
       return;
     }
     const avatar = e.target.files[0];
@@ -111,13 +114,12 @@ const TeamCreationPage = () => {
     else setRoles(roles.filter((role) => role !== e.target.value));
   };
   console.log(roles);
-  const changeOwnerRole = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const changeOwnerRole = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const invitedFriend = invitedFriends.find((friend) => friend.role === e.target.value);
     if (invitedFriend) {
-      Swal.fire({
+      await Swal.fire({
         icon: 'warning',
         title: 'Уверены?',
-
         html: `
   <div style="background-color: #f0f0f0; border-radius: 10px; padding: 10px;">
   <p>Если вы выберите эту роль, то приглашение для <strong>${invitedFriend.nickname}</strong> будет отменено</p>
@@ -137,13 +139,15 @@ const TeamCreationPage = () => {
           setOwnerRole(e.target.value);
 
           setInvitedFriends(invitedFriends.filter((friend) => friend.id !== invitedFriend.id));
+          if (roles.includes(e.target.value)) setRoles(roles.filter((role) => role !== e.target.value));
         } else {
           return;
         }
       });
-    } else setOwnerRole(e.target.value);
-    console.log('сделало');
-    if (roles.includes(e.target.value)) setRoles(roles.filter((role) => role !== e.target.value));
+    } else {
+      setOwnerRole(e.target.value);
+      if (roles.includes(e.target.value)) setRoles(roles.filter((role) => role !== e.target.value));
+    }
   };
 
   const ownerRoleState = (role: string) => {
@@ -189,6 +193,72 @@ const TeamCreationPage = () => {
     opacity: creationStep === 4 ? 1 : 0,
     from: { opacity: 0 },
   });
+
+  const createTeam = async () => {
+    let isCancel: boolean = false;
+    if (invitedFriends.length !== 0) {
+      const InvitedFriendsRender = () => {
+        return (
+          <>
+            <p>Эти игроки получат приглашение в вашу команду сразу после её создания</p>
+
+            <InvitedFriendsContainer>
+              {invitedFriends.map((friend) => (
+                <InvitedFriendItem key={friend.id}>
+                  <img src={friend.user_avatar} alt='' />
+                  <span>{friend.nickname}</span>
+                </InvitedFriendItem>
+              ))}
+            </InvitedFriendsContainer>
+          </>
+        );
+      };
+      await Swal.fire({
+        html: ReactDOMServer.renderToString(<InvitedFriendsRender />),
+        showCancelButton: true,
+        cancelButtonText: 'Отмена',
+        confirmButtonText: 'Продолжить',
+      }).then((res) => {
+        if (!res.isConfirmed) {
+          isCancel = true;
+        }
+      });
+    }
+    if (isCancel) return;
+
+    const neededRoles = roles.filter((role) => !invitedFriends.find((friend) => friend.role === role));
+
+    const CreatedTeam = () => {
+      return (
+        <CreatedTeamContainer>
+          <LeftCreatedTeamContainer>
+            <img src={team.avatar} alt='' />
+            <CreatedTeamDescription>{team.description}</CreatedTeamDescription>
+          </LeftCreatedTeamContainer>
+          <RightCreatedTeamContainer>
+            <CreatedTeamName>{team.name}</CreatedTeamName>
+            <RolesContainer>
+              {neededRoles.map((role) => (
+                <CreatedTeamRoleLabel key={role}>{role}</CreatedTeamRoleLabel>
+              ))}
+            </RolesContainer>
+          </RightCreatedTeamContainer>
+        </CreatedTeamContainer>
+      );
+    };
+
+    await Swal.fire({
+      html: ReactDOMServer.renderToString(<CreatedTeam />),
+      showCancelButton: true,
+      cancelButtonText: 'Отмена',
+      confirmButtonText: 'Создать',
+    }).then((res) => {
+      if (!res.isConfirmed) {
+        isCancel = true;
+      }
+    });
+    if (isCancel) return;
+  };
 
   return (
     <Main>
@@ -238,7 +308,7 @@ const TeamCreationPage = () => {
                     <ErrorOutlineContainer>
                       <ErrorOutline />
                       <GameExplenation>
-                        Список достпуных игр зависит от ваших игровых профелей. Если вы не регистрировали профиль с какой-то игрой, то и
+                        Список доступных игр зависит от ваших игровых профелей. Если вы не регистрировали профиль с какой-то игрой, то и
                         создать команду с этой игрой нельзя.
                       </GameExplenation>
                     </ErrorOutlineContainer>
@@ -443,10 +513,12 @@ const TeamCreationPage = () => {
               )}
               <ConfirmButton
                 onClick={() => {
-                  setCreationStep((prev) => prev + 1);
+                  if (creationStep === 4) {
+                    createTeam();
+                  } else setCreationStep((prev) => prev + 1);
                 }}
               >
-                Далее
+                {creationStep !== 4 ? 'Далее' : 'Создать команду'}
               </ConfirmButton>
             </StepButtons>
           </InnerContainer>
@@ -684,9 +756,8 @@ const RoleLableContainer = styled.div`
   }
   > span {
     position: absolute;
-    top: 3px;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    top: -1px;
+    right: -1px;
 
     color: var(--main-text-color);
   }
@@ -741,4 +812,111 @@ const InvitedFriendsButton = styled(CommonButton)`
     right: -10px;
   }
 `;
+
+const InvitedFriendsContainer = styled.div`
+  display: flex;
+  width: 100%;
+  flex-wrap: wrap;
+  justify-content: center;
+  column-gap: 5px;
+  margin-top: 15px;
+`;
+
+const InvitedFriendItem = styled.div`
+  background-color: #f0f0f0;
+  display: flex;
+  align-items: center;
+  column-gap: 10px;
+  padding: 10px 10px;
+  border-radius: 5px;
+  > img {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 50%;
+  }
+  > span {
+    font-size: 18px;
+  }
+`;
+
+const CreatedTeamContainer = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #313131;
+  padding: 15px 20px;
+  border-radius: 10px;
+`;
+const LeftCreatedTeamContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  row-gap: 10px;
+  width: 55%;
+  > img {
+    border-radius: 10px;
+    width: 90px;
+    height: 90px;
+    object-fit: cover;
+  }
+`;
+const RightCreatedTeamContainer = styled.div`
+  width: 40%;
+  height: 100%;
+  display: flex;
+
+  flex-direction: column;
+  justify-content: space-between;
+`;
+
+const CreatedTeamDescription = styled.p`
+  width: 100%;
+  font-size: 16px;
+  padding: 10px 15px;
+  color: var(--main-text-color);
+  text-align: left;
+  background-color: #181818;
+
+  min-height: 100px;
+  border-radius: 5px;
+  border: 2px solid #565656;
+`;
+
+const CreatedTeamName = styled.p`
+  font-weight: 700;
+  font-size: 16px;
+  padding: 4px 7px;
+  color: var(--main-text-color);
+
+  background-color: #181818;
+
+  border-radius: 5px;
+`;
+
+const OwnerNickname = styled.span`
+  color: var(--main-text-color);
+  font-size: 16px;
+`;
+
+const CreatedTeamRoleLabel = styled(RoleLabel)`
+  border: 2px solid #565656;
+  background-color: #181818;
+  padding: 5px 10px;
+  border-radius: 7px;
+  display: block;
+  width: 130px;
+  text-align: center;
+  font-size: 16px;
+  color: #d1cfcf;
+
+  user-select: none;
+  &:hover {
+    border: 2px solid #565656;
+    background-color: #181818;
+    cursor: auto;
+  }
+`;
+
 export default TeamCreationPage;
