@@ -15,6 +15,7 @@ import cancelInviteIcon from '../assets/images/cancel-invite.png';
 import Cs2PlayerRoles from '../consts/Cs2PlayerRoles';
 import ConfirmButton from './UI/ConfirmButton';
 import { FriendWithRole } from '../types/FriendWithRole';
+import Swal from 'sweetalert2';
 
 interface ModalStatus {
   $active: string;
@@ -117,35 +118,36 @@ const FriendsInviteModal: FC<FriendsInviteModalProps> = ({ roles, ownerRole, inv
           />
           {invitedFriendsState && (
             <>
-              {invitedFriends.length === 0 ? (
-                <>
-                  <FriendsInviteTitle>Вы отменили все приглашенния</FriendsInviteTitle>
-                  {setTimeout(() => {
-                    setIsActive(false);
-                    changeInvitedFriendsModalState(false);
-                  }, 1500)}
-                </>
-              ) : (
-                <FriendsList>
-                  {invitedFriends.map((friend, _, arr) => (
-                    <FriendsListItem key={friend.nickname}>
-                      <img src={friend.user_avatar} alt='' />
-                      <span>{friend.nickname}</span>
-                      <span>{friend.role as string}</span>
+              <FriendsList>
+                {invitedFriends.map((friend, _, arr) => (
+                  <FriendsListItem key={friend.nickname}>
+                    <img src={friend.user_avatar} alt='' />
+                    <span>{friend.nickname}</span>
+                    <span>{friend.role as string}</span>
 
-                      <CommonButton
-                        onClick={() => {
-                          setInvitedFriends(arr.filter((arrItem) => arrItem.nickname !== friend.nickname));
-                          setRoles(roles.filter((role) => role !== (friend.role as string)));
-                        }}
-                      >
-                        Отменить
-                        <img src={cancelInviteIcon} alt='' />
-                      </CommonButton>
-                    </FriendsListItem>
-                  ))}
-                </FriendsList>
-              )}
+                    <CommonButton
+                      onClick={() => {
+                        setInvitedFriends(arr.filter((arrItem) => arrItem.nickname !== friend.nickname));
+                        setRoles(roles.filter((role) => role !== (friend.role as string)));
+                        if (invitedFriends.length - 1 === 0) {
+                          Swal.fire({
+                            titleText: 'Все приглашения отменены',
+
+                            confirmButtonText: 'Понятно',
+                            timer: 4000,
+                            timerProgressBar: true,
+                          });
+                          dispatch(changeInvitedFriendsModalState(false));
+                          setIsActive(false);
+                        }
+                      }}
+                    >
+                      Отменить
+                      <img src={cancelInviteIcon} alt='' />
+                    </CommonButton>
+                  </FriendsListItem>
+                ))}
+              </FriendsList>
             </>
           )}
           {friendsState && (

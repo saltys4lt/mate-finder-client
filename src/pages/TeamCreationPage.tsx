@@ -46,13 +46,16 @@ const TeamCreationPage = () => {
 
   const [team, setTeam] = useState<Team>({
     name: '',
+    userId: user.id,
+    user,
+    ownerRole: '',
     avatar: cs2Logo,
     game: 'cs2',
     description: '',
     public: true,
-    owner: user.nickname,
-    players: [],
+    members: [],
     neededRoles: [],
+    teamRequests: [],
   });
   const [game, setGame] = useState<SingleValue<Option>>();
   const uploadAvatar = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -230,20 +233,38 @@ const TeamCreationPage = () => {
 
     const CreatedTeam = () => {
       return (
-        <CreatedTeamContainer>
-          <LeftCreatedTeamContainer>
-            <img src={team.avatar} alt='' />
-            <CreatedTeamDescription>{team.description}</CreatedTeamDescription>
-          </LeftCreatedTeamContainer>
-          <RightCreatedTeamContainer>
-            <CreatedTeamName>{team.name}</CreatedTeamName>
-            <RolesContainer>
-              {neededRoles.map((role) => (
-                <CreatedTeamRoleLabel key={role}>{role}</CreatedTeamRoleLabel>
-              ))}
-            </RolesContainer>
-          </RightCreatedTeamContainer>
-        </CreatedTeamContainer>
+        <div>
+          <strong>Данные вашей команды</strong>
+          <CreatedTeamContainer>
+            <LeftCreatedTeamContainer>
+              <LeftContainerHeader>
+                <img src={team.avatar} alt='' />
+                <div>
+                  <CreatedTeamName>{team.name}</CreatedTeamName>
+
+                  <TeamType>
+                    <span>Тип:</span>
+                    {team.public ? 'публичная' : 'приватная'}
+                  </TeamType>
+                  <OwnerNickname>
+                    <span>Создатель: </span>
+                    {team.user.nickname}
+                  </OwnerNickname>
+                </div>
+              </LeftContainerHeader>
+
+              <CreatedTeamDescription>{team.description}</CreatedTeamDescription>
+            </LeftCreatedTeamContainer>
+            <RightCreatedTeamContainer>
+              <CreatedTeamRoles>
+                <RolesTitle>Нужные игроки</RolesTitle>
+                {neededRoles.map((role) => (
+                  <CreatedTeamRoleLabel key={role}>{role}</CreatedTeamRoleLabel>
+                ))}
+              </CreatedTeamRoles>
+            </RightCreatedTeamContainer>
+          </CreatedTeamContainer>
+        </div>
       );
     };
 
@@ -258,6 +279,8 @@ const TeamCreationPage = () => {
       }
     });
     if (isCancel) return;
+
+    // dispatch(createTeam({ team,}))
   };
 
   return (
@@ -587,6 +610,7 @@ const TeamLogo = styled.div`
   flex-direction: column;
 `;
 const TeamLogoImg = styled.img<{ loading: string }>`
+  width: 100%;
   max-width: 200px;
   border-radius: 10px;
   opacity: ${(p) => (p.loading === 'true' ? '0.4' : '1')};
@@ -844,37 +868,54 @@ const CreatedTeamContainer = styled.div`
   width: 100%;
   display: flex;
   justify-content: space-between;
-  align-items: center;
+
   background-color: #313131;
-  padding: 15px 20px;
+  padding: 10px 10px;
   border-radius: 10px;
+  margin-top: 15px;
 `;
 const LeftCreatedTeamContainer = styled.div`
   display: flex;
   flex-direction: column;
-  align-items: center;
+  padding: 10px 15px;
   row-gap: 10px;
-  width: 55%;
-  > img {
+  width: 60%;
+  border-right: 1px solid #989898;
+  img {
     border-radius: 10px;
     width: 90px;
     height: 90px;
     object-fit: cover;
   }
 `;
+
+const LeftContainerHeader = styled.div`
+  display: flex;
+  column-gap: 10px;
+  width: 100%;
+  > div {
+    display: flex;
+    flex-direction: column;
+    row-gap: 5px;
+    align-items: flex-start;
+  }
+`;
+
 const RightCreatedTeamContainer = styled.div`
   width: 40%;
-  height: 100%;
-  display: flex;
+  padding: 10px 5px;
 
+  height: 100%;
+
+  display: flex;
+  align-items: center;
   flex-direction: column;
-  justify-content: space-between;
 `;
 
 const CreatedTeamDescription = styled.p`
   width: 100%;
   font-size: 16px;
-  padding: 10px 15px;
+  padding: 5px 10px;
   color: var(--main-text-color);
   text-align: left;
   background-color: #181818;
@@ -886,20 +927,19 @@ const CreatedTeamDescription = styled.p`
 
 const CreatedTeamName = styled.p`
   font-weight: 700;
-  font-size: 16px;
-  padding: 4px 7px;
+  font-size: 18px;
+  margin-bottom: 10px;
   color: var(--main-text-color);
-
-  background-color: #181818;
-
-  border-radius: 5px;
 `;
 
 const OwnerNickname = styled.span`
   color: var(--main-text-color);
   font-size: 16px;
+  > span {
+    font-size: 12px;
+  }
 `;
-
+const TeamType = styled(OwnerNickname)``;
 const CreatedTeamRoleLabel = styled(RoleLabel)`
   border: 2px solid #565656;
   background-color: #181818;
@@ -917,6 +957,14 @@ const CreatedTeamRoleLabel = styled(RoleLabel)`
     background-color: #181818;
     cursor: auto;
   }
+`;
+const CreatedTeamRoles = styled(RolesContainer)`
+  row-gap: 10px;
+`;
+
+const RolesTitle = styled.span`
+  white-space: nowrap;
+  color: var(--main-text-color);
 `;
 
 export default TeamCreationPage;
