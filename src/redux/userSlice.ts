@@ -13,6 +13,8 @@ import defaultUserAvatar from '../assets/images/default-avatar.png';
 import { FriendRequestWithAction } from '../types/friendRequest';
 import fetchUserFriendsData from './userThunks/fetchUserFriendsData';
 import { UserFriendsData } from '../types/UserFriendsData';
+import Team from '../types/Team';
+import createTeam from './teamThunks/createTeam';
 interface UserState {
   user: ClientUser | null;
   isAuth: boolean;
@@ -24,6 +26,7 @@ interface UserState {
   updateCs2DataStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
   updateUserStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
   deleteCs2Status: 'idle' | 'pending' | 'fulfilled' | 'rejected';
+  createTeamStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
 
   createUserError: string | null;
   fetchUserError: string | null;
@@ -50,6 +53,8 @@ const initialState: UserState = {
   updateUserStatus: 'idle',
 
   deleteCs2Status: 'idle',
+
+  createTeamStatus: 'idle',
 };
 
 const userSlice = createSlice({
@@ -283,6 +288,17 @@ const userSlice = createSlice({
         state.user.friends = action.payload.friends;
         state.user.receivedRequests = action.payload.receivedRequests;
         state.user.sentRequests = action.payload.sentRequests;
+      }
+    });
+
+    //teams
+    builder.addCase(createTeam.pending, (state) => {
+      state.createTeamStatus = 'pending';
+    });
+    builder.addCase(createTeam.fulfilled, (state, action: PayloadAction<Team>) => {
+      if (state.user) {
+        state.createTeamStatus = 'fulfilled';
+        state.user.teams?.push(action.payload);
       }
     });
   },

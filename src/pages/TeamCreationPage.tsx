@@ -27,6 +27,8 @@ import { changeFriendsInviteModalState, changeInvitedFriendsModalState } from '.
 import FriendsInviteModal from '../components/FriendsInviteModal';
 import { FriendWithRole } from '../types/FriendWithRole';
 import ReactDOMServer from 'react-dom/server';
+import createTeam from '../redux/teamThunks/createTeam';
+
 interface CreationDataValidation {
   isRolesValid: boolean;
 }
@@ -197,7 +199,7 @@ const TeamCreationPage = () => {
     from: { opacity: 0 },
   });
 
-  const createTeam = async () => {
+  const handleCreateTeam = async () => {
     let isCancel: boolean = false;
     if (invitedFriends.length !== 0) {
       const InvitedFriendsRender = () => {
@@ -230,7 +232,9 @@ const TeamCreationPage = () => {
     if (isCancel) return;
 
     const neededRoles = roles.filter((role) => !invitedFriends.find((friend) => friend.role === role));
-
+    const finishedRoles = Cs2PlayerRoles.filter(
+      (role) => !invitedFriends.find((friend) => friend.role === role.name) && roles.find((innerRole) => innerRole === role.name),
+    );
     const CreatedTeam = () => {
       return (
         <div>
@@ -244,7 +248,7 @@ const TeamCreationPage = () => {
 
                   <TeamType>
                     <span>Тип:</span>
-                    {team.public ? 'публичная' : 'приватная'}
+                    {team.public ? ' публичная' : ' приватная'}
                   </TeamType>
                   <OwnerNickname>
                     <span>Создатель: </span>
@@ -279,8 +283,14 @@ const TeamCreationPage = () => {
       }
     });
     if (isCancel) return;
-
-    // dispatch(createTeam({ team,}))
+    const newTeam: Team = team;
+    newTeam.teamRequests = invitedFriends.map((friend) => ({
+      toUserId: friend.id,
+      roleId: Cs2PlayerRoles.find((role) => role.name === friend.role)?.id as number,
+    }));
+    newTeam.neededRoles = finishedRoles;
+    newTeam.ownerRole = ownerRole;
+    dispatch(createTeam(newTeam));
   };
 
   return (
@@ -426,7 +436,12 @@ const TeamCreationPage = () => {
                 <NameAndDesc>
                   <TeamData>
                     <TeamDataText>Название: </TeamDataText>
-                    <CommonInput onChange={handleTeamNameChange} placeholder='...' value={team.name} style={{ maxWidth: '250px' }} />
+                    <CommonInput
+                      onChange={handleTeamNameChange}
+                      placeholder='Например, «89 squad»'
+                      value={team.name}
+                      style={{ maxWidth: '250px' }}
+                    />
                   </TeamData>
                   <TeamData>
                     <TeamDataText>Информация: </TeamDataText>
@@ -537,7 +552,7 @@ const TeamCreationPage = () => {
               <ConfirmButton
                 onClick={() => {
                   if (creationStep === 4) {
-                    createTeam();
+                    handleCreateTeam();
                   } else setCreationStep((prev) => prev + 1);
                 }}
               >
@@ -612,6 +627,8 @@ const TeamLogo = styled.div`
 const TeamLogoImg = styled.img<{ loading: string }>`
   width: 100%;
   max-width: 200px;
+  max-height: 250px;
+
   border-radius: 10px;
   opacity: ${(p) => (p.loading === 'true' ? '0.4' : '1')};
 `;
@@ -934,12 +951,14 @@ const CreatedTeamName = styled.p`
 
 const OwnerNickname = styled.span`
   color: var(--main-text-color);
-  font-size: 16px;
+  font-size: 14px;
   > span {
     font-size: 12px;
   }
 `;
-const TeamType = styled(OwnerNickname)``;
+const TeamType = styled(OwnerNickname)`
+  font-size: 14px;
+`;
 const CreatedTeamRoleLabel = styled(RoleLabel)`
   border: 2px solid #565656;
   background-color: #181818;

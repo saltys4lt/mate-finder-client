@@ -3,8 +3,8 @@ import Team from './Team';
 
 export interface TeamRequest {
   id?: number;
-  teamId: number;
-  team: Team;
-  ToUserId: number;
-  user: ClientUser;
+  teamId?: number;
+  team?: Team;
+  toUserId: number;
+  user?: ClientUser;
 }
