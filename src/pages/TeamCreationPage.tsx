@@ -28,12 +28,12 @@ import FriendsInviteModal from '../components/FriendsInviteModal';
 import { FriendWithRole } from '../types/FriendWithRole';
 import ReactDOMServer from 'react-dom/server';
 import createTeam from '../redux/teamThunks/createTeam';
-
-interface CreationDataValidation {
-  isRolesValid: boolean;
-}
+import isCreationStepButtonDisabled from '../util/isCreationStepButtonDisabled';
+import { TeamCreationDataValidation } from '../types/TeamCreationDataValidation';
+import { ErrorAlert } from '../components/AuthForms/RegistrationForm';
 
 const TeamCreationPage = () => {
+  const regex = /^[a-zA-Z0-9]+$/;
   const dispatch = useAppDispatch();
   const user = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
   const [availableGames, setAvailableGames] = useState<Option[]>(Games);
@@ -42,8 +42,13 @@ const TeamCreationPage = () => {
   const [creationStep, setCreationStep] = useState<number>(1);
   const [roles, setRoles] = useState<string[]>([]);
   const [invitedFriends, setInvitedFriends] = useState<FriendWithRole[]>([]);
-  const [dataValidation, setDataValidation] = useState<CreationDataValidation>({
+  const [dataValidation, setDataValidation] = useState<TeamCreationDataValidation>({
+    isNameValid: true,
+    isDescriptionValid: true,
     isRolesValid: true,
+    descError: null,
+    nameError: null,
+    rolesError: null,
   });
 
   const [team, setTeam] = useState<Team>({
@@ -90,6 +95,13 @@ const TeamCreationPage = () => {
   };
 
   const handleTeamNameChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (!dataValidation.isNameValid) {
+      if (dataValidation.nameError === 'format' && regex.test(team.name)) {
+        setDataValidation({ ...dataValidation, nameError: null, isNameValid: true });
+      } else if (dataValidation.nameError === 'length' && team.name.length < 16) {
+        setDataValidation({ ...dataValidation, nameError: null, isNameValid: true });
+      }
+    }
     setTeam({ ...team, name: e.target.value });
   };
 
@@ -292,6 +304,35 @@ const TeamCreationPage = () => {
     newTeam.ownerRole = ownerRole;
     dispatch(createTeam(newTeam));
   };
+  console.log(creationStep);
+
+  const handleChangeStep = () => {
+    console.log(creationStep);
+    if (creationStep === 4) {
+      handleCreateTeam();
+    } else {
+      console.log(creationStep);
+      if (creationStep === 2) {
+        console.log('dsdsds');
+        if (!regex.test(team.name)) {
+          setDataValidation({ ...dataValidation, isNameValid: false, nameError: 'format' });
+        } else if (team.name.length > 15) {
+          setDataValidation({ ...dataValidation, isNameValid: false, nameError: 'length' });
+        } else setCreationStep(3);
+        return;
+      }
+
+      if (creationStep === 3) {
+        if (!regex.test(team.description)) {
+          setDataValidation({ ...dataValidation, isNameValid: false, nameError: 'format' });
+        } else if (team.name.length > 70) {
+          setDataValidation({ ...dataValidation, isNameValid: false, nameError: 'length' });
+        } else setCreationStep(3);
+        return;
+      }
+      setCreationStep((prev) => prev + 1);
+    }
+  };
 
   return (
     <Main>
@@ -436,12 +477,18 @@ const TeamCreationPage = () => {
                 <NameAndDesc>
                   <TeamData>
                     <TeamDataText>Название: </TeamDataText>
-                    <CommonInput
+                    <TeamCreationInput
                       onChange={handleTeamNameChange}
                       placeholder='Например, «89 squad»'
                       value={team.name}
                       style={{ maxWidth: '250px' }}
+                      $isValid={dataValidation.isNameValid}
                     />
+                    {!dataValidation.isNameValid && (
+                      <ErrorAlert style={{ textAlign: 'center', marginTop: '-5px' }}>
+                        {dataValidation.nameError === 'format' ? 'Некорректный формат' : 'Максимальная длина 15 символов'}
+                      </ErrorAlert>
+                    )}
                   </TeamData>
                   <TeamData>
                     <TeamDataText>Информация: </TeamDataText>
@@ -549,15 +596,13 @@ const TeamCreationPage = () => {
                   Назад
                 </ConfirmButton>
               )}
-              <ConfirmButton
-                onClick={() => {
-                  if (creationStep === 4) {
-                    handleCreateTeam();
-                  } else setCreationStep((prev) => prev + 1);
-                }}
+              <TeamCreationConfirm
+                onClick={handleChangeStep}
+                $isDisabled={creationStep !== 4 && !isCreationStepButtonDisabled(dataValidation, creationStep, ownerRole)}
+                disabled={creationStep !== 4 && !isCreationStepButtonDisabled(dataValidation, creationStep, ownerRole)}
               >
                 {creationStep !== 4 ? 'Далее' : 'Создать команду'}
-              </ConfirmButton>
+              </TeamCreationConfirm>
             </StepButtons>
           </InnerContainer>
         </MainContainer>
@@ -699,6 +744,18 @@ const GameExplenation = styled(TypeExplenation)`
   padding: 10px;
   border-radius: 5px;
   box-shadow: 0px 1px 10px #333333;
+`;
+
+const TeamCreationInput = styled(CommonInput)<{ $isValid: boolean }>`
+  border-color: ${(p) => (p.$isValid ? '#565656' : 'var(--main-red-color)')};
+`;
+
+const TeamCreationConfirm = styled(ConfirmButton)<{ $isDisabled: boolean }>`
+  opacity: ${(p) => (p.$isDisabled ? '0.3' : '1')};
+  cursor: ${(p) => (p.$isDisabled ? 'auto' : 'pointer')};
+  &:hover {
+    background-color: ${(p) => p.$isDisabled && '#000'};
+  }
 `;
 
 const TeamDataText = styled.h4`

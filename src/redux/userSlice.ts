@@ -297,6 +297,7 @@ const userSlice = createSlice({
     });
     builder.addCase(createTeam.fulfilled, (state, action: PayloadAction<Team>) => {
       if (state.user) {
+        console.log(action.payload);
         state.createTeamStatus = 'fulfilled';
         state.user.teams?.push(action.payload);
       }
