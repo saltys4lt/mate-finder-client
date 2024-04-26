@@ -201,7 +201,7 @@ const LoginButton = styled.button`
 `;
 
 export const ErrorAlert = styled.span`
-  margin: -10px;
+  margin-top: -10px;
   font-size: 12px;
   color: #d82f2f;
 `;

@@ -33,7 +33,8 @@ import { TeamCreationDataValidation } from '../types/TeamCreationDataValidation'
 import { ErrorAlert } from '../components/AuthForms/RegistrationForm';
 
 const TeamCreationPage = () => {
-  const regex = /^[a-zA-Z0-9]+$/;
+  const regex = /^[A-Za-z0-9А-Яа-я]+$/;
+
   const dispatch = useAppDispatch();
   const user = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
   const [availableGames, setAvailableGames] = useState<Option[]>(Games);
@@ -106,6 +107,13 @@ const TeamCreationPage = () => {
   };
 
   const handleTeamDescChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
+    if (!dataValidation.isDescriptionValid) {
+      if (dataValidation.descError === 'format' && regex.test(team.description)) {
+        setDataValidation({ ...dataValidation, descError: null, isDescriptionValid: true });
+      } else if (dataValidation.descError === 'length' && team.description.length < 150) {
+        setDataValidation({ ...dataValidation, descError: null, isDescriptionValid: true });
+      }
+    }
     setTeam({ ...team, description: e.target.value });
   };
   const handleTeamTypeChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -311,25 +319,33 @@ const TeamCreationPage = () => {
     if (creationStep === 4) {
       handleCreateTeam();
     } else {
+      const tempDataValidation = { ...dataValidation };
       console.log(creationStep);
       if (creationStep === 2) {
-        console.log('dsdsds');
         if (!regex.test(team.name)) {
-          setDataValidation({ ...dataValidation, isNameValid: false, nameError: 'format' });
+          tempDataValidation.isNameValid = false;
+          tempDataValidation.nameError = 'format';
         } else if (team.name.length > 15) {
-          setDataValidation({ ...dataValidation, isNameValid: false, nameError: 'length' });
-        } else setCreationStep(3);
+          tempDataValidation.isNameValid = false;
+          tempDataValidation.nameError = 'length';
+        }
+
+        if (!regex.test(team.description)) {
+          tempDataValidation.isDescriptionValid = false;
+          tempDataValidation.descError = 'format';
+        } else if (team.description.length > 150) {
+          tempDataValidation.isDescriptionValid = false;
+          tempDataValidation.descError = 'length';
+        }
+        if (!tempDataValidation.isDescriptionValid || !tempDataValidation.isNameValid) {
+          setDataValidation(tempDataValidation);
+
+          return;
+        }
+        setCreationStep(3);
         return;
       }
 
-      if (creationStep === 3) {
-        if (!regex.test(team.description)) {
-          setDataValidation({ ...dataValidation, isNameValid: false, nameError: 'format' });
-        } else if (team.name.length > 70) {
-          setDataValidation({ ...dataValidation, isNameValid: false, nameError: 'length' });
-        } else setCreationStep(3);
-        return;
-      }
       setCreationStep((prev) => prev + 1);
     }
   };
@@ -485,14 +501,25 @@ const TeamCreationPage = () => {
                       $isValid={dataValidation.isNameValid}
                     />
                     {!dataValidation.isNameValid && (
-                      <ErrorAlert style={{ textAlign: 'center', marginTop: '-5px' }}>
+                      <ErrorAlert style={{ marginTop: '-5px' }}>
                         {dataValidation.nameError === 'format' ? 'Некорректный формат' : 'Максимальная длина 15 символов'}
                       </ErrorAlert>
                     )}
                   </TeamData>
                   <TeamData>
                     <TeamDataText>Информация: </TeamDataText>
-                    <DescriptionInput onChange={handleTeamDescChange} placeholder='Кто вы, что вы и зачем ' value={team.description} />
+
+                    <DescriptionInput
+                      $isValid={dataValidation.isDescriptionValid}
+                      onChange={handleTeamDescChange}
+                      placeholder='Кто вы, что вы и зачем '
+                      value={team.description}
+                    />
+                    {!dataValidation.isDescriptionValid && (
+                      <ErrorAlert style={{ marginTop: '-5px' }}>
+                        {dataValidation.descError === 'format' ? 'Некорректный формат' : 'Максимальная длина 150 символов'}
+                      </ErrorAlert>
+                    )}
                   </TeamData>
                 </NameAndDesc>
               </TeamLogoContainer>
@@ -781,7 +808,7 @@ const InviteFriendsButton = styled(CommonButton)`
   text-align: center;
 `;
 
-const DescriptionInput = styled.textarea`
+const DescriptionInput = styled.textarea<{ $isValid: boolean }>`
   width: 100%;
   font-size: 16px;
   padding: 10px 15px;
@@ -797,6 +824,7 @@ const DescriptionInput = styled.textarea`
   &::placeholder {
     font-size: 15px;
   }
+  border-color: ${(p) => (p.$isValid ? '#565656' : 'var(--main-red-color)')};
 `;
 
 const ErrorOutlineContainer = styled.div`
