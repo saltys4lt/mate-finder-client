@@ -16,8 +16,7 @@ import FilterBar from '../components/FilterBar';
 import { PagePurposes } from '../consts/enums/PagePurposes';
 import List from '../components/List';
 import Cs2Data from '../types/Cs2Data';
-import playerSlice from '../redux/playerSlice';
-import { FilterSharp } from '@mui/icons-material';
+
 const theme = createTheme({
   palette: {
     primary: {

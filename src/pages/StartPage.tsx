@@ -2,7 +2,10 @@ import styled from 'styled-components';
 import Modal from '../components/Modal';
 import { useAppDispatch } from '../redux';
 import { changeRegState } from '../redux/modalSlice';
-
+import improveIcon from '../assets/images/improve.png';
+import matesIcon from '../assets/images/mates.png';
+import uniteIcon from '../assets/images/unite.png';
+import startPageBg from '../assets/images/start-page-bg.jpg';
 const StartPage = () => {
   const dispatch = useAppDispatch();
 
@@ -17,24 +20,24 @@ const StartPage = () => {
       <Main>
         <ContentContainer>
           <Content>
-            <ContentTitle>your new gameplay begins here</ContentTitle>
+            <ContentTitle>новый геймплей начинается здесь</ContentTitle>
             <div style={{ marginTop: '80px' }}>
               <SubContent>
-                <SubContentRed>Discover</SubContentRed> your gaming companions
-                <ContentIcon src='/images/mates.png'></ContentIcon>
+                <SubContentRed>Находи</SubContentRed> нужных людей
+                <ContentIcon src={matesIcon}></ContentIcon>
               </SubContent>
               <SubContent>
-                <SubContentRed>Unite</SubContentRed> with a team
-                <ContentIcon src='/images/unite.png'></ContentIcon>
+                <SubContentRed>Объединяйся</SubContentRed> с ними
+                <ContentIcon src={uniteIcon}></ContentIcon>
               </SubContent>
 
               <SubContent>
                 {' '}
-                <SubContentRed>Improve</SubContentRed> your game skills!
-                <ContentIcon src='/images/improve.png'></ContentIcon>
+                <SubContentRed>Выводи</SubContentRed> свой скилл на новый уровень!
+                <ContentIcon src={improveIcon}></ContentIcon>
               </SubContent>
             </div>
-            <StartButton onClick={openRegModal}>Let's start</StartButton>
+            <StartButton onClick={openRegModal}>Начать сейчас</StartButton>
           </Content>
         </ContentContainer>
       </Main>
@@ -44,7 +47,7 @@ const StartPage = () => {
 
 const Main = styled.main`
   height: 80vh;
-  background-image: url('/images/start-page-bg.jpg');
+  background-image: url('${startPageBg}');
   background-size: 100%;
   background-repeat: no-repeat;
 `;

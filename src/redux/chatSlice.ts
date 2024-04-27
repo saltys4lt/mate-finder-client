@@ -91,6 +91,7 @@ const chatSlice = createSlice({
       }
     },
     resetChats(state) {
+      state.fetchChatsStatus = 'idle';
       state.currentChat = null;
       state.chats = [];
     },

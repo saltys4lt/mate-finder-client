@@ -24,18 +24,41 @@ import updateUser from '../redux/userThunks/updateUser';
 import UpdatedUserData from '../types/UpdatedUserData';
 import Swal from 'sweetalert2';
 import deleteCs2Data from '../redux/cs2Thunks/deleteCs2Data';
-import { changeGameProfileState } from '../redux/modalSlice';
+import { changeChatState, changeGameProfileState } from '../redux/modalSlice';
+import defaultUserAvatar from '../assets/images/default-avatar.png';
+import editIcon from '../assets/images/edit.png';
+import linkIcon from '../assets/images/link.png';
+import groupInviteIcon from '../assets/images/group-invite.png';
+import closeCross from '../assets/images/close-cross.png';
+import sendedFriendReq from '../assets/images/sended-friend-req.png';
+import inFriendsIcon from '../assets/images/in-friends-icon.png';
 
+import confirmEditIcon from '../assets/images/confirm-edit.png';
+import editProfileIcon from '../assets/images/edit-profile.png';
+import FriendsIcon from '../assets/images/friends.png';
+import addFriendsIcon from '../assets/images/add-friend.png';
+import sendMessageIcon from '../assets/images/send-message.png';
+import cs2ProfilePicture from '../assets/images/cs2-profile-pic.jpeg';
+import valorantProfilePicture from '../assets/images/valorant-profile-pic.jpg';
+import dropDownArrow from '../assets/images/drop-down-arrow.png';
+import headerBg from '../assets/images/profile-bg.webp';
+import { setCurrentChat } from '../redux/chatSlice';
+import { Chat } from '../types/Chat';
+import { sendFriendRequest } from '../api/friendsRequests/sendFriendRequest';
+import { sendTeamRequest } from '../api/teamRequsts.ts/sendTeamRequest';
+import ReactDOMServer from 'react-dom/server';
 const ProfilePage = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const nickname = useParams().nickname;
-  const user = useSelector((state: RootState) => state.userReducer.user);
-  const player = useSelector((root: RootState) => root.playerReducer.player);
+  const user = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
+  const player = useSelector((root: RootState) => root.playerReducer.player) as Player;
 
   const playerError = useSelector((root: RootState) => root.playerReducer.fetchPlayerByNameError);
   const updateFaceitStatus = useSelector((root: RootState) => root.userReducer.updateCs2DataStatus);
   const deleteCs2Status = useSelector((root: RootState) => root.userReducer.deleteCs2Status);
+  const chats = useSelector((root: RootState) => root.chatReducer.chats);
+
   const [profileUser, setProfileUser] = useState<ClientUser | Player | null>(null);
   const [editMode, setEditMode] = useState<boolean>(false);
   const [urlTextCopied, setUrlTextCopied] = useState<boolean>(false);
@@ -90,6 +113,31 @@ const ProfilePage = () => {
     return <Loader />;
   }
 
+  const handleTeamInvite = (userId: number) => {
+    if (user.teams?.length === 0) {
+      const NoTeamAlert = () => {
+        return (
+          <div style={{ textAlign: 'center' }}>
+            <h3>У вас нет своей команды :&#40;</h3>
+            <p>Но вы можете создать ее :D</p>
+          </div>
+        );
+      };
+      Swal.fire({
+        html: ReactDOMServer.renderToString(<NoTeamAlert />),
+        confirmButtonText: 'Создать',
+        showCancelButton: true,
+        cancelButtonText: 'Отмена',
+      }).then((res) => {
+        if (res.isConfirmed) {
+          navigate('/team-creator');
+        }
+      });
+    } else {
+      if (user.teams) sendTeamRequest({ toUserId: userId, teamId: user.teams[0].id, roleId: 1 });
+    }
+  };
+
   const cancelEdit = async () => {
     setEditMode(false);
     if (updatedUserData.user_avatar) {
@@ -139,139 +187,209 @@ const ProfilePage = () => {
       showCancelButton: true,
       confirmButtonColor: '#d33',
       cancelButtonColor: '#a4a4a4',
-      confirmButtonText: 'Leave',
+      confirmButtonText: 'Подтвердить',
+      cancelButtonText: 'Отмена',
     }).then((result) => {
       if (result.isConfirmed) {
         dispatch(deleteCs2Data());
       }
     });
   };
+  const handleChatOpen = () => {
+    dispatch(changeChatState(true));
+
+    const openedChat = {
+      roomId: user.id.toString() + player.id.toString(),
+      members: [
+        {
+          user_avatar: player.user_avatar,
+          nickname: player.nickname,
+          id: player.id,
+        },
+        {
+          avatar: user.user_avatar,
+          nickname: user.nickname,
+          id: user.id,
+        },
+      ],
+      messages: [],
+      team: false,
+    } as Chat;
+
+    const chat: Chat | undefined = chats?.find(
+      (chat) => chat.members.find((member) => member.id === user.id) && chat.members.find((member) => member.id === player.id),
+    );
+    if (chat) {
+      dispatch(setCurrentChat(chat));
+    } else dispatch(setCurrentChat(openedChat));
+  };
+  const sendRequest = (playerId: number) => {
+    sendFriendRequest({ fromUserId: user.id, toUserId: playerId });
+  };
 
   const profileAvatar = player
     ? profileUser.user_avatar
       ? profileUser.user_avatar
-      : '/images/default-avatar.png'
+      : defaultUserAvatar
     : updatedUserData.user_avatar
       ? updatedUserData.user_avatar
       : profileUser?.user_avatar;
-  console.log(profileUser);
+
   return (
     <>
       <Modal />
       <ProfileHeader>
         <Container>
-          <MainDataContainer>
-            <ProfileAvatarContainer>
-              <ProfileAvatar $avatarIsLoading={avatarIsLoading} src={profileAvatar} alt='' />
-              {editMode && (
-                <>
-                  <ChangeAvatarButton onClick={openFileExplorer}>
-                    <ChangeAvatarButtonIcon src='/images/edit.png' alt='' />
-                  </ChangeAvatarButton>
-                  <input
-                    style={{ display: 'none' }}
-                    id='file__input'
-                    className='file__upload__input'
-                    type='file'
-                    accept='image/png, image/jpeg'
-                    onChange={(e) => {
-                      uploadAvatar(e);
-                    }}
-                  />
-                </>
-              )}
-              {avatarIsLoading && (
-                <CircularProgress
-                  color='error'
-                  size={'50px'}
-                  sx={{
-                    zIndex: 3,
-                    position: 'absolute',
-                    inset: '0',
-                    margin: 'auto',
-                  }}
-                />
-              )}
-            </ProfileAvatarContainer>
-            <UserDataContainer>
-              <UserData>
-                <UserNickname>{profileUser?.nickname}</UserNickname>
-                <UserAge>Возраст: {dateToUserAge(profileUser?.birthday as string)}</UserAge>
-
-                <UserDataButtons>
-                  <CommonButton
-                    onClick={() => {
-                      copyCurrentUrl();
-                      setUrlTextCopied(true);
-                    }}
-                  >
-                    <img src='/images/link.png' alt='' />
-                    Скопировать ссылку
-                  </CommonButton>
-                  {player && (
-                    <CommonButton>
-                      <img src='/images/group-invite.png' alt='' />
-                      Пригласить в команду
-                    </CommonButton>
+          {!profileUser ? (
+            <></>
+          ) : (
+            <>
+              <MainDataContainer>
+                <ProfileAvatarContainer>
+                  <ProfileAvatar $avatarIsLoading={avatarIsLoading} src={profileAvatar} alt='' />
+                  {editMode && (
+                    <>
+                      <ChangeAvatarButton onClick={openFileExplorer}>
+                        <ChangeAvatarButtonIcon src={editIcon} alt='' />
+                      </ChangeAvatarButton>
+                      <input
+                        style={{ display: 'none' }}
+                        id='file__input'
+                        className='file__upload__input'
+                        type='file'
+                        accept='image/png, image/jpeg'
+                        onChange={(e) => {
+                          uploadAvatar(e);
+                        }}
+                      />
+                    </>
                   )}
-                  {urlTextCopied && <CopyUrlText>Ссылка скопирована!</CopyUrlText>}
-                </UserDataButtons>
-              </UserData>
-            </UserDataContainer>
-          </MainDataContainer>
-          <FooterUserData>
-            {!player &&
-              (editMode ? (
-                <SocialButtons>
-                  <CancelEditButton onClick={cancelEdit}>
-                    <img src='/images/close-cross.png' alt='' />
-                    Отменить изменения
-                  </CancelEditButton>
-                  <ConfirmEditButton onClick={confirmEdit} disabled={!updatedUserData.description && !updatedUserData.user_avatar}>
-                    <img src='/images/confirm-edit.png' alt='' />
-                    Подтвердить изменения
-                  </ConfirmEditButton>
-                </SocialButtons>
-              ) : (
-                <EditProfileButton
-                  onClick={() => {
-                    setEditMode(!editMode);
-                    setUpdatedUserData({ user_avatar: profileUser.user_avatar as string, description: profileUser.description as string });
-                  }}
-                >
-                  <img src='/images/edit-profile.png' alt='' />
-                  Редактировать профиль
-                </EditProfileButton>
-              ))}
-            {!editMode && (
-              <SocialButtons>
-                {!player ? (
-                  <>
-                    <CommonButton>
-                      <img src='/images/friends.png' alt='' />
-                      Мои друзья
-                    </CommonButton>
+                  {avatarIsLoading && (
+                    <CircularProgress
+                      color='error'
+                      size={'50px'}
+                      sx={{
+                        zIndex: 3,
+                        position: 'absolute',
+                        inset: '0',
+                        margin: 'auto',
+                      }}
+                    />
+                  )}
+                </ProfileAvatarContainer>
+                <UserDataContainer>
+                  <UserData>
+                    <UserNickname>
+                      {profileUser?.nickname}
+                      <UserGender>, Пол: {profileUser?.gender === 'female' ? 'Женский' : 'Мужской'}</UserGender>
+                    </UserNickname>
+                    <UserAge>Возраст: {dateToUserAge(profileUser?.birthday as string)}</UserAge>
 
-                    <CommonButton>
-                      <img src='/images/send-message.png' alt='' />
-                      Мои сообщения
-                    </CommonButton>
-                  </>
-                ) : (
-                  <>
-                    <CommonButton>
-                      <img src='/images/add-friend.png' alt='' />
-                      Добавить в друзья
-                    </CommonButton>
-                    <CommonButton>
-                      <img src='/images/send-message.png' alt='' />
-                      Cообщение
-                    </CommonButton>
-                  </>
+                    <UserDataButtons>
+                      <CommonButton
+                        onClick={() => {
+                          copyCurrentUrl();
+                          setUrlTextCopied(true);
+                        }}
+                      >
+                        <img src={linkIcon} alt='' />
+                        Скопировать ссылку
+                      </CommonButton>
+                      {player && (
+                        <CommonButton onClick={() => handleTeamInvite(profileUser.id)}>
+                          <img src={groupInviteIcon} alt='' />
+                          Пригласить в команду
+                        </CommonButton>
+                      )}
+                      {urlTextCopied && <CopyUrlText>Ссылка скопирована!</CopyUrlText>}
+                    </UserDataButtons>
+                  </UserData>
+                </UserDataContainer>
+              </MainDataContainer>
+              <FooterUserData>
+                {!player &&
+                  (editMode ? (
+                    <SocialButtons>
+                      <CancelEditButton onClick={cancelEdit}>
+                        <img src={closeCross} alt='' />
+                        Отменить изменения
+                      </CancelEditButton>
+                      <ConfirmEditButton onClick={confirmEdit} disabled={!updatedUserData.description && !updatedUserData.user_avatar}>
+                        <img src={confirmEditIcon} alt='' />
+                        Подтвердить изменения
+                      </ConfirmEditButton>
+                    </SocialButtons>
+                  ) : (
+                    <EditProfileButton
+                      onClick={() => {
+                        setEditMode(!editMode);
+                        setUpdatedUserData({
+                          user_avatar: profileUser.user_avatar as string,
+                          description: profileUser.description as string,
+                        });
+                      }}
+                    >
+                      <img src={editProfileIcon} alt='' />
+                      Редактировать профиль
+                    </EditProfileButton>
+                  ))}
+                {!editMode && (
+                  <SocialButtons>
+                    {!player ? (
+                      <>
+                        <CommonButton>
+                          <img src={FriendsIcon} alt='' />
+                          Мои друзья
+                        </CommonButton>
+
+                        <CommonButton onClick={() => dispatch(changeChatState(true))}>
+                          <img src={sendMessageIcon} alt='' />
+                          Мои сообщения
+                        </CommonButton>
+                      </>
+                    ) : (
+                      <>
+                        {user.sentRequests.find((req) => req.fromUserId === user.id && req.toUserId === player.id) ? (
+                          <CommonButton>
+                            <img src={sendedFriendReq} alt='' />
+                            Заявка отправлена
+                          </CommonButton>
+                        ) : user.receivedRequests.find((req) => req.toUserId === user.id && req.fromUserId === player.id) ? (
+                          <InFriendLabel
+                            onClick={(e) => {
+                              e.stopPropagation();
+                            }}
+                          >
+                            <img src={sendedFriendReq} alt='' />
+                            Ждет вашего ответа
+                          </InFriendLabel>
+                        ) : user.friends.find((friend) => friend.id === player.id) ? (
+                          <InFriendLabel>
+                            <img src={inFriendsIcon} alt='' />
+                            Ваш друг
+                          </InFriendLabel>
+                        ) : (
+                          <CommonButton
+                            onClick={() => {
+                              sendRequest(player.id);
+                            }}
+                          >
+                            <img src={addFriendsIcon} alt='' />
+                            Добавить в друзья
+                          </CommonButton>
+                        )}
+
+                        <CommonButton onClick={handleChatOpen}>
+                          <img src={sendMessageIcon} alt='' />
+                          Cообщение
+                        </CommonButton>
+                      </>
+                    )}
+                  </SocialButtons>
                 )}
-              </SocialButtons>
-            )}
-          </FooterUserData>
+              </FooterUserData>
+            </>
+          )}
         </Container>
       </ProfileHeader>
       <Container>
@@ -290,10 +408,10 @@ const ProfilePage = () => {
                       margin: 'auto',
                     }}
                   />
-                  <LoaderBackground bgColor='#333' borderRadius='0px' />
+                  <LoaderBackground bgcolor='#333' borderradius='0px' />
                 </>
               )}
-              <GameIcon src='/images/cs2-profile-pic.jpeg' />
+              <GameIcon src={cs2ProfilePicture} />
               <Cs2Stats>
                 {profileUser?.cs2_data ? (
                   <>
@@ -338,7 +456,7 @@ const ProfilePage = () => {
                       <GameContainerButtons>
                         <DropDown>
                           <GameContainerButton>
-                            Изменить <img src='/images/drop-down-arrow.png' alt='' />
+                            Изменить <img src={dropDownArrow} alt='' />
                           </GameContainerButton>
                           <DropDownContent>
                             <DropDownButton onClick={() => handleUpdateFaceitData(user?.cs2_data?.steamId as string)}>
@@ -361,7 +479,7 @@ const ProfilePage = () => {
               </Cs2Stats>
             </GameContainer>
             <GameContainer>
-              <GameIcon src='/images/valorant-profile-pic.jpg' />
+              <GameIcon src={valorantProfilePicture} />
               <ValorantStats>
                 {profileUser.valorant_data ? (
                   <></>
@@ -416,12 +534,15 @@ const ProfileHeader = styled.div`
     left: 0;
     width: 100%;
     height: 100%;
-    background-image: url('/images/profile-bg.webp');
+    background-image: url('${headerBg}');
     z-index: -1;
     background-position: center;
     background-size: cover;
     background-repeat: no-repeat;
     filter: blur(5px);
+  }
+  @media (max-width: 650px) {
+    min-height: 330px;
   }
 `;
 
@@ -467,10 +588,12 @@ const ProfileAvatar = styled.img<{ $avatarIsLoading: boolean }>`
   border-radius: 50%;
   width: 160px;
   height: 160px;
+
   border: 4px solid #2b2b2b;
   box-shadow: 0px 3px 15px 10px rgba(0, 0, 0, 0.6);
   position: relative;
   opacity: ${(p) => (p.$avatarIsLoading ? '0.4' : '1')};
+  object-fit: cover;
 `;
 
 const UserDataContainer = styled.div`
@@ -501,6 +624,12 @@ const UserNickname = styled.h5`
   color: #fff;
 `;
 
+const UserGender = styled.span`
+  font-weight: 400;
+  font-size: 17px;
+  color: #cdcdcd;
+`;
+
 const UserAge = styled.p`
   font-size: 17px;
   color: #ccc8c8;
@@ -514,6 +643,7 @@ const UserDataButtons = styled.div`
   column-gap: 15px;
   flex-wrap: wrap;
 `;
+
 const FooterUserData = styled.div`
   margin-top: 10px;
   width: 100%;
@@ -529,7 +659,12 @@ const SocialButtons = styled.div`
   padding: 10px 0;
   flex-wrap: wrap;
 `;
-
+const InFriendLabel = styled(CommonButton)`
+  &:hover {
+    background-color: #181818;
+    border-color: #565656;
+  }
+`;
 const ProfileMainContainer = styled.div`
   width: 100%;
   display: flex;

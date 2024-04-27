@@ -9,7 +9,15 @@ import refillCs2Data from './cs2Thunks/refillCs2Data';
 import updateCs2Data from './cs2Thunks/updateCs2Data';
 import updateUser from './userThunks/updateUser';
 import deleteCs2Data from './cs2Thunks/deleteCs2Data';
-
+import defaultUserAvatar from '../assets/images/default-avatar.png';
+import { FriendRequestWithAction } from '../types/friendRequest';
+import fetchUserFriendsData from './userThunks/fetchUserFriendsData';
+import { UserFriendsData } from '../types/UserFriendsData';
+import Team from '../types/Team';
+import createTeam from './teamThunks/createTeam';
+import { TeamRequest } from '../types/TeamRequest';
+import { Membership } from '../types/Membership';
+import { Status } from '../types/Status';
 interface UserState {
   user: ClientUser | null;
   isAuth: boolean;
@@ -21,6 +29,7 @@ interface UserState {
   updateCs2DataStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
   updateUserStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
   deleteCs2Status: 'idle' | 'pending' | 'fulfilled' | 'rejected';
+  createTeamStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
 
   createUserError: string | null;
   fetchUserError: string | null;
@@ -47,6 +56,8 @@ const initialState: UserState = {
   updateUserStatus: 'idle',
 
   deleteCs2Status: 'idle',
+
+  createTeamStatus: 'idle',
 };
 
 const userSlice = createSlice({
@@ -76,6 +87,77 @@ const userSlice = createSlice({
     setUpdateFaceitStatus(state, action) {
       state.updateCs2DataStatus = action.payload;
     },
+    setUserFriends(state, action: PayloadAction<ClientUser>) {
+      if (state.user) {
+        state.user.friends.push(action.payload);
+        const isUserReceived = state.user.receivedRequests.find((req) => req.fromUser.nickname === action.payload.nickname);
+        if (isUserReceived) {
+          state.user.receivedRequests = state.user.receivedRequests.filter((req) => req.fromUser.nickname !== action.payload.nickname);
+        } else {
+          state.user.sentRequests = state.user.sentRequests.filter((req) => req.toUser.nickname !== action.payload.nickname);
+        }
+      }
+    },
+    setUserReceivedFriendRequests(state, action: PayloadAction<FriendRequestWithAction>) {
+      if (state.user) {
+        if (action.payload.denied === -1) {
+          state.user.receivedRequests.push(action.payload.req);
+        } else {
+          const fr = action.payload.req;
+          console.log();
+          state.user = { ...state.user, receivedRequests: state.user.receivedRequests.filter((req) => req.fromUserId !== fr.fromUserId) };
+        }
+      }
+    },
+    setUserSentFriendRequests(state, action: PayloadAction<FriendRequestWithAction>) {
+      if (state.user) {
+        if (action.payload.denied === -1) {
+          state.user.sentRequests.push(action.payload.req);
+        } else {
+          const fr = action.payload.req;
+
+          state.user = { ...state.user, sentRequests: state.user.sentRequests.filter((req) => req.toUserId !== fr.toUserId) };
+        }
+      }
+    },
+
+    resetStatus(state, action: PayloadAction<Status>) {
+      state[action.payload] = 'idle';
+    },
+    addTeamRequest(state, action: PayloadAction<TeamRequest>) {
+      if (state.user) {
+        state.user.requestsToTeam.push(action.payload);
+      }
+    },
+    joinTeam(state, action: PayloadAction<Membership>) {
+      if (state.user) {
+        if (state.user.teams?.find((team) => team.id === action.payload.teamId)) {
+          state.user.teams?.map((team) =>
+            team.id === action.payload.id
+              ? {
+                  ...team,
+                  teamRequests: team.teamRequests.filter((req) => req.id !== action.payload.id),
+                  members: [...team.members, action.payload.user],
+                }
+              : team,
+          );
+        } else {
+          state.user.memberOf.push(action.payload);
+          state.user.requestsToTeam = state.user.requestsToTeam.filter((req) => req.id !== action.payload.id);
+        }
+      }
+    },
+    removeTeamRequest(state, action: PayloadAction<TeamRequest>) {
+      if (state.user) {
+        if (state.user.teams?.find((team) => team.id === action.payload.id)) {
+          state.user.teams?.map((team) =>
+            team.id === action.payload.id
+              ? { ...team, teamRequests: team.teamRequests.filter((req) => req.id !== action.payload.id) }
+              : team,
+          );
+        } else state.user.requestsToTeam = state.user.requestsToTeam.filter((req) => req.id !== action.payload.id);
+      }
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(fetchUser.pending, (state) => {
@@ -85,9 +167,9 @@ const userSlice = createSlice({
       state.fetchUserStatus = 'fulfilled';
       const Toast = Swal.mixin({
         toast: true,
-        position: 'bottom-end',
+        position: 'bottom-start',
         showConfirmButton: false,
-        timer: 3000,
+        timer: 2500,
         timerProgressBar: true,
         didOpen: (toast) => {
           toast.onmouseenter = Swal.stopTimer;
@@ -96,12 +178,12 @@ const userSlice = createSlice({
       });
       Toast.fire({
         icon: 'success',
-        title: 'Signed in successfully',
-        text: `Welcome, ${action.payload.nickname}`,
+        title: 'Успешный вход!',
+        text: `Добро пожаловать, ${action.payload.nickname}`,
       });
       if (action.payload) {
         state.checkUserStatus = 'fulfilled';
-        const userAvatar = action.payload.user_avatar ? action.payload.user_avatar : '/images/default-avatar.png';
+        const userAvatar = action.payload.user_avatar ? action.payload.user_avatar : defaultUserAvatar;
         state.user = { ...action.payload, user_avatar: userAvatar };
         state.isAuth = true;
       }
@@ -111,10 +193,10 @@ const userSlice = createSlice({
       state.fetchUserError = action.payload as string;
       Swal.fire({
         icon: 'error',
-        title: 'Login Failure',
+        title: 'Ошибка входа',
         text: state.fetchUserError,
         showConfirmButton: true,
-        confirmButtonText: 'Get It',
+        confirmButtonText: 'Понял',
       });
     });
 
@@ -125,10 +207,10 @@ const userSlice = createSlice({
       state.createUserStatus = 'fulfilled';
       Swal.fire({
         icon: 'success',
-        title: `Registration Successful`,
-        text: `User ${action.payload} was created`,
+        title: `Успех!`,
+        text: `Пользователь ${action.payload} создан`,
         showConfirmButton: false,
-        timer: 1500,
+        timer: 2000,
       });
     });
     builder.addCase(createUser.rejected, (state, action) => {
@@ -137,7 +219,7 @@ const userSlice = createSlice({
 
       Swal.fire({
         icon: 'error',
-        title: 'Registration Failure',
+        title: 'Ошибка регистрации!',
         text: state.createUserError,
         showConfirmButton: true,
         timer: 3000,
@@ -149,10 +231,9 @@ const userSlice = createSlice({
       state.checkUserStatus = 'pending';
     });
     builder.addCase(checkUserIsAuth.fulfilled, (state, action: PayloadAction<ClientUser | undefined>) => {
-      console.log(action.payload);
       if (action.payload) {
         state.checkUserStatus = 'fulfilled';
-        const userAvatar = action.payload.user_avatar ? action.payload.user_avatar : '/images/default-avatar.png';
+        const userAvatar = action.payload.user_avatar ? action.payload.user_avatar : defaultUserAvatar;
         state.user = { ...action.payload, user_avatar: userAvatar };
         state.isAuth = true;
       }
@@ -185,7 +266,7 @@ const userSlice = createSlice({
         Toast.fire({
           icon: 'success',
           title: 'Ура!',
-          text: `Ваш игровой профиль по CS2 успешно создан!`,
+          text: `Ваш игровой профиль для Counter-Strike 2 успешно создан!`,
         });
       }
     });
@@ -241,9 +322,42 @@ const userSlice = createSlice({
     builder.addCase(deleteCs2Data.rejected, (state) => {
       state.updateUserStatus = 'rejected';
     });
+
+    //user friends
+    builder.addCase(fetchUserFriendsData.fulfilled, (state, action: PayloadAction<UserFriendsData>) => {
+      if (state.user) {
+        state.user.friends = action.payload.friends;
+        state.user.receivedRequests = action.payload.receivedRequests;
+        state.user.sentRequests = action.payload.sentRequests;
+      }
+    });
+
+    //teams
+    builder.addCase(createTeam.pending, (state) => {
+      state.createTeamStatus = 'pending';
+    });
+    builder.addCase(createTeam.fulfilled, (state, action: PayloadAction<Team>) => {
+      if (state.user) {
+        state.createTeamStatus = 'fulfilled';
+        state.user.teams?.push(action.payload);
+      }
+    });
   },
 });
 
-export const { resetUserStatus, changeIsAuth, setPendingForCheck, setGameCreationActive, setUpdateFaceitStatus } = userSlice.actions;
+export const {
+  resetUserStatus,
+  changeIsAuth,
+  setPendingForCheck,
+  setGameCreationActive,
+  setUpdateFaceitStatus,
+  setUserSentFriendRequests,
+  setUserFriends,
+  setUserReceivedFriendRequests,
+  addTeamRequest,
+  joinTeam,
+  removeTeamRequest,
+  resetStatus,
+} = userSlice.actions;
 
 export default userSlice.reducer;

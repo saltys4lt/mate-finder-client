@@ -40,21 +40,21 @@ const LoginForm = () => {
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <FormContainer>
-        <h3>Login</h3>
+        <h3>Вход</h3>
         <TextField
           {...register('nickname', {
-            required: { value: true, message: 'nickname is required' },
-            maxLength: { value: 10, message: 'max length is 10' },
-            minLength: { value: 3, message: 'min length is 3' },
+            required: { value: true, message: 'Ник обязателен' },
+            maxLength: { value: 10, message: 'Макисмум 10 символов' },
+            minLength: { value: 3, message: 'Минимум 3 символа' },
           })}
           size='small'
-          label='Nickname'
+          label='Логин'
           color='secondary'
           variant='filled'
         ></TextField>
-        {errors.nickname?.type === 'required' && <ErrorAlert role='alert'>Nickname is required</ErrorAlert>}
-        {errors.nickname?.type === 'maxLength' && <ErrorAlert role='alert'>Max length is 10</ErrorAlert>}
-        {errors.nickname?.type === 'minLength' && <ErrorAlert role='alert'>Min length is 3</ErrorAlert>}
+        {errors.nickname?.type === 'required' && <ErrorAlert role='alert'>Логин обязателен</ErrorAlert>}
+        {errors.nickname?.type === 'maxLength' && <ErrorAlert role='alert'>Макисмум 10 символов</ErrorAlert>}
+        {errors.nickname?.type === 'minLength' && <ErrorAlert role='alert'>Минимум 3 символа</ErrorAlert>}
 
         <TextField
           type='password'
@@ -62,16 +62,16 @@ const LoginForm = () => {
             required: true,
           })}
           size='small'
-          label='Password'
+          label='Пароль'
           color='secondary'
           variant='filled'
         ></TextField>
 
-        {errors.password?.type === 'required' && <ErrorAlert role='alert'>Password is required</ErrorAlert>}
+        {errors.password?.type === 'required' && <ErrorAlert role='alert'>Пароль обязателен</ErrorAlert>}
 
         <FormButtons>
-          <LoginButton type='submit'>Welcome back</LoginButton>
-          <RegButton onClick={switchToRegistration}>Sign Up</RegButton>
+          <LoginButton type='submit'>Вход</LoginButton>
+          <RegButton onClick={switchToRegistration}>Регистрация</RegButton>
         </FormButtons>
       </FormContainer>
     </form>
@@ -121,7 +121,8 @@ const RegButton = styled.button`
   padding: 5px 15px;
   border-radius: 3px;
   transition: all 0.2s ease-in-out;
-
+  background-color: #e1e1e1;
+  border: 1px solid #969696;
   &:hover {
     background-color: #c3c3c3;
     transform: scale(1.05);
