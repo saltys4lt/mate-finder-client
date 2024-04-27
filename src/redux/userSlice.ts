@@ -15,6 +15,9 @@ import fetchUserFriendsData from './userThunks/fetchUserFriendsData';
 import { UserFriendsData } from '../types/UserFriendsData';
 import Team from '../types/Team';
 import createTeam from './teamThunks/createTeam';
+import { TeamRequest } from '../types/TeamRequest';
+import { Membership } from '../types/Membership';
+import { Status } from '../types/Status';
 interface UserState {
   user: ClientUser | null;
   isAuth: boolean;
@@ -115,6 +118,44 @@ const userSlice = createSlice({
 
           state.user = { ...state.user, sentRequests: state.user.sentRequests.filter((req) => req.toUserId !== fr.toUserId) };
         }
+      }
+    },
+
+    resetStatus(state, action: PayloadAction<Status>) {
+      state[action.payload] = 'idle';
+    },
+    addTeamRequest(state, action: PayloadAction<TeamRequest>) {
+      if (state.user) {
+        state.user.requestsToTeam.push(action.payload);
+      }
+    },
+    joinTeam(state, action: PayloadAction<Membership>) {
+      if (state.user) {
+        if (state.user.teams?.find((team) => team.id === action.payload.teamId)) {
+          state.user.teams?.map((team) =>
+            team.id === action.payload.id
+              ? {
+                  ...team,
+                  teamRequests: team.teamRequests.filter((req) => req.id !== action.payload.id),
+                  members: [...team.members, action.payload.user],
+                }
+              : team,
+          );
+        } else {
+          state.user.memberOf.push(action.payload);
+          state.user.requestsToTeam = state.user.requestsToTeam.filter((req) => req.id !== action.payload.id);
+        }
+      }
+    },
+    removeTeamRequest(state, action: PayloadAction<TeamRequest>) {
+      if (state.user) {
+        if (state.user.teams?.find((team) => team.id === action.payload.id)) {
+          state.user.teams?.map((team) =>
+            team.id === action.payload.id
+              ? { ...team, teamRequests: team.teamRequests.filter((req) => req.id !== action.payload.id) }
+              : team,
+          );
+        } else state.user.requestsToTeam = state.user.requestsToTeam.filter((req) => req.id !== action.payload.id);
       }
     },
   },
@@ -297,7 +338,6 @@ const userSlice = createSlice({
     });
     builder.addCase(createTeam.fulfilled, (state, action: PayloadAction<Team>) => {
       if (state.user) {
-        console.log(action.payload);
         state.createTeamStatus = 'fulfilled';
         state.user.teams?.push(action.payload);
       }
@@ -314,6 +354,10 @@ export const {
   setUserSentFriendRequests,
   setUserFriends,
   setUserReceivedFriendRequests,
+  addTeamRequest,
+  joinTeam,
+  removeTeamRequest,
+  resetStatus,
 } = userSlice.actions;
 
 export default userSlice.reducer;

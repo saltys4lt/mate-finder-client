@@ -45,6 +45,8 @@ import headerBg from '../assets/images/profile-bg.webp';
 import { setCurrentChat } from '../redux/chatSlice';
 import { Chat } from '../types/Chat';
 import { sendFriendRequest } from '../api/friendsRequests/sendFriendRequest';
+import { sendTeamRequest } from '../api/teamRequsts.ts/sendTeamRequest';
+import ReactDOMServer from 'react-dom/server';
 const ProfilePage = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -110,6 +112,31 @@ const ProfilePage = () => {
   if (!profileUser) {
     return <Loader />;
   }
+
+  const handleTeamInvite = (userId: number) => {
+    if (user.teams?.length === 0) {
+      const NoTeamAlert = () => {
+        return (
+          <div style={{ textAlign: 'center' }}>
+            <h3>У вас нет своей команды :&#40;</h3>
+            <p>Но вы можете создать ее :D</p>
+          </div>
+        );
+      };
+      Swal.fire({
+        html: ReactDOMServer.renderToString(<NoTeamAlert />),
+        confirmButtonText: 'Создать',
+        showCancelButton: true,
+        cancelButtonText: 'Отмена',
+      }).then((res) => {
+        if (res.isConfirmed) {
+          navigate('/team-creator');
+        }
+      });
+    } else {
+      if (user.teams) sendTeamRequest({ toUserId: userId, teamId: user.teams[0].id, roleId: 1 });
+    }
+  };
 
   const cancelEdit = async () => {
     setEditMode(false);
@@ -199,6 +226,7 @@ const ProfilePage = () => {
   const sendRequest = (playerId: number) => {
     sendFriendRequest({ fromUserId: user.id, toUserId: playerId });
   };
+
   const profileAvatar = player
     ? profileUser.user_avatar
       ? profileUser.user_avatar
@@ -268,7 +296,7 @@ const ProfilePage = () => {
                         Скопировать ссылку
                       </CommonButton>
                       {player && (
-                        <CommonButton>
+                        <CommonButton onClick={() => handleTeamInvite(profileUser.id)}>
                           <img src={groupInviteIcon} alt='' />
                           Пригласить в команду
                         </CommonButton>

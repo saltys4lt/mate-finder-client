@@ -1,5 +1,7 @@
 import Cs2Data from './Cs2Data';
+import { Membership } from './Membership';
 import Team from './Team';
+import { TeamRequest } from './TeamRequest';
 import ValorantData from './ValorantData';
 import { FriendRequest } from './friendRequest';
 
@@ -17,4 +19,6 @@ export default interface ClientUser {
   friends: ClientUser[];
   sentRequests: FriendRequest[];
   receivedRequests: FriendRequest[];
+  requestsToTeam: TeamRequest[];
+  memberOf: Membership[];
 }

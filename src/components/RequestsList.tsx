@@ -9,18 +9,30 @@ import ClientUser from '../types/ClientUser';
 import { changeReqsState } from '../redux/modalSlice';
 import CommonButton from './UI/CommonButton';
 import { friendRequestAnswer } from '../api/friendsRequests/friendRequestAnswer';
-import { setUserFriends, setUserReceivedFriendRequests, setUserSentFriendRequests } from '../redux/userSlice';
+import {
+  addTeamRequest,
+  joinTeam,
+  removeTeamRequest,
+  setUserFriends,
+  setUserReceivedFriendRequests,
+  setUserSentFriendRequests,
+} from '../redux/userSlice';
 import { ioSocket } from '../api/webSockets/socket';
 import { FriendRequest } from '../types/friendRequest';
 import { useNavigate } from 'react-router-dom';
+import { TeamRequest } from '../types/TeamRequest';
+import { Membership } from '../types/Membership';
+import { answerTeamRequest } from '../api/teamRequsts.ts/answerTeamRequest';
 const RequestsList = () => {
-  const { receivedRequests, sentRequests, id } = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
+  const { receivedRequests, sentRequests, requestsToTeam, id } = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
   const isActive = useSelector((state: RootState) => state.modalReducer.requestsIsActive);
   const dispatch = useAppDispatch();
   const [reqsType, setReqsType] = useState<'players' | 'teams'>('players');
 
   const navigate = useNavigate();
   useEffect(() => {
+    ioSocket.emit('connected', id);
+
     ioSocket.on('friendRequest', (req: FriendRequest) => {
       dispatch(setUserSentFriendRequests({ req, denied: -1 }));
     });
@@ -53,12 +65,25 @@ const RequestsList = () => {
       }
       return;
     });
+    ioSocket.on('teamRequestToFriends', (teamReq: TeamRequest) => {
+      dispatch(addTeamRequest(teamReq));
+    });
+    ioSocket.on('answerTeamRequest', (request: { req: TeamRequest | Membership; accept: boolean }) => {
+      if (request.accept) {
+        const acceptedReq = request.req as Membership;
+        dispatch(joinTeam(acceptedReq));
+      } else {
+        const acceptedReq = request.req as TeamRequest;
+
+        dispatch(removeTeamRequest(acceptedReq));
+      }
+    });
     return () => {
       dispatch(changeReqsState(false));
     };
   }, []);
 
-  return receivedRequests.length > 0 || sentRequests.length > 0 ? (
+  return receivedRequests.length > 0 || sentRequests.length > 0 || requestsToTeam.length > 0 ? (
     <>
       {isActive ? (
         <OpenRequestsContainer>
@@ -87,6 +112,8 @@ const RequestsList = () => {
                   if (reqsType !== 'teams') setReqsType('teams');
                 }}
                 $selected={reqsType === 'teams'}
+                $teamsReqs={requestsToTeam.length}
+                data-reqs={requestsToTeam.length}
               >
                 Команды
               </ReqName>
@@ -125,7 +152,45 @@ const RequestsList = () => {
                   ))}
                 </>
               ) : (
-                <>team</>
+                <>
+                  {requestsToTeam.map((req) => (
+                    <TeamReqItem
+                      key={req.id}
+                      onClick={() => {
+                        navigate(`/team/${req.team?.name}`);
+                      }}
+                    >
+                      <TeamReqItemData>
+                        <div>
+                          <img src={req.team?.avatar} alt='' />
+                          <span>{req.team?.name}</span>
+                        </div>
+                        <span>
+                          Приглашение на роль: <span>{req.role?.name}</span>
+                        </span>
+                      </TeamReqItemData>
+                      <TeamActionButtons>
+                        <CommonButton
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            answerTeamRequest({ accept: true, req: req });
+                          }}
+                        >
+                          Принять
+                        </CommonButton>
+                        <CommonButton
+                          onClick={(e) => {
+                            e.stopPropagation();
+
+                            answerTeamRequest({ accept: false, req: req });
+                          }}
+                        >
+                          Отклонить
+                        </CommonButton>
+                      </TeamActionButtons>
+                    </TeamReqItem>
+                  ))}
+                </>
               )}
             </ReqsList>
           </OpenRequests>
@@ -136,7 +201,10 @@ const RequestsList = () => {
             dispatch(changeReqsState(true));
           }}
         >
-          <RequestsButtonInnerContainer data-reqs={receivedRequests.length} $requests={receivedRequests.length}>
+          <RequestsButtonInnerContainer
+            data-reqs={receivedRequests.length + requestsToTeam.length}
+            $requests={receivedRequests.length + requestsToTeam.length}
+          >
             <RequestsButton>
               <img src={requestIcon} alt='' />
             </RequestsButton>
@@ -305,6 +373,58 @@ const ReqItem = styled.div`
   &:hover {
     background-color: #595959;
     cursor: pointer;
+  }
+`;
+
+const TeamActionButtons = styled.div`
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  row-gap: 5px;
+`;
+
+const TeamReqItem = styled.div`
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  width: 100%;
+
+  &:hover {
+    background-color: #595959;
+    cursor: pointer;
+  }
+`;
+const TeamReqItemData = styled.div`
+  display: flex;
+  flex-direction: column;
+  row-gap: 5px;
+  padding: 5px;
+  width: 100%;
+  > div {
+    display: flex;
+    align-items: center;
+    column-gap: 5px;
+    > img {
+      width: 50px;
+      height: 50px;
+      object-fit: cover;
+      border-radius: 5px;
+      border: 1px solid #111;
+    }
+    span {
+      color: var(--main-text-color);
+    }
+  }
+  span {
+    color: var(--main-text-color);
+    font-size: 14px;
+    > span {
+      font-size: 15px;
+
+      font-weight: 700;
+      color: #de3434;
+    }
   }
 `;
 

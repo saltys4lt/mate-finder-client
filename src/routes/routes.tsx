@@ -8,6 +8,7 @@ import TeamsPage from '../pages/TeamsPage';
 import MatchesPage from '../pages/MatchesPage';
 import NewsPage from '../pages/NewsPage';
 import { Navigate } from 'react-router-dom';
+import TeamPage from '../pages/TeamPage';
 const HomePage = lazy(() => import('../pages/HomePage'));
 const ProfilePage = lazy(() => import('../pages/ProfilePage'));
 
@@ -26,6 +27,14 @@ export const authorizedGameProfileRoutes = [
     element: (
       <Suspense fallback={<Loader />}>
         <TeamCreationPage />
+      </Suspense>
+    ),
+  },
+  {
+    path: '/team/:name',
+    element: (
+      <Suspense fallback={<Loader />}>
+        <TeamPage />
       </Suspense>
     ),
   },

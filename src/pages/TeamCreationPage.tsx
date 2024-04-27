@@ -31,12 +31,18 @@ import createTeam from '../redux/teamThunks/createTeam';
 import isCreationStepButtonDisabled from '../util/isCreationStepButtonDisabled';
 import { TeamCreationDataValidation } from '../types/TeamCreationDataValidation';
 import { ErrorAlert } from '../components/AuthForms/RegistrationForm';
+import LoaderBackground from '../components/UI/LoaderBackground';
+import { useNavigate } from 'react-router-dom';
+import { sendTeamRequestsToFriends } from '../api/teamRequsts.ts/sendTeamRequestsToFriends';
 
+import { resetStatus } from '../redux/userSlice';
 const TeamCreationPage = () => {
-  const regex = /^[A-Za-z0-9А-Яа-я]+$/;
+  const regex = /^[A-Za-z0-9А-Яа-я\s]+$/;
 
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const user = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
+  const createTeamStatus = useSelector((state: RootState) => state.userReducer.createTeamStatus);
   const [availableGames, setAvailableGames] = useState<Option[]>(Games);
   const [avatarIsLoading, setAvatarIsLoading] = useState<boolean>(false);
   const [ownerRole, setOwnerRole] = useState<string>('');
@@ -132,9 +138,6 @@ const TeamCreationPage = () => {
     else return '';
   };
   const changePlayersRoles = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // if (!dataValidation.isRolesValid) {
-    //   setDataValidation({ ...dataValidation, isRolesValid: true });
-    // }
     if (!roles.includes(e.target.value)) setRoles([...roles, e.target.value]);
     else setRoles(roles.filter((role) => role !== e.target.value));
   };
@@ -195,6 +198,28 @@ const TeamCreationPage = () => {
     return () => {};
   }, []);
 
+  useEffect(() => {
+    if (createTeamStatus === 'fulfilled') {
+      sendTeamRequestsToFriends((user.teams as Team[])[0].teamRequests); //мб потом переписать надо хуита
+      dispatch(resetStatus('createTeamStatus'));
+      const teamName = (user.teams as Team[])[0].name;
+      Swal.fire({
+        icon: 'success',
+        title: 'Успех!',
+        text: `Ваша команда ${teamName} создана! Хотите перейти в профиль команды?`,
+        showCancelButton: true,
+        cancelButtonText: 'Нет',
+        confirmButtonText: 'Да',
+      }).then((res) => {
+        if (res.isConfirmed) {
+          navigate(`/team/${teamName}`);
+        } else {
+          navigate(`/profile/${user.nickname}`);
+        }
+      });
+    }
+  }, [createTeamStatus]);
+
   const openFileExplorer = () => {
     document.getElementById('file__input')?.click();
   };
@@ -221,6 +246,22 @@ const TeamCreationPage = () => {
 
   const handleCreateTeam = async () => {
     let isCancel: boolean = false;
+    if (roles.length !== 4) {
+      await Swal.fire({
+        icon: 'question',
+        titleText: 'Уверены?',
+        text: 'У вас остались невыбранные роли для нужных игроков.',
+        showCancelButton: true,
+        cancelButtonText: 'Отмена',
+        confirmButtonText: 'Продолжить',
+      }).then((res) => {
+        if (!res.isConfirmed) {
+          isCancel = true;
+        }
+      });
+    }
+    if (isCancel) return;
+
     if (invitedFriends.length !== 0) {
       const InvitedFriendsRender = () => {
         return (
@@ -312,10 +353,8 @@ const TeamCreationPage = () => {
     newTeam.ownerRole = ownerRole;
     dispatch(createTeam(newTeam));
   };
-  console.log(creationStep);
 
   const handleChangeStep = () => {
-    console.log(creationStep);
     if (creationStep === 4) {
       handleCreateTeam();
     } else {
@@ -361,6 +400,23 @@ const TeamCreationPage = () => {
       />
       <Container>
         <MainContainer>
+          {createTeamStatus === 'pending' && (
+            <>
+              <LoaderBackground borderradius='15px' />
+
+              <CircularProgress
+                color='error'
+                size={'120px'}
+                sx={{
+                  zIndex: 3,
+                  position: 'absolute',
+                  inset: '0',
+                  margin: 'auto',
+                }}
+              />
+            </>
+          )}
+
           <TeamCreationTitle>Регистрация команды</TeamCreationTitle>
           <hr style={{ marginTop: '-40px', width: '100%' }} />
           <InnerContainer>
@@ -586,7 +642,7 @@ const TeamCreationPage = () => {
                 </RolesContainer>
                 <div style={{ display: 'flex', columnGap: '10px', alignItems: 'center', color: '#fff', marginTop: 50 }}>
                   <InviteFriendsButton
-                    disabled={roles.length === 4}
+                    disabled={roles.length === 4 || invitedFriends.length === user.friends.length}
                     onClick={() => {
                       dispatch(changeFriendsInviteModalState(true));
                     }}
@@ -659,6 +715,7 @@ const Main = styled.main`
 
 const MainContainer = styled.div`
   background-color: #252525;
+  position: relative;
   margin: 0 auto;
   width: 50%;
   display: flex;

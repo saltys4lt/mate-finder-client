@@ -2,12 +2,11 @@ import ClientUser from './ClientUser';
 import Cs2Role from './Cs2Role';
 import Team from './Team';
 
-export interface TeamRequest {
+export interface Membership {
   id?: number;
-  teamId?: number;
-  team?: Team;
-  toUserId: number;
-  user?: ClientUser;
+  role: Cs2Role;
+  team: Team;
+  teamId: number;
   roleId: number;
-  role?: Cs2Role;
+  user: ClientUser;
 }

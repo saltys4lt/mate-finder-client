@@ -86,7 +86,7 @@ const FriendsInviteModal: FC<FriendsInviteModalProps> = ({ roles, ownerRole, inv
     setInvitedFriends([...(invitedFriends as FriendWithRole[]), selectedFriend as FriendWithRole]);
     setRoles([...roles, selectedFriend?.role as string]);
     setSelectedFriend(null);
-    if (roles.length === 3) {
+    if (roles.length === 3 || invitedFriends.length + 1 === friends.length) {
       dispatch(changeFriendsInviteModalState(false));
       setIsActive(false);
     }
@@ -196,7 +196,9 @@ const FriendsInviteModal: FC<FriendsInviteModalProps> = ({ roles, ownerRole, inv
                   <StepButtons>
                     <StepButton onClick={backFromSelectedFriend}>отмена</StepButton>
 
-                    <StepButton onClick={addInvitedFriend}>Подтвердить</StepButton>
+                    <StepButton $isDisabled={!selectedFriend.role} disabled={!selectedFriend.role} onClick={addInvitedFriend}>
+                      Подтвердить
+                    </StepButton>
                   </StepButtons>
                 </SelectedFriendContainer>
               ) : (
@@ -446,6 +448,11 @@ const RoleLabel = styled.label`
   }
 `;
 
-const StepButton = styled(ConfirmButton)`
+const StepButton = styled(ConfirmButton)<{ $isDisabled: boolean }>`
   font-size: 16px;
+  opacity: ${(p) => (p.$isDisabled ? '0.3' : '1')};
+  cursor: ${(p) => (p.$isDisabled ? 'auto' : 'pointer')};
+  &:hover {
+    background-color: ${(p) => p.$isDisabled && '#000'};
+  }
 `;
