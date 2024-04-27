@@ -1,27 +1,32 @@
-import React, { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { RootState, useAppDispatch } from '../../redux';
 import { changeChatState } from '../../redux/modalSlice';
 import { ioSocket } from '../../api/webSockets/socket';
-
+import { useNavigate } from 'react-router-dom';
 import CommonInput from '../UI/CommonInput';
 import UserMessage from './UserMessage';
 import PlayerMessage from './PlayerMessage';
 import { Message } from '../../types/Message';
 
-import { getChat, getMessage, resetChats, setCurrentChat, updateChatMessages, updateMessage } from '../../redux/chatSlice';
+import { getChat, getMessage, setCurrentChat, updateChatMessages, updateMessage } from '../../redux/chatSlice';
 import { Chat as IChat } from '../../types/Chat';
 import ClientUser from '../../types/ClientUser';
 import fetchChats from '../../redux/chatThunks/fetchChats';
 import { formatDate } from '../../util/formatDate';
 import SmsIcon from '@mui/icons-material/Sms';
+import chatImg from '../../assets/images/chat.png';
+import closeCross from '../../assets/images/close-cross.png';
+import defaultUserAvatar from '../../assets/images/default-avatar.png';
+import sendMessageIcon from '../../assets/images/message.png';
+
 const Chat = () => {
   const isActive = useSelector((state: RootState) => state.modalReducer.chatIsActive);
   const chats: IChat[] = useSelector((state: RootState) => state.chatReducer.chats) as IChat[];
   const fetchChatsStatus = useSelector((state: RootState) => state.chatReducer.fetchChatsStatus);
   const currentChat = useSelector((state: RootState) => state.chatReducer.currentChat);
-
+  const navigate = useNavigate();
   const user: ClientUser = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
   const messageContainer = useRef<HTMLDivElement>(null);
   const [message, setMessage] = useState<string>('');
@@ -116,7 +121,6 @@ const Chat = () => {
     }
     ioSocket.emit('connection');
     return () => {
-      dispatch(resetChats());
       dispatch(changeChatState(false));
       ioSocket.removeAllListeners();
     };
@@ -155,14 +159,14 @@ const Chat = () => {
   return fetchChatsStatus === 'pending' || fetchChatsStatus === 'idle' ? (
     <ChatButtonContainer>
       <ChatButton>
-        <img src='/images/chat.png' alt='' />
+        <img src={chatImg} alt='' />
       </ChatButton>
     </ChatButtonContainer>
   ) : !isActive ? (
     <ChatButtonContainer>
-      <ChatButtonInnerContainer data-uncheked={uncheckedMessages} $messages={uncheckedMessages}>
+      <ChatButtonInnerContainer data-unchecked={uncheckedMessages} $messages={uncheckedMessages}>
         <ChatButton onClick={() => handleChangeChatState(true)}>
-          <img src='/images/chat.png' alt='' />
+          <img src={chatImg} alt='' />
         </ChatButton>
       </ChatButtonInnerContainer>
     </ChatButtonContainer>
@@ -170,13 +174,13 @@ const Chat = () => {
     <OpenChatContainer>
       <OpenChat>
         <CloseButton onClick={() => handleChangeChatState(false)}>
-          <img src='/images/close-cross.png' alt='' />
+          <img src={closeCross} alt='' />
         </CloseButton>
         <ChatList>
           {chats.length !== 0 ? (
             chats.map((chat) => (
               <ChatListItem
-                data-uncheked={chat.messages.reduce(
+                data-unchecked={chat.messages.reduce(
                   (acc, message) => (message.nickname !== user.nickname && !message.checked ? acc + 1 : acc),
                   0,
                 )}
@@ -194,7 +198,7 @@ const Chat = () => {
                       src={
                         chat.members.find((member) => member.id !== user?.id)?.user_avatar
                           ? chat.members.find((member) => member.id !== user?.id)?.user_avatar
-                          : '/images/default-user_avatar.png'
+                          : defaultUserAvatar
                       }
                       alt=''
                     />{' '}
@@ -214,12 +218,16 @@ const Chat = () => {
           {currentChat ? (
             !currentChat.team ? (
               <>
-                <CurrentChatHeader>
+                <CurrentChatHeader
+                  onClick={() => {
+                    navigate(`/profile/${currentChat.members.find((member) => member.id !== user?.id)?.nickname}`);
+                  }}
+                >
                   <img
                     src={
                       currentChat.members.find((member) => member.id !== user?.id)?.user_avatar
                         ? currentChat.members.find((member) => member.id !== user?.id)?.user_avatar
-                        : '/images/default-user_avatar.png'
+                        : defaultUserAvatar
                     }
                     alt=''
                   />{' '}
@@ -257,7 +265,7 @@ const Chat = () => {
                     placeholder='Сообщение'
                   />
                   <SendMessageButton type='submit'>
-                    <img src='/images/message.png' alt='' />
+                    <img src={sendMessageIcon} alt='' />
                   </SendMessageButton>
                 </SendMessageContainer>
               </>
@@ -294,7 +302,7 @@ const ChatButtonInnerContainer = styled.div<{ $messages: number }>`
   display: block;
 
   &::before {
-    content: ${(p) => (p.$messages != 0 ? 'attr(data-uncheked)' : '')};
+    content: ${(p) => (p.$messages != 0 ? 'attr(data-unchecked)' : '')};
     position: absolute;
     display: block;
     text-align: center;
@@ -314,6 +322,7 @@ const ChatButtonContainer = styled.div`
   position: fixed;
   bottom: 20px;
   right: 20px;
+  z-index: 1;
 `;
 
 const ChatButton = styled.button`
@@ -343,7 +352,7 @@ const OpenChatContainer = styled.div`
   background-color: #434343;
   width: 900px;
   height: 400px;
-  z-index: 10;
+  z-index: 11;
 `;
 const OpenChat = styled.div`
   width: 100%;
@@ -392,6 +401,8 @@ const ChatListItem = styled.div<{ selected: boolean; $messages: number }>`
   img {
     border-radius: 50%;
     width: 40px;
+    height: 40px;
+    object-fit: cover;
   }
   &:hover {
     cursor: pointer;
@@ -400,7 +411,7 @@ const ChatListItem = styled.div<{ selected: boolean; $messages: number }>`
   background-color: ${(p) => (p.selected ? '#838383' : 'transparent')};
 
   &::before {
-    content: ${(p) => (p.$messages != 0 ? 'attr(data-uncheked)' : '')};
+    content: ${(p) => (p.$messages != 0 ? 'attr(data-unchecked)' : '')};
     position: absolute;
     display: block;
     text-align: center;
@@ -437,9 +448,15 @@ const CurrentChatHeader = styled.div`
   font-size: 20px;
   img {
     width: 50px;
+    height: 50px;
+    object-fit: cover;
     border-radius: 50%;
 
     border: 2px solid;
+    cursor: pointer;
+  }
+  span {
+    cursor: pointer;
   }
 `;
 

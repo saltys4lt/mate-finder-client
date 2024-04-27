@@ -100,9 +100,48 @@ const FilterBar: FC<FilterBarProps> = ({ filters, setFilters, purpose }) => {
                 value={currentFilters.gender ? currentFilters.gender : ''}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setFilters({ ...currentFilters, gender: e.target.value })}
               >
-                <FormControlLabel value='male' control={<Radio color='error' />} label='Мужской' />
-                <FormControlLabel value='female' control={<Radio color='error' />} label='Женский' />
-                <FormControlLabel value='' control={<Radio color='error' />} label='Любой' />
+                <FormControlLabel
+                  value='male'
+                  control={
+                    <Radio
+                      sx={{
+                        color: 'grey',
+                        '&.Mui-checked': {
+                          color: 'red',
+                        },
+                      }}
+                    />
+                  }
+                  label='Мужской'
+                />
+                <FormControlLabel
+                  value='female'
+                  control={
+                    <Radio
+                      sx={{
+                        color: 'grey',
+                        '&.Mui-checked': {
+                          color: 'red',
+                        },
+                      }}
+                    />
+                  }
+                  label='Женский'
+                />
+                <FormControlLabel
+                  value=''
+                  control={
+                    <Radio
+                      sx={{
+                        color: 'grey',
+                        '&.Mui-checked': {
+                          color: 'red',
+                        },
+                      }}
+                    />
+                  }
+                  label='Любой'
+                />
               </RadioGroup>
             </FilterCell>
             <FilterCell>

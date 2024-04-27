@@ -7,12 +7,15 @@ import { RootState, useAppDispatch } from '../redux';
 import { changeLoginState, changeRegState } from '../redux/modalSlice';
 import { changeIsAuth } from '../redux/userSlice';
 import { useEffect, useState } from 'react';
-import { ioSocket } from '../api/webSockets/socket';
+import logoImg from '../assets/images/header1-logo.jpeg';
+import logout from '../assets/images/logout.png';
+import { resetChats } from '../redux/chatSlice';
 
 const Navbar = () => {
   const dispatch = useAppDispatch();
 
   const user = useSelector((state: RootState) => state.userReducer.user);
+  console.log(user);
   const isAuth = useSelector((state: RootState) => state.userReducer.isAuth);
   const [isGameProfileExist, setIsGameProfileExist] = useState<boolean>(false);
   useEffect(() => {
@@ -23,23 +26,24 @@ const Navbar = () => {
     document.documentElement.style.overflowY = 'hidden';
     dispatch(changeRegState(true));
   };
-  console.log(user);
+
   const openLoginModal = () => {
     document.documentElement.style.overflowY = 'hidden';
     dispatch(changeLoginState(true));
   };
   const handleExit = () => {
     Swal.fire({
-      title: 'Are you sure?',
-      text: 'You need to enter your data next time',
+      title: 'Уверены?',
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#d33',
       cancelButtonColor: '#a4a4a4',
-      confirmButtonText: 'Leave',
+      confirmButtonText: 'Выйти',
+      cancelButtonText: 'Отмена',
     }).then((result) => {
       if (result.isConfirmed) {
         Cookies.remove('token');
+        dispatch(resetChats());
         dispatch(changeIsAuth(false));
       }
     });
@@ -52,7 +56,7 @@ const Navbar = () => {
           navigate('/');
         }}
       >
-        <LogoImage src='/images/header1-logo.jpeg' />
+        <LogoImage src={logoImg} />
         <LogoText>
           Squad
           <LogoTextSpan>Link</LogoTextSpan>
@@ -66,28 +70,28 @@ const Navbar = () => {
                 navigate('/');
               }}
             >
-              Home
+              Главная
             </NavLink>
             <DropDown>
-              <NavLink>Players</NavLink>
+              <NavLink>Игроки</NavLink>
               <DropDownContent>
-                <DropDownLink to={isGameProfileExist ? '/players' : '/'}>Find players</DropDownLink>
-                <DropDownLink to={isGameProfileExist ? '/friends' : '/'}>Friend list</DropDownLink>
+                <DropDownLink to={isGameProfileExist ? '/players' : '/'}>Поиск</DropDownLink>
+                <DropDownLink to={isGameProfileExist ? '/friends' : '/'}>Друзья</DropDownLink>
               </DropDownContent>
             </DropDown>
             <DropDown>
-              <NavLink>Teams</NavLink>
+              <NavLink>Команды</NavLink>
               <DropDownContent>
-                <DropDownLink to={isGameProfileExist ? '/team-creator' : '/'}>Create a Team</DropDownLink>
-                <DropDownLink to={isGameProfileExist ? '/teams' : '/'}>Teams list</DropDownLink>
+                <DropDownLink to={isGameProfileExist ? '/team-creator' : '/'}>Создать команду</DropDownLink>
+                <DropDownLink to={isGameProfileExist ? '/teams' : '/'}>Поиск</DropDownLink>
               </DropDownContent>
             </DropDown>
             <DropDown>
-              <NavLink>Other</NavLink>
+              <NavLink>Другое</NavLink>
               <DropDownContent>
-                <DropDownLink to={`/profile/${user?.nickname}`}>Profile</DropDownLink>
-                <DropDownLink to={'/matches'}>Matches</DropDownLink>
-                <DropDownLink to={'/news'}>News</DropDownLink>
+                <DropDownLink to={`/profile/${user?.nickname}`}>Профиль</DropDownLink>
+                <DropDownLink to={'/matches'}>Матчи</DropDownLink>
+                <DropDownLink to={'/news'}>Новости</DropDownLink>
               </DropDownContent>
             </DropDown>
           </NavLinks>
@@ -95,12 +99,12 @@ const Navbar = () => {
             <NavNickname>{user?.nickname}</NavNickname>
             <NavAvatar src={user?.user_avatar} />
           </NavProfile>
-          <Exit src='/images/logout.png' onClick={handleExit} />
+          <Exit src={logout} onClick={handleExit} />
         </AuthedNavbar>
       ) : (
         <AuthButtons>
-          <LoginButton onClick={openLoginModal}>login</LoginButton>
-          <RegistrationButton onClick={openRegModal}>sign up</RegistrationButton>
+          <LoginButton onClick={openLoginModal}>Вход</LoginButton>
+          <RegistrationButton onClick={openRegModal}>Регистрация</RegistrationButton>
         </AuthButtons>
       )}
     </NavbarContainer>
@@ -145,10 +149,10 @@ const RegistrationButton = styled.button`
   font-size: 16px;
   font-family: montserrat;
   text-transform: uppercase;
-  color: #fff;
+  color: var(--main-text-color);
   padding: 5px 16px;
   border-radius: 4px;
-  background: radial-gradient(circle at 10% 20%, rgb(197, 84, 76) 0%, rgb(73, 57, 57) 100.7%);
+  background: radial-gradient(circle at 10% 20%, rgb(172, 50, 42) 0%, rgb(106, 55, 55) 100.7%);
   background-size: 100%;
   height: 32px;
 
@@ -231,7 +235,7 @@ const NavAvatar = styled.img`
   display: block;
   width: 50px;
   height: 50px;
-
+  object-fit: cover;
   border-radius: 50%;
   transition: transform 0.2s linear;
 `;

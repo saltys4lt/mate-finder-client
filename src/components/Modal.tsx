@@ -8,6 +8,7 @@ import LoginForm from './AuthForms/LoginForm';
 import RegistrationForm from './AuthForms/RegistrationForm';
 import GameChoiceForm from './GameChoiceForm';
 import LoaderBackground from './UI/LoaderBackground';
+import closeCross from '../assets/images/close-cross.png';
 interface ModalStatus {
   $active: string;
 }
@@ -46,7 +47,7 @@ const Modal = () => {
           e.stopPropagation();
         }}
       >
-        <CloseCross src='/images/close-cross.png' onClick={closeModal} />
+        <CloseCross src={closeCross} onClick={closeModal} />
         {(regStatus === 'pending' || loginStatus === 'pending') && (
           <>
             <LinearProgress

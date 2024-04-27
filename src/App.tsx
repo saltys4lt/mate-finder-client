@@ -12,6 +12,7 @@ import Footer from './components/Footer';
 import Header from './components/Header';
 import styled from 'styled-components';
 import Chat from './components/chat/Chat';
+import RequestsList from './components/RequestsList';
 
 function App() {
   const token = Cookies.get('token');
@@ -51,7 +52,7 @@ function App() {
     };
   }, []);
   const [loaded, setLoaded] = useState(false);
-  console.log(check);
+
   return (
     <BrowserRouter>
       <GlobalStyle />
@@ -59,7 +60,8 @@ function App() {
         <Loader />
       ) : (
         <AppContainer>
-          {check === 'fulfilled' && <>{(user?.cs2_data || user?.valorant_data) && <Chat />}</>}
+          {(user?.cs2_data && user.cs2_data.roles.length !== 0) || user?.valorant_data ? <Chat /> : ''}
+          {(user?.cs2_data && user.cs2_data.roles.length !== 0) || user?.valorant_data ? <RequestsList /> : ''}
 
           <Header />
           <AppRouter />
@@ -72,7 +74,7 @@ function App() {
 
 const AppContainer = styled.div`
   width: 100%;
-  height: 100%;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   justify-content: space-between;

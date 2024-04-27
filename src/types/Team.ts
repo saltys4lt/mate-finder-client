@@ -1,9 +1,19 @@
+import ClientUser from './ClientUser';
+import Cs2Role from './Cs2Role';
+import Player from './Player';
+import { TeamRequest } from './TeamRequest';
+
 export default interface Team {
+  id?: number;
   game: 'cs2' | 'valorant';
-  ownerId: number;
+  user: ClientUser;
+  userId: number;
+  ownerRole: string;
   name: string;
   avatar: string;
   description: string;
   public: boolean;
-  players: string[];
+  neededRoles: Cs2Role[];
+  teamRequests: TeamRequest[];
+  members: Player[];
 }

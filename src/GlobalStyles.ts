@@ -25,7 +25,33 @@ body{
 html{
   overflow-x: hidden;
 }
+&::-webkit-scrollbar {
+    width: 12px;
+    
+   
+  }
 
+  &::-webkit-scrollbar-track {
+    background-color: #565656;
+    
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #888;
+    border-radius: 2px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: #707070;
+    border-radius: 10px;
+    &:hover{
+      cursor: grab;
+    }
+    &:active{
+      cursor: grabbing;
+
+    }
+  }
 
 `;
 
