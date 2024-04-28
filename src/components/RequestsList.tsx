@@ -65,7 +65,7 @@ const RequestsList = () => {
       }
       return;
     });
-    ioSocket.on('teamRequestToFriends', (teamReq: TeamRequest) => {
+    ioSocket.on('teamRequest', (teamReq: TeamRequest) => {
       dispatch(addTeamRequest(teamReq));
     });
     ioSocket.on('answerTeamRequest', (request: { req: TeamRequest | Membership; accept: boolean }) => {
@@ -74,7 +74,7 @@ const RequestsList = () => {
         dispatch(joinTeam(acceptedReq));
       } else {
         const deniedReq = request.req as TeamRequest;
-        console.log(deniedReq);
+
         dispatch(removeTeamRequest(deniedReq));
       }
     });

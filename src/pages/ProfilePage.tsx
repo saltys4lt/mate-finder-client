@@ -24,7 +24,7 @@ import updateUser from '../redux/userThunks/updateUser';
 import UpdatedUserData from '../types/UpdatedUserData';
 import Swal from 'sweetalert2';
 import deleteCs2Data from '../redux/cs2Thunks/deleteCs2Data';
-import { changeChatState, changeGameProfileState } from '../redux/modalSlice';
+import { changeChatState, changeGameProfileState, changeTeamInviteModalState } from '../redux/modalSlice';
 import defaultUserAvatar from '../assets/images/default-avatar.png';
 import editIcon from '../assets/images/edit.png';
 import linkIcon from '../assets/images/link.png';
@@ -46,7 +46,9 @@ import { setCurrentChat } from '../redux/chatSlice';
 import { Chat } from '../types/Chat';
 import { sendFriendRequest } from '../api/friendsRequests/sendFriendRequest';
 import { sendTeamRequest } from '../api/teamRequsts.ts/sendTeamRequest';
+
 import ReactDOMServer from 'react-dom/server';
+import TeamInviteModal from '../components/TeamInviteModal';
 const ProfilePage = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -113,7 +115,7 @@ const ProfilePage = () => {
     return <Loader />;
   }
 
-  const handleTeamInvite = (userId: number) => {
+  const handleTeamInvite = () => {
     if (user.teams?.length === 0) {
       const NoTeamAlert = () => {
         return (
@@ -134,7 +136,7 @@ const ProfilePage = () => {
         }
       });
     } else {
-      if (user.teams) sendTeamRequest({ toUserId: userId, teamId: user.teams[0].id, roleId: 1 });
+      dispatch(changeTeamInviteModalState(true));
     }
   };
 
@@ -238,6 +240,7 @@ const ProfilePage = () => {
   return (
     <>
       <Modal />
+      {player && user.teams.length > 0 && <TeamInviteModal candidate={player} />}
       <ProfileHeader>
         <Container>
           {!profileUser ? (
@@ -295,12 +298,18 @@ const ProfilePage = () => {
                         <img src={linkIcon} alt='' />
                         Скопировать ссылку
                       </CommonButton>
-                      {player && (
-                        <CommonButton onClick={() => handleTeamInvite(profileUser.id)}>
-                          <img src={groupInviteIcon} alt='' />
-                          Пригласить в команду
-                        </CommonButton>
-                      )}
+                      {player &&
+                        (user.teams?.find((team) => team.teamRequests.find((req) => req.toUserId === profileUser.id)) ? (
+                          <InFriendLabel>
+                            <img src={sendedFriendReq} alt='' />
+                            Приглашение отправлено
+                          </InFriendLabel>
+                        ) : (
+                          <CommonButton onClick={() => handleTeamInvite()}>
+                            <img src={groupInviteIcon} alt='' />
+                            Пригласить в команду
+                          </CommonButton>
+                        ))}
                       {urlTextCopied && <CopyUrlText>Ссылка скопирована!</CopyUrlText>}
                     </UserDataButtons>
                   </UserData>
