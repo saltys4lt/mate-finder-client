@@ -73,9 +73,9 @@ const RequestsList = () => {
         const acceptedReq = request.req as Membership;
         dispatch(joinTeam(acceptedReq));
       } else {
-        const acceptedReq = request.req as TeamRequest;
-
-        dispatch(removeTeamRequest(acceptedReq));
+        const deniedReq = request.req as TeamRequest;
+        console.log(deniedReq);
+        dispatch(removeTeamRequest(deniedReq));
       }
     });
     return () => {

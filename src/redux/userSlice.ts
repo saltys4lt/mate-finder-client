@@ -133,25 +133,28 @@ const userSlice = createSlice({
       if (state.user) {
         if (state.user.teams?.find((team) => team.id === action.payload.teamId)) {
           state.user.teams?.map((team) =>
-            team.id === action.payload.id
+            team.id === action.payload.teamId
               ? {
                   ...team,
-                  teamRequests: team.teamRequests.filter((req) => req.id !== action.payload.id),
+                  teamRequests: team.teamRequests.filter((req) => req.teamId !== action.payload.teamId),
                   members: [...team.members, action.payload.user],
                 }
               : team,
           );
         } else {
           state.user.memberOf.push(action.payload);
-          state.user.requestsToTeam = state.user.requestsToTeam.filter((req) => req.id !== action.payload.id);
+          state.user.requestsToTeam = state.user.requestsToTeam.filter((req) => req.teamId !== action.payload.teamId);
         }
       }
     },
     removeTeamRequest(state, action: PayloadAction<TeamRequest>) {
+      console.log(action.payload);
       if (state.user) {
-        if (state.user.teams?.find((team) => team.id === action.payload.id)) {
-          state.user.teams?.map((team) =>
-            team.id === action.payload.id
+        if (state.user.teams?.find((team) => team.id === action.payload.teamId)) {
+          console.log(action.payload);
+
+          state.user.teams = state.user.teams?.map((team) =>
+            team.id === action.payload.teamId
               ? { ...team, teamRequests: team.teamRequests.filter((req) => req.id !== action.payload.id) }
               : team,
           );
