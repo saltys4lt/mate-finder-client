@@ -45,7 +45,7 @@ import headerBg from '../assets/images/profile-bg.webp';
 import { setCurrentChat } from '../redux/chatSlice';
 import { Chat } from '../types/Chat';
 import { sendFriendRequest } from '../api/friendsRequests/sendFriendRequest';
-import { sendTeamRequest } from '../api/teamRequsts.ts/sendTeamRequest';
+import inGroupIcon from '../assets/images/in-group-icon.png';
 
 import ReactDOMServer from 'react-dom/server';
 import TeamInviteModal from '../components/TeamInviteModal';
@@ -304,11 +304,16 @@ const ProfilePage = () => {
                             <img src={sendedFriendReq} alt='' />
                             Приглашение отправлено
                           </InFriendLabel>
-                        ) : (
+                        ) : user.teams?.find((team) => team.members.find((member) => member.id === profileUser.id)) ? (
                           <CommonButton onClick={() => handleTeamInvite()}>
                             <img src={groupInviteIcon} alt='' />
                             Пригласить в команду
                           </CommonButton>
+                        ) : (
+                          <InFriendLabel>
+                            <img src={inGroupIcon} alt='' />
+                            Состоит в вашей команде<span>{user.teams[0].name}</span>
+                          </InFriendLabel>
                         ))}
                       {urlTextCopied && <CopyUrlText>Ссылка скопирована!</CopyUrlText>}
                     </UserDataButtons>
@@ -672,6 +677,10 @@ const InFriendLabel = styled(CommonButton)`
   &:hover {
     background-color: #181818;
     border-color: #565656;
+  }
+  span {
+    font-weight: 700;
+    color: #dbdbdb;
   }
 `;
 const ProfileMainContainer = styled.div`
