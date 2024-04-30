@@ -9,6 +9,7 @@ import ClientUser from '../types/ClientUser';
 import { changeReqsState } from '../redux/modalSlice';
 import CommonButton from './UI/CommonButton';
 import { friendRequestAnswer } from '../api/friendsRequests/friendRequestAnswer';
+import defaultUserIcon from '../assets/images/default-avatar.png';
 import {
   addTeamRequest,
   joinTeam,
@@ -129,7 +130,7 @@ const RequestsList = () => {
                         dispatch(changeReqsState(false));
                       }}
                     >
-                      <img src={req.fromUser.user_avatar} alt='' />
+                      <img src={req.fromUser.user_avatar ? req.fromUser.user_avatar : defaultUserIcon} alt='' />
                       <span>{req.fromUser.nickname}</span>
                       <CommonButton
                         onClick={(e) => {

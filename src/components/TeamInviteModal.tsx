@@ -34,7 +34,8 @@ const TeamInviteModal: FC<TeamInviteModalProps> = ({ candidate }) => {
           (role) =>
             role.name !== selectedTeam.ownerRole &&
             !selectedTeam.neededRoles.find((nRole) => nRole.id === role.id) &&
-            !selectedTeam.teamRequests.find((tRole) => tRole.roleId === role.id),
+            !selectedTeam.teamRequests.find((tRole) => tRole.roleId === role.id) &&
+            !selectedTeam.members.find((member) => member.roleId === role.id),
         ),
       );
     }
@@ -81,51 +82,57 @@ const TeamInviteModal: FC<TeamInviteModalProps> = ({ candidate }) => {
             }}
           />
           {selectedTeam ? (
-            <SelectedFriendContainer>
-              <SelectedTeamTitle>
-                <span>Выберите роль для</span>
-                <div>
-                  <img src={candidate.user_avatar} alt='' />
-                  <span>{candidate.nickname}</span>
-                </div>
-              </SelectedTeamTitle>
-              <RolesContainer>
-                {otherRoles.map((role, index) => (
-                  <RoleCard key={role.id}>
-                    <RoleCheckbox
-                      id={(index + 30).toString()}
-                      onChange={(e) => {
-                        handleSelectRole(e);
-                      }}
-                      value={role.name}
-                      type='checkbox'
-                    />
-                    <RoleLabel className={selectedRoleState(role.name)} htmlFor={(index + 30).toString()}>
-                      {role.name}
-                    </RoleLabel>
-                  </RoleCard>
-                ))}
-              </RolesContainer>
-              <StepButtons>
-                <StepButton
-                  onClick={() => {
-                    setSelectedTeam(null);
-                    setSelectedRole(null);
-                  }}
-                >
-                  Отмена
-                </StepButton>
-                <StepButton
-                  $isDisabled={!selectedRole}
-                  disabled={!selectedRole}
-                  onClick={() => {
-                    handleSendTeamInvite();
-                  }}
-                >
-                  Пригласить
-                </StepButton>
-              </StepButtons>
-            </SelectedFriendContainer>
+            otherRoles.length === 0 ? (
+              <SelectedFriendContainer>
+                <SelectedTeamTitle>Все роли заняты 😥</SelectedTeamTitle>
+              </SelectedFriendContainer>
+            ) : (
+              <SelectedFriendContainer>
+                <SelectedTeamTitle>
+                  <span>Выберите роль для</span>
+                  <div>
+                    <img src={candidate.user_avatar} alt='' />
+                    <span>{candidate.nickname}</span>
+                  </div>
+                </SelectedTeamTitle>
+                <RolesContainer>
+                  {otherRoles.map((role, index) => (
+                    <RoleCard key={role.id}>
+                      <RoleCheckbox
+                        id={(index + 30).toString()}
+                        onChange={(e) => {
+                          handleSelectRole(e);
+                        }}
+                        value={role.name}
+                        type='checkbox'
+                      />
+                      <RoleLabel className={selectedRoleState(role.name)} htmlFor={(index + 30).toString()}>
+                        {role.name}
+                      </RoleLabel>
+                    </RoleCard>
+                  ))}
+                </RolesContainer>
+                <StepButtons>
+                  <StepButton
+                    onClick={() => {
+                      setSelectedTeam(null);
+                      setSelectedRole(null);
+                    }}
+                  >
+                    Отмена
+                  </StepButton>
+                  <StepButton
+                    $isDisabled={!selectedRole}
+                    disabled={!selectedRole}
+                    onClick={() => {
+                      handleSendTeamInvite();
+                    }}
+                  >
+                    Пригласить
+                  </StepButton>
+                </StepButtons>
+              </SelectedFriendContainer>
+            )
           ) : (
             <>
               <TeamInviteTitle>Выберите команду</TeamInviteTitle>
