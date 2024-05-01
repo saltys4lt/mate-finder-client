@@ -15,7 +15,7 @@ export default interface ClientUser {
   birthday: string;
   valorant_data?: ValorantData | null;
   cs2_data?: Cs2Data | null;
-  teams?: Team[];
+  teams: Team[];
   friends: ClientUser[];
   sentRequests: FriendRequest[];
   receivedRequests: FriendRequest[];

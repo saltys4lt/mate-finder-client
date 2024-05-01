@@ -8,6 +8,7 @@ interface ModalInitialState {
   requestsIsActive: boolean;
   friendsInviteModalIsActive: boolean;
   invitedFriendsModalIsActive: boolean;
+  teamInviteModalIsActive: boolean;
 }
 
 const initialState: ModalInitialState = {
@@ -18,6 +19,7 @@ const initialState: ModalInitialState = {
   requestsIsActive: false,
   friendsInviteModalIsActive: false,
   invitedFriendsModalIsActive: false,
+  teamInviteModalIsActive: false,
 };
 
 const modalSlice = createSlice({
@@ -54,6 +56,14 @@ const modalSlice = createSlice({
 
       state.invitedFriendsModalIsActive = action.payload;
     },
+
+    changeTeamInviteModalState(state, action: PayloadAction<boolean>) {
+      if (action.payload) {
+        document.documentElement.style.overflowY = 'hidden';
+      } else document.documentElement.style.overflowY = 'visible';
+
+      state.teamInviteModalIsActive = action.payload;
+    },
   },
 });
 
@@ -65,6 +75,7 @@ export const {
   changeReqsState,
   changeFriendsInviteModalState,
   changeInvitedFriendsModalState,
+  changeTeamInviteModalState,
 } = modalSlice.actions;
 
 export default modalSlice.reducer;

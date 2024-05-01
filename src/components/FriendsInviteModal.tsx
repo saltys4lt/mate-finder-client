@@ -165,7 +165,7 @@ const FriendsInviteModal: FC<FriendsInviteModalProps> = ({ roles, ownerRole, inv
                         navigate('/players');
                       }}
                     >
-                      тут
+                      тут!
                     </span>
                   </SearchFriendsText>
                 </>

@@ -24,7 +24,7 @@ import updateUser from '../redux/userThunks/updateUser';
 import UpdatedUserData from '../types/UpdatedUserData';
 import Swal from 'sweetalert2';
 import deleteCs2Data from '../redux/cs2Thunks/deleteCs2Data';
-import { changeChatState, changeGameProfileState } from '../redux/modalSlice';
+import { changeChatState, changeGameProfileState, changeTeamInviteModalState } from '../redux/modalSlice';
 import defaultUserAvatar from '../assets/images/default-avatar.png';
 import editIcon from '../assets/images/edit.png';
 import linkIcon from '../assets/images/link.png';
@@ -45,8 +45,10 @@ import headerBg from '../assets/images/profile-bg.webp';
 import { setCurrentChat } from '../redux/chatSlice';
 import { Chat } from '../types/Chat';
 import { sendFriendRequest } from '../api/friendsRequests/sendFriendRequest';
-import { sendTeamRequest } from '../api/teamRequsts.ts/sendTeamRequest';
+import inGroupIcon from '../assets/images/in-group-icon.png';
+
 import ReactDOMServer from 'react-dom/server';
+import TeamInviteModal from '../components/TeamInviteModal';
 const ProfilePage = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -113,7 +115,7 @@ const ProfilePage = () => {
     return <Loader />;
   }
 
-  const handleTeamInvite = (userId: number) => {
+  const handleTeamInvite = () => {
     if (user.teams?.length === 0) {
       const NoTeamAlert = () => {
         return (
@@ -134,7 +136,7 @@ const ProfilePage = () => {
         }
       });
     } else {
-      if (user.teams) sendTeamRequest({ toUserId: userId, teamId: user.teams[0].id, roleId: 1 });
+      dispatch(changeTeamInviteModalState(true));
     }
   };
 
@@ -238,6 +240,7 @@ const ProfilePage = () => {
   return (
     <>
       <Modal />
+      {player && user.teams.length > 0 && <TeamInviteModal candidate={player} />}
       <ProfileHeader>
         <Container>
           {!profileUser ? (
@@ -295,12 +298,23 @@ const ProfilePage = () => {
                         <img src={linkIcon} alt='' />
                         Скопировать ссылку
                       </CommonButton>
-                      {player && (
-                        <CommonButton onClick={() => handleTeamInvite(profileUser.id)}>
-                          <img src={groupInviteIcon} alt='' />
-                          Пригласить в команду
-                        </CommonButton>
-                      )}
+                      {player &&
+                        (user.teams?.find((team) => team.teamRequests.find((req) => req.toUserId === profileUser.id)) ? (
+                          <InFriendLabel>
+                            <img src={sendedFriendReq} alt='' />
+                            Приглашение отправлено
+                          </InFriendLabel>
+                        ) : !user.teams?.find((team) => team.members.find((member) => member.id === profileUser.id)) ? (
+                          <CommonButton onClick={() => handleTeamInvite()}>
+                            <img src={groupInviteIcon} alt='' />
+                            Пригласить в команду
+                          </CommonButton>
+                        ) : (
+                          <InFriendLabel>
+                            <img src={inGroupIcon} alt='' />
+                            Состоит в вашей команде<span>{user.teams[0].name}</span>
+                          </InFriendLabel>
+                        ))}
                       {urlTextCopied && <CopyUrlText>Ссылка скопирована!</CopyUrlText>}
                     </UserDataButtons>
                   </UserData>
@@ -512,7 +526,35 @@ const ProfilePage = () => {
             <Teams>
               <RightContentTitle>Команды</RightContentTitle>
               <TeamsContainer>
-                <Team></Team>
+                {profileUser.teams.length > 0
+                  ? profileUser.teams.map((team) => (
+                      <Team
+                        key={team.id}
+                        onClick={() => {
+                          navigate(`/team/${team.name}`);
+                        }}
+                      >
+                        <div>
+                          <img src={team.avatar} alt='' />
+                          <span>{team.name}</span>
+                        </div>
+                        <span>{team.members.length + 1}/5</span>
+                      </Team>
+                    ))
+                  : profileUser.memberOf.map(({ team }) => (
+                      <Team
+                        key={team.id}
+                        onClick={() => {
+                          navigate(`/team/${team.name}`);
+                        }}
+                      >
+                        <div>
+                          <img src={team.avatar} alt='' />
+                          <span>{team.name}</span>
+                        </div>
+                        <span>{team.members.length + 1}/5</span>
+                      </Team>
+                    ))}
               </TeamsContainer>
             </Teams>
           </RightContainer>
@@ -663,6 +705,10 @@ const InFriendLabel = styled(CommonButton)`
   &:hover {
     background-color: #181818;
     border-color: #565656;
+  }
+  span {
+    font-weight: 700;
+    color: #dbdbdb;
   }
 `;
 const ProfileMainContainer = styled.div`
@@ -910,5 +956,34 @@ const TeamsContainer = styled.div`
   flex-direction: column;
   row-gap: 20px;
 `;
-const Team = styled.div``;
+const Team = styled.div`
+  width: 100%;
+  color: var(--main-text-color);
+  background-color: #2f2f2f;
+  display: flex;
+  column-gap: 10px;
+  align-items: center;
+  border-radius: 5px;
+  justify-content: space-between;
+  padding: 5px 10px;
+  &:hover {
+    cursor: pointer;
+    background-color: #3d3d3d;
+  }
+  > div {
+    display: flex;
+    column-gap: 10px;
+    align-items: center;
+
+    > img {
+      width: 40px;
+      height: 40px;
+      object-fit: cover;
+      border-radius: 5px;
+    }
+    > span {
+      font-size: 16px;
+    }
+  }
+`;
 export default ProfilePage;

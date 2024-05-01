@@ -126,13 +126,17 @@ const userSlice = createSlice({
     },
     addTeamRequest(state, action: PayloadAction<TeamRequest>) {
       if (state.user) {
-        state.user.requestsToTeam.push(action.payload);
+        if (state.user.teams?.find((team) => team.id === action.payload.teamId)) {
+          state.user.teams = state.user.teams?.map((team) =>
+            team.id === action.payload.teamId ? { ...team, teamRequests: [...team.teamRequests, action.payload] } : team,
+          );
+        } else state.user.requestsToTeam.push(action.payload);
       }
     },
     joinTeam(state, action: PayloadAction<Membership>) {
       if (state.user) {
         if (state.user.teams?.find((team) => team.id === action.payload.teamId)) {
-          state.user.teams?.map((team) =>
+          state.user.teams = state.user.teams?.map((team) =>
             team.id === action.payload.teamId
               ? {
                   ...team,
@@ -148,11 +152,8 @@ const userSlice = createSlice({
       }
     },
     removeTeamRequest(state, action: PayloadAction<TeamRequest>) {
-      console.log(action.payload);
       if (state.user) {
         if (state.user.teams?.find((team) => team.id === action.payload.teamId)) {
-          console.log(action.payload);
-
           state.user.teams = state.user.teams?.map((team) =>
             team.id === action.payload.teamId
               ? { ...team, teamRequests: team.teamRequests.filter((req) => req.id !== action.payload.id) }
