@@ -526,7 +526,35 @@ const ProfilePage = () => {
             <Teams>
               <RightContentTitle>Команды</RightContentTitle>
               <TeamsContainer>
-                <Team></Team>
+                {profileUser.teams.length > 0
+                  ? profileUser.teams.map((team) => (
+                      <Team
+                        key={team.id}
+                        onClick={() => {
+                          navigate(`/team/${team.name}`);
+                        }}
+                      >
+                        <div>
+                          <img src={team.avatar} alt='' />
+                          <span>{team.name}</span>
+                        </div>
+                        <span>{team.members.length + 1}/5</span>
+                      </Team>
+                    ))
+                  : profileUser.memberOf.map(({ team }) => (
+                      <Team
+                        key={team.id}
+                        onClick={() => {
+                          navigate(`/team/${team.name}`);
+                        }}
+                      >
+                        <div>
+                          <img src={team.avatar} alt='' />
+                          <span>{team.name}</span>
+                        </div>
+                        <span>{team.members.length + 1}/5</span>
+                      </Team>
+                    ))}
               </TeamsContainer>
             </Teams>
           </RightContainer>
@@ -928,5 +956,34 @@ const TeamsContainer = styled.div`
   flex-direction: column;
   row-gap: 20px;
 `;
-const Team = styled.div``;
+const Team = styled.div`
+  width: 100%;
+  color: var(--main-text-color);
+  background-color: #2f2f2f;
+  display: flex;
+  column-gap: 10px;
+  align-items: center;
+  border-radius: 5px;
+  justify-content: space-between;
+  padding: 5px 10px;
+  &:hover {
+    cursor: pointer;
+    background-color: #3d3d3d;
+  }
+  > div {
+    display: flex;
+    column-gap: 10px;
+    align-items: center;
+
+    > img {
+      width: 40px;
+      height: 40px;
+      object-fit: cover;
+      border-radius: 5px;
+    }
+    > span {
+      font-size: 16px;
+    }
+  }
+`;
 export default ProfilePage;

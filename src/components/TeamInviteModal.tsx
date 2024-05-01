@@ -11,6 +11,7 @@ import Cs2PlayerRoles from '../consts/Cs2PlayerRoles';
 import ConfirmButton from './UI/ConfirmButton';
 import { TeamRequest } from '../types/TeamRequest';
 import { sendTeamRequest } from '../api/teamRequsts.ts/sendTeamRequest';
+import defaultUserAvatar from '../assets/images/default-avatar.png';
 import Swal from 'sweetalert2';
 interface ModalStatus {
   $active: string;
@@ -33,7 +34,6 @@ const TeamInviteModal: FC<TeamInviteModalProps> = ({ candidate }) => {
         Cs2PlayerRoles.filter(
           (role) =>
             role.name !== selectedTeam.ownerRole &&
-            !selectedTeam.neededRoles.find((nRole) => nRole.id === role.id) &&
             !selectedTeam.teamRequests.find((tRole) => tRole.roleId === role.id) &&
             !selectedTeam.members.find((member) => member.roleId === role.id),
         ),
@@ -84,14 +84,17 @@ const TeamInviteModal: FC<TeamInviteModalProps> = ({ candidate }) => {
           {selectedTeam ? (
             otherRoles.length === 0 ? (
               <SelectedFriendContainer>
-                <SelectedTeamTitle>Все роли заняты 😥</SelectedTeamTitle>
+                <SelectedTeamTitle>
+                  <span>Все роли заняты 😥</span>
+                  <p>Вы можете отменить приглашения или изменить нужные роли в редакторе команды</p>
+                </SelectedTeamTitle>
               </SelectedFriendContainer>
             ) : (
               <SelectedFriendContainer>
                 <SelectedTeamTitle>
                   <span>Выберите роль для</span>
                   <div>
-                    <img src={candidate.user_avatar} alt='' />
+                    <img src={candidate.user_avatar ? candidate.user_avatar : defaultUserAvatar} alt='' />
                     <span>{candidate.nickname}</span>
                   </div>
                 </SelectedTeamTitle>
@@ -283,6 +286,7 @@ const SelectedFriendContainer = styled.div`
 `;
 const SelectedTeamTitle = styled.h3`
   > span {
+    text-align: center;
     color: var(--main-text-color);
   }
   > div {
@@ -307,6 +311,12 @@ const SelectedTeamTitle = styled.h3`
       border-radius: 50%;
       object-fit: cover;
     }
+  }
+  > p {
+    text-align: center;
+    color: var(--main-text-color);
+    margin-top: 10px;
+    font-size: 14px;
   }
 `;
 const StepButtons = styled.div`

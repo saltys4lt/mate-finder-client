@@ -33,6 +33,8 @@ const CommonButtonStyled = styled.button`
   img {
     display: block;
     width: 20px;
+    height: 20px;
+    object-fit: cover;
     filter: invert(0.5);
   }
   &:disabled {
