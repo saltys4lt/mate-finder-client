@@ -16,10 +16,14 @@ import rolesIcons from '../consts/rolesIcons';
 import isDefaultAvatar from '../util/isDefaultAvatar';
 import Cs2Role from '../types/Cs2Role';
 import Cs2PlayerRoles from '../consts/Cs2PlayerRoles';
+import copyCurrentUrl from '../util/copyCurrentUrl';
+import ClientUser from '../types/ClientUser';
 
 const TeamPage = () => {
-  const user = useSelector((state: RootState) => state.userReducer.user);
+  const user = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [urlTextCopied, setUrlTextCopied] = useState<boolean>(false);
+
   const navigate = useNavigate();
   const name = useParams().name;
   const [currentTeam, setCurrentTeam] = useState<Team | null>(null);
@@ -50,17 +54,34 @@ const TeamPage = () => {
               </span>
             </TeamHeaderLeftData>
 
-            <TeamHeaderButtons>
-              <CommonButton>
+            <TeamHeaderButtons style={{ position: 'relative' }}>
+              {' '}
+              <CommonButton
+                onClick={() => {
+                  copyCurrentUrl();
+                  setUrlTextCopied(true);
+                  setTimeout(() => {
+                    setUrlTextCopied(false);
+                  }, 2000);
+                }}
+              >
                 <img src={linkIcon} alt='' />
                 Скопировать ссылку
               </CommonButton>
-
-              <CommonButton>
-                {' '}
-                <img src={groupInviteIcon} alt='' />
-                Пригласить друзей
-              </CommonButton>
+              {urlTextCopied && <CopyUrlText>Ссылка скопирована!</CopyUrlText>}
+              {user.id !== currentTeam.userId ? (
+                <CommonButton>
+                  {' '}
+                  <img src={groupInviteIcon} alt='' />
+                  Пригласить друзей
+                </CommonButton>
+              ) : (
+                <CommonButton>
+                  {' '}
+                  <img src={groupInviteIcon} alt='' />
+                  Отправить запрос
+                </CommonButton>
+              )}
             </TeamHeaderButtons>
           </TeamHeaderData>
         </Container>
@@ -247,6 +268,7 @@ const TeamHeaderLeftData = styled.div`
 `;
 const TeamHeaderButtons = styled.div`
   display: flex;
+  position: relative;
   column-gap: 15px;
   margin-left: auto;
   margin-top: auto;
@@ -402,6 +424,14 @@ const DescriptionText = styled.p`
   min-height: 220px;
   border-radius: 5px;
   font-size: 14px;
+`;
+
+const CopyUrlText = styled.span`
+  color: #fff;
+  font-size: 13px;
+  position: absolute;
+
+  top: -20px;
 `;
 
 export default TeamPage;
