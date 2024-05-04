@@ -16,6 +16,7 @@ import Cs2PlayerRoles from '../consts/Cs2PlayerRoles';
 import ConfirmButton from './UI/ConfirmButton';
 import { FriendWithRole } from '../types/FriendWithRole';
 import Swal from 'sweetalert2';
+import isDefaultAvatar from '../util/isDefaultAvatar';
 
 interface ModalStatus {
   $active: string;
@@ -121,7 +122,7 @@ const FriendsInviteModal: FC<FriendsInviteModalProps> = ({ roles, ownerRole, inv
               <FriendsList>
                 {invitedFriends.map((friend, _, arr) => (
                   <FriendsListItem key={friend.nickname}>
-                    <img src={friend.user_avatar} alt='' />
+                    <img src={isDefaultAvatar(friend.user_avatar)} alt='' />
                     <span>{friend.nickname}</span>
                     <span>{friend.role as string}</span>
 
@@ -174,7 +175,7 @@ const FriendsInviteModal: FC<FriendsInviteModalProps> = ({ roles, ownerRole, inv
                   <SelectedFriendTitle>
                     <span>Выберите роль для</span>
                     <div>
-                      <img src={selectedFriend.user_avatar} alt='' />
+                      <img src={isDefaultAvatar(selectedFriend.user_avatar)} alt='' />
                       <span>{selectedFriend.nickname}</span>
                     </div>
                   </SelectedFriendTitle>
@@ -221,7 +222,7 @@ const FriendsInviteModal: FC<FriendsInviteModalProps> = ({ roles, ownerRole, inv
                           !invitedFriends.find((invFriend) => invFriend.nickname === friend.nickname) && (
                             <FriendsListItem key={friend.nickname}>
                               <img src={friend.cs2_data?.lvlImg} alt='' />
-                              <img src={friend.user_avatar} alt='' />
+                              <img src={isDefaultAvatar(friend.user_avatar as string)} alt='' />
                               <span>{friend.nickname}</span>
 
                               <CommonButton
@@ -270,7 +271,7 @@ const ModalContainer = styled.div<ModalStatus>`
   align-items: center;
   pointer-events: ${(p) => (p.$active == 'false' ? 'none' : 'all')};
   transition: opacity 0.2s ease-in-out;
-  z-index: 1;
+  z-index: 2;
 `;
 
 const Content = styled.div`

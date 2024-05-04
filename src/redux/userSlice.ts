@@ -141,7 +141,7 @@ const userSlice = createSlice({
               ? {
                   ...team,
                   teamRequests: team.teamRequests.filter((req) => req.teamId !== action.payload.teamId),
-                  members: [...team.members, action.payload.user],
+                  members: [...team.members, action.payload],
                 }
               : team,
           );
@@ -160,6 +160,22 @@ const userSlice = createSlice({
               : team,
           );
         } else state.user.requestsToTeam = state.user.requestsToTeam.filter((req) => req.id !== action.payload.id);
+      }
+    },
+    cancelTeamRequest(state, action: PayloadAction<{ req: TeamRequest; toMyTeam: boolean }>) {
+      if (state.user) {
+        if (action.payload.toMyTeam) {
+          state.user.teams = state.user.teams.map((team) =>
+            action.payload.req.teamId === team.id
+              ? {
+                  ...team,
+                  teamRequests: team.teamRequests.filter((req) => req.id !== action.payload.req.id),
+                }
+              : team,
+          );
+        } else {
+          state.user.requestsToTeam = state.user.requestsToTeam.filter((req) => req.id !== action.payload.req.id);
+        }
       }
     },
   },
@@ -362,6 +378,7 @@ export const {
   joinTeam,
   removeTeamRequest,
   resetStatus,
+  cancelTeamRequest,
 } = userSlice.actions;
 
 export default userSlice.reducer;

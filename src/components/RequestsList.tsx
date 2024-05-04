@@ -12,6 +12,7 @@ import { friendRequestAnswer } from '../api/friendsRequests/friendRequestAnswer'
 import defaultUserIcon from '../assets/images/default-avatar.png';
 import {
   addTeamRequest,
+  cancelTeamRequest,
   joinTeam,
   removeTeamRequest,
   setUserFriends,
@@ -24,6 +25,7 @@ import { useNavigate } from 'react-router-dom';
 import { TeamRequest } from '../types/TeamRequest';
 import { Membership } from '../types/Membership';
 import { answerTeamRequest } from '../api/teamRequsts.ts/answerTeamRequest';
+import { cancelRequest } from '../api/teamRequsts.ts/cancelRequest';
 const RequestsList = () => {
   const { receivedRequests, sentRequests, requestsToTeam, id } = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
   const isActive = useSelector((state: RootState) => state.modalReducer.requestsIsActive);
@@ -79,6 +81,14 @@ const RequestsList = () => {
         dispatch(removeTeamRequest(deniedReq));
       }
     });
+    ioSocket.on('cancelTeamRequest', (req: TeamRequest) => {
+      if (req.team?.userId === id) {
+        dispatch(cancelTeamRequest({ req, toMyTeam: true }));
+      } else {
+        dispatch(cancelTeamRequest({ req, toMyTeam: false }));
+      }
+    });
+
     return () => {
       dispatch(changeReqsState(false));
     };

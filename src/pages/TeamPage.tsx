@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Loader from '../components/Loader';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { RootState } from '../redux';
+import { RootState, useAppDispatch } from '../redux';
 import Team from '../types/Team';
 import { fetchTeam } from '../api/teamRequsts.ts/fetchTeam';
 import headerBg from '../assets/images/cs-creation-bg.webp';
@@ -18,13 +18,23 @@ import Cs2Role from '../types/Cs2Role';
 import Cs2PlayerRoles from '../consts/Cs2PlayerRoles';
 import copyCurrentUrl from '../util/copyCurrentUrl';
 import ClientUser from '../types/ClientUser';
-
+import FriendsInviteModal from '../components/FriendsInviteModal';
+import { FriendWithRole } from '../types/FriendWithRole';
+import { changeFriendsInviteModalState } from '../redux/modalSlice';
+import cancelIcom from '../assets/images/cancel-invite.png';
+import { TeamRequest } from '../types/TeamRequest';
+import Swal from 'sweetalert2';
+import { cancelRequest } from '../api/teamRequsts.ts/cancelRequest';
+import ReactDOMServer from 'react-dom/server';
 const TeamPage = () => {
   const user = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isMembersSection, setIsMembersSection] = useState<boolean>(true);
   const [urlTextCopied, setUrlTextCopied] = useState<boolean>(false);
-
+  const [invitedFriends, setInvitedFriends] = useState<FriendWithRole[]>([]);
+  const [roles, setRoles] = useState<string[]>([]);
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const name = useParams().name;
   const [currentTeam, setCurrentTeam] = useState<Team | null>(null);
   useEffect(() => {
@@ -35,12 +45,50 @@ const TeamPage = () => {
       }
       setIsLoading(false);
     })();
-  }, []);
+  }, [user.teams]);
+
+  useEffect(() => {
+    if (currentTeam) {
+      setRoles(currentTeam.teamRequests.map((tr) => tr.role?.name as string));
+    }
+  }, [currentTeam]);
+
   const ownerRole: Cs2Role = Cs2PlayerRoles.find((role) => role.name === currentTeam?.ownerRole) as Cs2Role;
+
+  const handleCancelTeamRequest = (req: TeamRequest) => {
+    const InvitedFriendRender = () => {
+      return (
+        <div>
+          <p>Отменить приглашение для</p>
+          <InvitedFriendItem>
+            <img src={isDefaultAvatar(req.user?.user_avatar as string)} alt='' />
+            <span>{req.user?.nickname}</span>
+          </InvitedFriendItem>
+        </div>
+      );
+    };
+    Swal.fire({
+      html: ReactDOMServer.renderToString(<InvitedFriendRender />),
+      cancelButtonText: 'Отмена',
+      showCancelButton: true,
+      confirmButtonText: 'Подтвердить',
+      confirmButtonColor: 'red',
+    }).then((res) => {
+      if (res.isConfirmed) cancelRequest(req);
+      else return;
+    });
+  };
   return currentTeam === null ? (
     <Loader />
   ) : (
     <Main>
+      <FriendsInviteModal
+        roles={roles}
+        setRoles={setRoles}
+        invitedFriends={invitedFriends}
+        setInvitedFriends={setInvitedFriends}
+        ownerRole={currentTeam.ownerRole}
+      />
       <TeamHeader>
         <HeaderBg />
         <Container>
@@ -69,8 +117,12 @@ const TeamPage = () => {
                 Скопировать ссылку
               </CommonButton>
               {urlTextCopied && <CopyUrlText>Ссылка скопирована!</CopyUrlText>}
-              {user.id !== currentTeam.userId ? (
-                <CommonButton>
+              {user.id === currentTeam.userId ? (
+                <CommonButton
+                  onClick={() => {
+                    dispatch(changeFriendsInviteModalState(true));
+                  }}
+                >
                   {' '}
                   <img src={groupInviteIcon} alt='' />
                   Пригласить друзей
@@ -92,7 +144,7 @@ const TeamPage = () => {
           <NeededPlayersList>
             {currentTeam.neededRoles.length > 0 ? (
               currentTeam.neededRoles.map((role) => (
-                <RoleLable>
+                <RoleLable key={role.id}>
                   <img src={rolesIcons.get(role.id)} alt='' />
                   {role.name}
                 </RoleLable>
@@ -103,95 +155,203 @@ const TeamPage = () => {
           </NeededPlayersList>
         </NeededPlayersRow>
         <MembersSectionTitle>
-          Участники ({currentTeam.members.length + 1}) &nbsp; &nbsp; &nbsp;ELO в среднем:{' '}
-          {Math.floor(
-            ((currentTeam.user.cs2_data?.elo as number) +
-              currentTeam.members.reduce((start, member) => (member.user.cs2_data?.elo as number) + start, 0)) /
-              (currentTeam.members.length + 1),
+          <div>
+            <SectionType
+              onClick={() => {
+                if (!isMembersSection) setIsMembersSection(true);
+              }}
+              $selected={isMembersSection}
+            >
+              Участники ({currentTeam.members.length + 1})
+            </SectionType>
+            {currentTeam.userId === user.id && (
+              <SectionType
+                onClick={() => {
+                  if (isMembersSection) setIsMembersSection(false);
+                }}
+                $selected={!isMembersSection}
+              >
+                Приглашенные ({currentTeam.teamRequests.length})
+              </SectionType>
+            )}
+          </div>
+          {isMembersSection && (
+            <span>
+              ELO в среднем: &nbsp;
+              <span>
+                {Math.floor(
+                  ((currentTeam.user.cs2_data?.elo as number) +
+                    currentTeam.members.reduce((start, member) => (member.user.cs2_data?.elo as number) + start, 0)) /
+                    (currentTeam.members.length + 1),
+                )}
+              </span>
+            </span>
           )}
         </MembersSectionTitle>
         <MembersAndDescription>
           <MembersSection>
             <MembersList>
-              <MemberItem
-                onClick={() => {
-                  navigate(`/profile/${currentTeam.user.nickname}`);
-                }}
-              >
-                <MemberItemHeader>
-                  <MemberAvatar src={isDefaultAvatar(currentTeam.user.user_avatar as string)} alt='' />
-                  <div>
-                    <div>
-                      <MemberLvl src={currentTeam.user.cs2_data?.lvlImg} alt='' />
-                      <span> {currentTeam.user.cs2_data?.elo} elo </span>
-                    </div>
-
-                    <span>{currentTeam.user.nickname}</span>
-                  </div>
-                  <div style={{ marginLeft: 'auto' }}>
-                    <RoleLable>
-                      <img src={rolesIcons.get(ownerRole.id)} alt='' />
-                      {ownerRole.name}
-                    </RoleLable>
-                  </div>
-                </MemberItemHeader>
-                <MemberCsDataRow>
-                  <MemberCsDataText>
-                    КД: &nbsp;<span>{currentTeam.user?.cs2_data?.kd}</span>
-                  </MemberCsDataText>
-                  <MemberCsDataText>
-                    Убийств в голову: &nbsp;<span>{currentTeam.user?.cs2_data?.hs} %</span>
-                  </MemberCsDataText>
-                  <MemberCsDataText>
-                    Матчи: &nbsp;<span>{currentTeam.user?.cs2_data?.matches}</span>
-                  </MemberCsDataText>
-
-                  <MemberCsDataText>
-                    Процент побед: &nbsp;<span>{currentTeam.user?.cs2_data?.winrate} %</span>
-                  </MemberCsDataText>
-                </MemberCsDataRow>
-              </MemberItem>
-              {currentTeam.members.map((member) => (
-                <MemberItem
-                  key={member.id}
-                  onClick={() => {
-                    navigate(`/profile/${member.user.nickname}`);
-                  }}
-                >
-                  <MemberItemHeader>
-                    <MemberAvatar src={isDefaultAvatar(member.user.user_avatar as string)} alt='' />
-                    <div>
+              {isMembersSection ? (
+                <>
+                  {' '}
+                  <MemberItem>
+                    <MemberItemHeader>
+                      <MemberAvatar
+                        onClick={() => {
+                          navigate(`/profile/${currentTeam.user.nickname}`);
+                        }}
+                        src={isDefaultAvatar(currentTeam.user.user_avatar as string)}
+                        alt=''
+                      />
                       <div>
-                        <MemberLvl src={member.user.cs2_data?.lvlImg} alt='' />
-                        <span> {member.user.cs2_data?.elo} elo </span>
+                        <div>
+                          <MemberLvl src={currentTeam.user.cs2_data?.lvlImg} alt='' />
+                          <span> {currentTeam.user.cs2_data?.elo} elo </span>
+                        </div>
+
+                        <MemberNickname
+                          onClick={() => {
+                            navigate(`/profile/${currentTeam.user.nickname}`);
+                          }}
+                        >
+                          {currentTeam.user.nickname}
+                        </MemberNickname>
                       </div>
+                      <div style={{ marginLeft: 'auto' }}>
+                        <RoleLable>
+                          <img src={rolesIcons.get(ownerRole.id)} alt='' />
+                          {ownerRole.name}
+                        </RoleLable>
+                      </div>
+                    </MemberItemHeader>
+                    <MemberCsDataRow>
+                      <MemberCsDataText>
+                        КД: &nbsp;<span>{currentTeam.user?.cs2_data?.kd}</span>
+                      </MemberCsDataText>
+                      <MemberCsDataText>
+                        Убийств в голову: &nbsp;<span>{currentTeam.user?.cs2_data?.hs} %</span>
+                      </MemberCsDataText>
+                      <MemberCsDataText>
+                        Матчи: &nbsp;<span>{currentTeam.user?.cs2_data?.matches}</span>
+                      </MemberCsDataText>
 
-                      <span>{member.user.nickname}</span>
-                    </div>
-                    <div style={{ marginLeft: 'auto' }}>
-                      <RoleLable>
-                        <img src={rolesIcons.get(member.roleId)} alt='' />
-                        {member.role.name}
-                      </RoleLable>
-                    </div>
-                  </MemberItemHeader>
-                  <MemberCsDataRow>
-                    <MemberCsDataText>
-                      КД: &nbsp;<span>{member.user?.cs2_data?.kd}</span>
-                    </MemberCsDataText>
-                    <MemberCsDataText>
-                      Убийств в голову: &nbsp;<span>{member.user?.cs2_data?.hs} %</span>
-                    </MemberCsDataText>
-                    <MemberCsDataText>
-                      Матчи: &nbsp;<span>{member.user?.cs2_data?.matches}</span>
-                    </MemberCsDataText>
+                      <MemberCsDataText>
+                        Процент побед: &nbsp;<span>{currentTeam.user?.cs2_data?.winrate} %</span>
+                      </MemberCsDataText>
+                    </MemberCsDataRow>
+                  </MemberItem>
+                  {currentTeam.members.map((member) => (
+                    <MemberItem key={member.id}>
+                      <MemberItemHeader>
+                        <MemberAvatar
+                          onClick={() => {
+                            navigate(`/profile/${member.user.nickname}`);
+                          }}
+                          src={isDefaultAvatar(member.user.user_avatar as string)}
+                          alt=''
+                        />
+                        <div>
+                          <div>
+                            <MemberLvl src={member.user.cs2_data?.lvlImg} alt='' />
+                            <span> {member.user.cs2_data?.elo} elo </span>
+                          </div>
 
-                    <MemberCsDataText>
-                      Процент побед: &nbsp;<span>{member.user?.cs2_data?.winrate} %</span>
-                    </MemberCsDataText>
-                  </MemberCsDataRow>
-                </MemberItem>
-              ))}
+                          <MemberNickname
+                            onClick={() => {
+                              navigate(`/profile/${member.user.nickname}`);
+                            }}
+                          >
+                            {member.user.nickname}
+                          </MemberNickname>
+                        </div>
+                        <div style={{ marginLeft: 'auto' }}>
+                          <RoleLable>
+                            <img src={rolesIcons.get(member.roleId)} alt='' />
+                            {member.role.name}
+                          </RoleLable>
+                        </div>
+                      </MemberItemHeader>
+                      <MemberCsDataRow>
+                        <MemberCsDataText>
+                          КД: &nbsp;<span>{member.user?.cs2_data?.kd}</span>
+                        </MemberCsDataText>
+                        <MemberCsDataText>
+                          Убийств в голову: &nbsp;<span>{member.user?.cs2_data?.hs} %</span>
+                        </MemberCsDataText>
+                        <MemberCsDataText>
+                          Матчи: &nbsp;<span>{member.user?.cs2_data?.matches}</span>
+                        </MemberCsDataText>
+
+                        <MemberCsDataText>
+                          Процент побед: &nbsp;<span>{member.user?.cs2_data?.winrate} %</span>
+                        </MemberCsDataText>
+                      </MemberCsDataRow>
+                    </MemberItem>
+                  ))}
+                </>
+              ) : (
+                <>
+                  {' '}
+                  {currentTeam.teamRequests.map((req) => (
+                    <InvitedPlayer key={req.user?.id}>
+                      <MemberItemHeader>
+                        <MemberAvatar
+                          onClick={() => {
+                            navigate(`/profile/${req.user?.nickname}`);
+                          }}
+                          src={isDefaultAvatar(req.user?.user_avatar as string)}
+                          alt=''
+                        />
+                        <div>
+                          <div>
+                            <MemberLvl src={req.user?.cs2_data?.lvlImg} alt='' />
+                            <span> {req.user?.cs2_data?.elo} elo </span>
+                          </div>
+
+                          <MemberNickname
+                            onClick={() => {
+                              navigate(`/profile/${req.user?.nickname}`);
+                            }}
+                          >
+                            {req.user?.nickname}
+                          </MemberNickname>
+                        </div>
+                        <div
+                          style={{ marginLeft: 'auto', display: 'flex', flexDirection: 'row', alignItems: 'flex-start', columnGap: '5px' }}
+                        >
+                          <span style={{ fontSize: 14, marginTop: 8 }}>Приглашение на роль:</span>
+                          <RoleLable>
+                            <img src={rolesIcons.get(req.roleId)} alt='' />
+                            {req.role?.name}
+                          </RoleLable>
+                        </div>
+                      </MemberItemHeader>
+                      <MemberCsDataRow>
+                        <MemberCsDataText>
+                          КД: &nbsp;<span>{req.user?.cs2_data?.kd}</span>
+                        </MemberCsDataText>
+                        <MemberCsDataText>
+                          Убийств в голову: &nbsp;<span>{req.user?.cs2_data?.hs} %</span>
+                        </MemberCsDataText>
+                        <MemberCsDataText>
+                          Матчи: &nbsp;<span>{req.user?.cs2_data?.matches}</span>
+                        </MemberCsDataText>
+
+                        <MemberCsDataText>
+                          Процент побед: &nbsp;<span>{req.user?.cs2_data?.winrate} %</span>
+                        </MemberCsDataText>
+                      </MemberCsDataRow>
+                      <CancelInviteButton
+                        onClick={() => {
+                          handleCancelTeamRequest({ ...req, team: currentTeam });
+                        }}
+                      >
+                        <img src={cancelIcom} alt='' /> Отменить приглашение
+                      </CancelInviteButton>
+                    </InvitedPlayer>
+                  ))}
+                </>
+              )}
             </MembersList>
           </MembersSection>
           <Description>
@@ -316,11 +476,35 @@ const MembersSection = styled.section`
   gap: 15px;
 `;
 
+const SectionType = styled.span<{ $selected: boolean }>`
+  font-weight: ${(p) => (p.$selected ? 700 : 400)};
+  color: ${(p) => (p.$selected ? 'var(--main-text-color)' : '#636363')};
+  &:hover {
+    cursor: pointer;
+  }
+`;
+
 const MembersSectionTitle = styled.h4`
   width: 100%;
   border-bottom: 1px solid #919191;
   padding-bottom: 10px;
   margin-block: 20px;
+  display: flex;
+  justify-content: space-between;
+
+  > div {
+    display: flex;
+    column-gap: 20px;
+  }
+
+  > span {
+    text-align: right;
+    font-weight: 400;
+    color: #ececec;
+    > span {
+      font-weight: 700;
+    }
+  }
 `;
 
 const MembersList = styled.div`
@@ -338,15 +522,13 @@ const MemberItem = styled.div`
   max-width: 590px;
   background-color: #202020;
   border-radius: 5px;
-  &:hover {
-    background-color: #3d3d3d;
-    cursor: pointer;
-    ${RoleLable} {
-      opacity: 0.7;
-    }
-  }
 `;
 
+const InvitedPlayer = styled(MemberItem)``;
+
+const CancelInviteButton = styled(CommonButton)`
+  margin-top: 15px;
+`;
 const MemberItemHeader = styled.div`
   width: 100%;
   display: flex;
@@ -380,6 +562,18 @@ const MemberAvatar = styled.img`
   height: 70px;
   object-fit: cover;
   border-radius: 50%;
+  &:hover {
+    cursor: pointer;
+    opacity: 0.9;
+  }
+`;
+
+const MemberNickname = styled.span`
+  &:hover {
+    cursor: pointer;
+    text-decoration: underline;
+    color: #fff;
+  }
 `;
 
 const MemberCsDataRow = styled.div`
@@ -432,6 +626,24 @@ const CopyUrlText = styled.span`
   position: absolute;
 
   top: -20px;
+`;
+
+const InvitedFriendItem = styled.div`
+  background-color: #f0f0f0;
+  display: flex;
+  align-items: center;
+  column-gap: 10px;
+  padding: 10px 10px;
+  border-radius: 5px;
+  > img {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 50%;
+  }
+  > span {
+    font-size: 18px;
+  }
 `;
 
 export default TeamPage;
