@@ -1,4 +1,5 @@
 import { Message } from './Message';
+import Team from './Team';
 
 export interface ChatUser {
   id: number;
@@ -7,7 +8,7 @@ export interface ChatUser {
 }
 
 export interface Chat {
-  team: boolean;
+  team: Team;
   roomId: string;
   messages: Message[];
   members: ChatUser[];

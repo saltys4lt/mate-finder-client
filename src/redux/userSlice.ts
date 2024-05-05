@@ -18,6 +18,7 @@ import createTeam from './teamThunks/createTeam';
 import { TeamRequest } from '../types/TeamRequest';
 import { Membership } from '../types/Membership';
 import { Status } from '../types/Status';
+import { ioSocket } from '../api/webSockets/socket';
 interface UserState {
   user: ClientUser | null;
   isAuth: boolean;
@@ -148,6 +149,7 @@ const userSlice = createSlice({
         } else {
           state.user.memberOf.push(action.payload);
           state.user.requestsToTeam = state.user.requestsToTeam.filter((req) => req.teamId !== action.payload.teamId);
+          ioSocket.emit('join', action.payload.team.chat.roomId);
         }
       }
     },
@@ -360,6 +362,7 @@ const userSlice = createSlice({
       if (state.user) {
         state.createTeamStatus = 'fulfilled';
         state.user.teams?.push(action.payload);
+        ioSocket.emit('join', action.payload.chat.roomId);
       }
     });
   },

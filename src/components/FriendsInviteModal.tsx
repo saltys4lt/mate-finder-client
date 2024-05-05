@@ -17,6 +17,8 @@ import ConfirmButton from './UI/ConfirmButton';
 import { FriendWithRole } from '../types/FriendWithRole';
 import Swal from 'sweetalert2';
 import isDefaultAvatar from '../util/isDefaultAvatar';
+import { sendTeamRequest } from '../api/teamRequsts.ts/sendTeamRequest';
+import { TeamRequest } from '../types/TeamRequest';
 
 interface ModalStatus {
   $active: string;
@@ -28,9 +30,10 @@ interface FriendsInviteModalProps {
   setInvitedFriends: (friends: FriendWithRole[]) => void;
   roles: string[];
   setRoles: (role: string[]) => void;
+  teamId?: number;
 }
 
-const FriendsInviteModal: FC<FriendsInviteModalProps> = ({ roles, ownerRole, invitedFriends, setInvitedFriends, setRoles }) => {
+const FriendsInviteModal: FC<FriendsInviteModalProps> = ({ roles, ownerRole, invitedFriends, setInvitedFriends, setRoles, teamId }) => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [isActive, setIsActive] = useState<boolean>(false);
@@ -90,6 +93,13 @@ const FriendsInviteModal: FC<FriendsInviteModalProps> = ({ roles, ownerRole, inv
     if (roles.length === 3 || invitedFriends.length + 1 === friends.length) {
       dispatch(changeFriendsInviteModalState(false));
       setIsActive(false);
+    }
+    if (teamId) {
+      const roleId = Cs2PlayerRoles.find((role) => role.name === selectedFriend?.role)?.id;
+      if (roleId) {
+        const newReq: TeamRequest = { roleId, teamId, toUserId: selectedFriend?.id as number };
+        sendTeamRequest(newReq);
+      }
     }
   };
 

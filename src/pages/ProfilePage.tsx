@@ -304,7 +304,7 @@ const ProfilePage = () => {
                             <img src={sendedFriendReq} alt='' />
                             Приглашение отправлено
                           </InFriendLabel>
-                        ) : !user.teams?.find((team) => team.members.find((member) => member.id === profileUser.id)) ? (
+                        ) : !user.teams?.find((team) => team.members.find((member) => member.user.id === profileUser.id)) ? (
                           <CommonButton onClick={() => handleTeamInvite()}>
                             <img src={groupInviteIcon} alt='' />
                             Пригласить в команду

@@ -26,6 +26,7 @@ const Chat = () => {
   const chats: IChat[] = useSelector((state: RootState) => state.chatReducer.chats) as IChat[];
   const fetchChatsStatus = useSelector((state: RootState) => state.chatReducer.fetchChatsStatus);
   const currentChat = useSelector((state: RootState) => state.chatReducer.currentChat);
+  const [isPlayersChat, setIsPlayersChat] = useState<boolean>(true);
   const navigate = useNavigate();
   const user: ClientUser = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
   const messageContainer = useRef<HTMLDivElement>(null);
@@ -73,7 +74,7 @@ const Chat = () => {
         checked: false,
       };
       setMessage('');
-      if (currentChat?.messages.length === 0) {
+      if (!currentChat?.team && currentChat?.messages.length === 0) {
         ioSocket.emit('firstMessage', { ...currentChat, messages: [newMessage] });
       } else ioSocket.emit('sendMessage', newMessage);
     }
@@ -156,6 +157,11 @@ const Chat = () => {
     return acc + unreadMessages.length;
   }, 0);
 
+  const openTeamChat = () => {
+    const teamChat = chats.find((chat) => chat.team !== null);
+    if (teamChat) dispatch(setCurrentChat(teamChat));
+  };
+
   return fetchChatsStatus === 'pending' || fetchChatsStatus === 'idle' ? (
     <ChatButtonContainer>
       <ChatButton>
@@ -177,101 +183,137 @@ const Chat = () => {
           <img src={closeCross} alt='' />
         </CloseButton>
         <ChatList>
-          {chats.length !== 0 ? (
-            chats.map((chat) => (
-              <ChatListItem
-                data-unchecked={chat.messages.reduce(
-                  (acc, message) => (message.nickname !== user.nickname && !message.checked ? acc + 1 : acc),
-                  0,
-                )}
-                $messages={chat.messages.reduce(
-                  (acc, message) => (message.nickname !== user.nickname && !message.checked ? acc + 1 : acc),
-                  0,
-                )}
-                selected={chat.roomId === currentChat?.roomId}
-                key={chat.roomId}
-                onClick={() => handleChangeChat(chat)}
-              >
-                {!chat.team ? (
-                  <>
-                    <img
-                      src={
-                        chat.members.find((member) => member.id !== user?.id)?.user_avatar
-                          ? chat.members.find((member) => member.id !== user?.id)?.user_avatar
-                          : defaultUserAvatar
-                      }
-                      alt=''
-                    />{' '}
-                    <PartnerNickname>{chat.members.find((member) => member.id !== user?.id)?.nickname}</PartnerNickname>
-                  </>
-                ) : (
-                  <>team</>
-                )}
-              </ChatListItem>
-            ))
-          ) : (
-            <h3 style={{ textAlign: 'center', color: 'var(--main-text-color)' }}> У вас нет активных чатов</h3>
-          )}
+          <ChatTypes>
+            <ChatType
+              onClick={() => {
+                if (!isPlayersChat) setIsPlayersChat(true);
+              }}
+              $selected={isPlayersChat}
+            >
+              Игроки
+            </ChatType>
+            <ChatType
+              onClick={() => {
+                if (isPlayersChat) setIsPlayersChat(false);
+
+                openTeamChat();
+              }}
+              $selected={!isPlayersChat}
+            >
+              Команда
+            </ChatType>
+          </ChatTypes>
+          {chats.length !== 0 && isPlayersChat
+            ? chats.map(
+                (chat) =>
+                  !chat.team && (
+                    <ChatListItem
+                      data-unchecked={chat.messages.reduce(
+                        (acc, message) => (message.nickname !== user.nickname && !message.checked ? acc + 1 : acc),
+                        0,
+                      )}
+                      $messages={chat.messages.reduce(
+                        (acc, message) => (message.nickname !== user.nickname && !message.checked ? acc + 1 : acc),
+                        0,
+                      )}
+                      selected={chat.roomId === currentChat?.roomId}
+                      key={chat.roomId}
+                      onClick={() => handleChangeChat(chat)}
+                    >
+                      <>
+                        <img
+                          src={
+                            chat.members.find((member) => member.id !== user?.id)?.user_avatar
+                              ? chat.members.find((member) => member.id !== user?.id)?.user_avatar
+                              : defaultUserAvatar
+                          }
+                          alt=''
+                        />{' '}
+                        <PartnerNickname>{chat.members.find((member) => member.id !== user?.id)?.nickname}</PartnerNickname>
+                      </>
+                    </ChatListItem>
+                  ),
+              )
+            : isPlayersChat && <h3 style={{ textAlign: 'center', color: 'var(--main-text-color)' }}> У вас нет активных чатов</h3>}
         </ChatList>
 
         <CurrentChat>
           {currentChat ? (
-            !currentChat.team ? (
-              <>
-                <CurrentChatHeader
-                  onClick={() => {
-                    navigate(`/profile/${currentChat.members.find((member) => member.id !== user?.id)?.nickname}`);
-                  }}
-                >
-                  <img
-                    src={
-                      currentChat.members.find((member) => member.id !== user?.id)?.user_avatar
-                        ? currentChat.members.find((member) => member.id !== user?.id)?.user_avatar
-                        : defaultUserAvatar
-                    }
-                    alt=''
-                  />{' '}
-                  <span>{currentChat.members.find((member) => member.id !== user?.id)?.nickname}</span>
-                </CurrentChatHeader>
-                <MessagesContainer ref={messageContainer}>
-                  {currentChat.messages.length === 0 ? (
-                    <p style={{ color: 'var(--main-text-color)', textAlign: 'center', marginTop: 20 }}>
-                      Это будет ваше первое сообщение для{' '}
-                      <span style={{ fontWeight: 700, color: '#f6f6f6', fontSize: 16 }}>
-                        {currentChat.members.find((member) => member.id !== user?.id)?.nickname}
-                      </span>
-                      <br /> Насладитесь моментом перед отправкой :3
-                    </p>
-                  ) : (
-                    currentChat.messages.map((message, index, messages) => (
-                      <MessageComponent $isuser={message.nickname === user?.nickname ? '1' : ''} key={message.id}>
-                        {((index !== 0 && new Date(message.time).getDate() !== new Date(messages[index - 1].time).getDate()) ||
-                          index === 0) && <b style={{ textAlign: 'center', margin: '10px 0' }}>{formatDate(message.time)}</b>}
-                        {message.nickname === user?.nickname ? <UserMessage message={message} /> : <PlayerMessage message={message} />}
-                      </MessageComponent>
-                    ))
-                  )}
-                </MessagesContainer>
-                <SendMessageContainer
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    handleSendMessage();
-                  }}
-                >
-                  <CommonInput
-                    style={{ borderRadius: '5px 0 0 5px' }}
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder='Сообщение'
-                  />
-                  <SendMessageButton type='submit'>
-                    <img src={sendMessageIcon} alt='' />
-                  </SendMessageButton>
-                </SendMessageContainer>
-              </>
-            ) : (
-              <CurrentChatHeader>team</CurrentChatHeader>
-            )
+            <>
+              <CurrentChatHeader
+                onClick={() => {
+                  if (currentChat.team) {
+                    navigate(`/team/${currentChat.team.name}`);
+                  } else navigate(`/profile/${currentChat.members.find((member) => member.id !== user?.id)?.nickname}`);
+                }}
+              >
+                {currentChat.team !== null ? (
+                  <>
+                    {' '}
+                    <img src={currentChat.team.avatar} alt='' /> <span>{currentChat.team.name}</span>
+                  </>
+                ) : (
+                  <>
+                    <img
+                      src={
+                        currentChat.members.find((member) => member.id !== user?.id)?.user_avatar
+                          ? currentChat.members.find((member) => member.id !== user?.id)?.user_avatar
+                          : defaultUserAvatar
+                      }
+                      alt=''
+                    />{' '}
+                    <span>{currentChat.members.find((member) => member.id !== user?.id)?.nickname}</span>
+                  </>
+                )}
+              </CurrentChatHeader>
+              <MessagesContainer ref={messageContainer}>
+                {currentChat.messages.length === 0 ? (
+                  <p style={{ color: 'var(--main-text-color)', textAlign: 'center', marginTop: 20 }}>
+                    {currentChat.team ? (
+                      <>
+                        {' '}
+                        Это будет первое сообщение в чате &nbsp;
+                        <span style={{ fontWeight: 700, color: '#f6f6f6', fontSize: 16 }}>{currentChat.team.name}</span>
+                        <br /> Насладитесь моментом перед отправкой :3
+                      </>
+                    ) : (
+                      <>
+                        {' '}
+                        Это будет ваше первое сообщение для{' '}
+                        <span style={{ fontWeight: 700, color: '#f6f6f6', fontSize: 16 }}>
+                          {currentChat.members.find((member) => member.id !== user?.id)?.nickname}
+                        </span>
+                        <br /> Насладитесь моментом перед отправкой :3
+                      </>
+                    )}
+                  </p>
+                ) : (
+                  currentChat.messages.map((message, index, messages) => (
+                    <MessageComponent $isuser={message.nickname === user?.nickname ? '1' : ''} key={message.id}>
+                      {((index !== 0 && new Date(message.time).getDate() !== new Date(messages[index - 1].time).getDate()) ||
+                        index === 0) && <b style={{ textAlign: 'center', margin: '10px 0' }}>{formatDate(message.time)}</b>}
+                      {message.nickname === user?.nickname ? <UserMessage message={message} /> : <PlayerMessage message={message} />}
+                    </MessageComponent>
+                  ))
+                )}
+              </MessagesContainer>
+              <SendMessageContainer
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSendMessage();
+                }}
+              >
+                <CommonInput
+                  style={{ borderRadius: '5px 0 0 5px' }}
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder='Сообщение'
+                />
+                <SendMessageButton type='submit'>
+                  <img src={sendMessageIcon} alt='' />
+                </SendMessageButton>
+              </SendMessageContainer>
+            </>
           ) : (
             <div
               style={{
@@ -381,6 +423,27 @@ const CloseButton = styled.button`
   }
 `;
 
+const ChatTypes = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  column-gap: 15px;
+  width: 100%;
+`;
+
+const ChatType = styled.span<{ $selected: boolean }>`
+  font-weight: 700;
+  color: var(--main-text-color);
+  padding: 3px 5px;
+  border-radius: 5px 5px 0 0;
+  font-size: 14px;
+  background-color: ${(p) => (p.$selected ? '#898989' : ' #3f3f3f')};
+  &:hover {
+    background-color: #898989;
+    cursor: pointer;
+  }
+`;
+
 const ChatList = styled.div`
   width: 28%;
   height: 100%;
@@ -439,9 +502,10 @@ const CurrentChat = styled.div`
 `;
 
 const CurrentChatHeader = styled.div`
+  width: 40%;
   display: flex;
   align-items: center;
-  width: 100%;
+
   column-gap: 10px;
   font-weight: 700;
   color: #d1d1d1;

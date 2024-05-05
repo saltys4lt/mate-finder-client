@@ -15,7 +15,6 @@ import groupInviteIcon from '../assets/images/group-invite.png';
 import rolesIcons from '../consts/rolesIcons';
 import isDefaultAvatar from '../util/isDefaultAvatar';
 import Cs2Role from '../types/Cs2Role';
-import Cs2PlayerRoles from '../consts/Cs2PlayerRoles';
 import copyCurrentUrl from '../util/copyCurrentUrl';
 import ClientUser from '../types/ClientUser';
 import FriendsInviteModal from '../components/FriendsInviteModal';
@@ -26,6 +25,11 @@ import { TeamRequest } from '../types/TeamRequest';
 import Swal from 'sweetalert2';
 import { cancelRequest } from '../api/teamRequsts.ts/cancelRequest';
 import ReactDOMServer from 'react-dom/server';
+import Cs2PlayerRoles from '../consts/Cs2PlayerRoles';
+import chatIcon from '../assets/images/chat.png';
+import { setCurrentChat } from '../redux/chatSlice';
+import { Chat } from '../types/Chat';
+
 const TeamPage = () => {
   const user = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -49,7 +53,29 @@ const TeamPage = () => {
 
   useEffect(() => {
     if (currentTeam) {
-      setRoles(currentTeam.teamRequests.map((tr) => tr.role?.name as string));
+      setRoles(
+        Cs2PlayerRoles.filter((role) => (currentTeam.members.find((member) => member.roleId === role.id) ? true : false)).map(
+          (role) => role.name,
+        ),
+      );
+      setInvitedFriends([
+        ...currentTeam.teamRequests
+          .filter((req) => user.friends.find((friend) => friend.id === req.toUserId))
+          .map((req) => ({
+            id: req.toUserId as number,
+            nickname: req.user?.nickname as string,
+            user_avatar: req.user?.user_avatar as string,
+            role: req.role?.name as string,
+          })),
+        ...currentTeam.members
+          .filter((member) => user.friends.find((friend) => friend.id === member.user.id))
+          .map((member) => ({
+            id: member.user.id as number,
+            nickname: member.user?.nickname as string,
+            user_avatar: member.user?.user_avatar as string,
+            role: member.role?.name as string,
+          })),
+      ]);
     }
   }, [currentTeam]);
 
@@ -78,6 +104,11 @@ const TeamPage = () => {
       else return;
     });
   };
+
+  const handleOpenChat = () => {
+    dispatch(setCurrentChat(currentTeam?.chat as Chat));
+  };
+
   return currentTeam === null ? (
     <Loader />
   ) : (
@@ -88,6 +119,7 @@ const TeamPage = () => {
         invitedFriends={invitedFriends}
         setInvitedFriends={setInvitedFriends}
         ownerRole={currentTeam.ownerRole}
+        teamId={currentTeam.id}
       />
       <TeamHeader>
         <HeaderBg />
@@ -101,9 +133,18 @@ const TeamPage = () => {
                 Создатель <span>{currentTeam?.user.nickname}</span>
               </span>
             </TeamHeaderLeftData>
+            <div style={{ marginTop: 'auto' }}>
+              {' '}
+              <CommonButton
+                onClick={() => {
+                  handleOpenChat();
+                }}
+              >
+                <img src={chatIcon} alt='' />
+              </CommonButton>
+            </div>
 
             <TeamHeaderButtons style={{ position: 'relative' }}>
-              {' '}
               <CommonButton
                 onClick={() => {
                   copyCurrentUrl();
@@ -115,7 +156,7 @@ const TeamPage = () => {
               >
                 <img src={linkIcon} alt='' />
                 Скопировать ссылку
-              </CommonButton>
+              </CommonButton>{' '}
               {urlTextCopied && <CopyUrlText>Ссылка скопирована!</CopyUrlText>}
               {user.id === currentTeam.userId ? (
                 <CommonButton
@@ -164,7 +205,7 @@ const TeamPage = () => {
             >
               Участники ({currentTeam.members.length + 1})
             </SectionType>
-            {currentTeam.userId === user.id && (
+            {currentTeam.userId === user.id && currentTeam.teamRequests.length !== 0 && (
               <SectionType
                 onClick={() => {
                   if (isMembersSection) setIsMembersSection(false);
