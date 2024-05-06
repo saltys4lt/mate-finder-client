@@ -204,7 +204,7 @@ const ProfilePage = () => {
       roomId: user.id.toString() + player.id.toString(),
       members: [
         {
-          user_avatar: player.user_avatar,
+          user_avatar: player.user_avatar as string,
           nickname: player.nickname,
           id: player.id,
         },
@@ -215,7 +215,6 @@ const ProfilePage = () => {
         },
       ],
       messages: [],
-      team: false,
     } as Chat;
 
     const chat: Chat | undefined = chats?.find(

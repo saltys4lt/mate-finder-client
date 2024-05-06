@@ -29,10 +29,11 @@ import Cs2PlayerRoles from '../consts/Cs2PlayerRoles';
 import chatIcon from '../assets/images/chat.png';
 import { setCurrentChat } from '../redux/chatSlice';
 import { Chat } from '../types/Chat';
+import { changeChatState } from '../redux/modalSlice';
 
 const TeamPage = () => {
   const user = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+
   const [isMembersSection, setIsMembersSection] = useState<boolean>(true);
   const [urlTextCopied, setUrlTextCopied] = useState<boolean>(false);
   const [invitedFriends, setInvitedFriends] = useState<FriendWithRole[]>([]);
@@ -47,7 +48,6 @@ const TeamPage = () => {
       if (typeof team !== 'string') {
         setCurrentTeam(team as Team);
       }
-      setIsLoading(false);
     })();
   }, [user.teams]);
 
@@ -106,6 +106,7 @@ const TeamPage = () => {
   };
 
   const handleOpenChat = () => {
+    dispatch(changeChatState(true));
     dispatch(setCurrentChat(currentTeam?.chat as Chat));
   };
 
@@ -133,16 +134,18 @@ const TeamPage = () => {
                 Создатель <span>{currentTeam?.user.nickname}</span>
               </span>
             </TeamHeaderLeftData>
-            <div style={{ marginTop: 'auto' }}>
-              {' '}
-              <CommonButton
-                onClick={() => {
-                  handleOpenChat();
-                }}
-              >
-                <img src={chatIcon} alt='' />
-              </CommonButton>
-            </div>
+            {(currentTeam.userId === user.id || currentTeam.members.find((member) => member.user.id === user.id)) && (
+              <div style={{ marginTop: 'auto' }}>
+                {' '}
+                <CommonButton
+                  onClick={() => {
+                    handleOpenChat();
+                  }}
+                >
+                  <img src={chatIcon} alt='' />
+                </CommonButton>
+              </div>
+            )}
 
             <TeamHeaderButtons style={{ position: 'relative' }}>
               <CommonButton

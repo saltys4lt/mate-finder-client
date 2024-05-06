@@ -135,6 +135,9 @@ const Chat = () => {
 
   useEffect(() => {
     if (currentChat || isActive) {
+      if (currentChat?.team) {
+        setIsPlayersChat(false);
+      }
       ioSocket.removeListener('getMessage');
       ioSocket.on('getMessage', (value: Message) => {
         if (isActive && value.roomId === currentChat?.roomId && value.nickname !== user.nickname) {
@@ -192,16 +195,19 @@ const Chat = () => {
             >
               Игроки
             </ChatType>
-            <ChatType
-              onClick={() => {
-                if (isPlayersChat) setIsPlayersChat(false);
+            {user.teams.length !== 0 ||
+              (user.memberOf.length !== 0 && (
+                <ChatType
+                  onClick={() => {
+                    if (isPlayersChat) setIsPlayersChat(false);
 
-                openTeamChat();
-              }}
-              $selected={!isPlayersChat}
-            >
-              Команда
-            </ChatType>
+                    openTeamChat();
+                  }}
+                  $selected={!isPlayersChat}
+                >
+                  Команда
+                </ChatType>
+              ))}
           </ChatTypes>
           {chats.length !== 0 && isPlayersChat
             ? chats.map(
@@ -247,7 +253,7 @@ const Chat = () => {
                   } else navigate(`/profile/${currentChat.members.find((member) => member.id !== user?.id)?.nickname}`);
                 }}
               >
-                {currentChat.team !== null ? (
+                {currentChat.team ? (
                   <>
                     {' '}
                     <img src={currentChat.team.avatar} alt='' /> <span>{currentChat.team.name}</span>
