@@ -6,8 +6,9 @@ import { messageToLink } from '../../util/MessageToLink';
 import { Done, DoneAll } from '@mui/icons-material';
 interface MessageProps {
   message: Message;
+  userId?: number;
 }
-const UserMessage: FC<MessageProps> = ({ message }) => {
+const UserMessage: FC<MessageProps> = ({ message, userId }) => {
   return (
     <MessageContainer>
       <MessageHeader>
@@ -16,7 +17,7 @@ const UserMessage: FC<MessageProps> = ({ message }) => {
       <MessageText>
         {messageToLink(message.text)}
 
-        {message.checked ? (
+        {message.checked.find((checkedBy) => checkedBy.isChecked) ? (
           <DoneAll style={{ position: 'absolute', fontSize: 18, right: '6px', bottom: '3px' }} />
         ) : (
           <Done style={{ position: 'absolute', fontSize: 18, right: '6px', bottom: '2px' }} />
