@@ -218,7 +218,8 @@ const ProfilePage = () => {
     } as Chat;
 
     const chat: Chat | undefined = chats?.find(
-      (chat) => chat.members.find((member) => member.id === user.id) && chat.members.find((member) => member.id === player.id),
+      (chat) =>
+        chat.members.find((member) => !chat.team && member.id === user.id) && chat.members.find((member) => member.id === player.id),
     );
     if (chat) {
       dispatch(setCurrentChat(chat));

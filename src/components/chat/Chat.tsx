@@ -35,11 +35,16 @@ const Chat = () => {
   const dispatch = useAppDispatch();
   const handleChangeChatState = (value: boolean) => {
     dispatch(changeChatState(value));
-    if (currentChat && currentChat.messages.find((message) => !message.checked && message.nickname !== user.nickname)) {
-      ioSocket.emit(
-        'checkWholeChat',
-        currentChat.messages.filter((message) => message.nickname !== user.nickname && !message.checked),
+    setIsPlayersChat(true);
+    if (
+      currentChat &&
+      currentChat.messages.find((message) => message.checked.find((checkedBy) => checkedBy.userId === user.id && !checkedBy.isChecked))
+    ) {
+      const checkedMessages = currentChat.messages.filter((message) =>
+        message.checked.find((checkedBy) => checkedBy.userId === user.id && !checkedBy.isChecked),
       );
+
+      ioSocket.emit('checkWholeChat', { messages: checkedMessages, userId: user.id });
     }
     setTimeout(() => {
       if (messageContainer.current) {
@@ -49,11 +54,12 @@ const Chat = () => {
   };
 
   const handleChangeChat = (chat: IChat) => {
-    if (chat.messages.find((message) => !message.checked && message.nickname !== user.nickname)) {
-      ioSocket.emit(
-        'checkWholeChat',
-        chat.messages.filter((message) => message.nickname !== user.nickname && !message.checked),
+    if (chat.messages.find((message) => message.checked.find((checkedBy) => checkedBy.userId === user.id && !checkedBy.isChecked))) {
+      const checkedMessages = chat.messages.filter((message) =>
+        message.checked.find((checkedBy) => checkedBy.userId === user.id && !checkedBy.isChecked),
       );
+
+      ioSocket.emit('checkWholeChat', { messages: checkedMessages, userId: user.id });
     }
     dispatch(setCurrentChat(chat));
 
@@ -66,17 +72,21 @@ const Chat = () => {
 
   const handleSendMessage = () => {
     if (message) {
-      const newMessage: Message = {
-        roomId: currentChat?.roomId as string,
-        nickname: user?.nickname as string,
-        text: message,
-        time: new Date(),
-        checked: false,
-      };
-      setMessage('');
-      if (!currentChat?.team && currentChat?.messages.length === 0) {
-        ioSocket.emit('firstMessage', { ...currentChat, messages: [newMessage] });
-      } else ioSocket.emit('sendMessage', newMessage);
+      const members = currentChat?.members.filter((member) => member.id !== user.id);
+
+      if (members) {
+        const newMessage: Message = {
+          roomId: currentChat?.roomId as string,
+          text: message,
+          time: new Date(),
+          userId: user.id,
+          checked: [...members.map((member) => ({ isChecked: false, userId: member.id }))],
+        };
+        setMessage('');
+        if (!currentChat?.team && currentChat?.messages.length === 0) {
+          ioSocket.emit('firstMessage', { ...currentChat, messages: [newMessage] });
+        } else ioSocket.emit('sendMessage', newMessage);
+      }
     }
   };
 
@@ -100,8 +110,9 @@ const Chat = () => {
       }
     });
     ioSocket.on('getMessage', (value: Message) => {
-      if (value.roomId === currentChat?.roomId && value.nickname !== user.nickname && isActive) {
-        ioSocket.emit('readMessage', value);
+      console.log(value);
+      if (value.roomId === currentChat?.roomId && value.userId !== user.id && isActive) {
+        ioSocket.emit('readMessage', { message: value, userId: user.id });
       }
       dispatch(getMessage(value));
 
@@ -113,6 +124,7 @@ const Chat = () => {
     });
 
     ioSocket.on('readMessage', (value: Message) => {
+      console.log(value);
       dispatch(updateMessage(value));
     });
     ioSocket.on('disconnect', () => {});
@@ -139,12 +151,12 @@ const Chat = () => {
         setIsPlayersChat(false);
       }
       ioSocket.removeListener('getMessage');
-      ioSocket.on('getMessage', (value: Message) => {
-        if (isActive && value.roomId === currentChat?.roomId && value.nickname !== user.nickname) {
-          ioSocket.emit('readMessage', value);
+      ioSocket.on('getMessage', (message: Message) => {
+        if (isActive && message.roomId === currentChat?.roomId && message.userId !== user.id) {
+          ioSocket.emit('readMessage', { message, userId: user.id });
         }
 
-        dispatch(getMessage(value));
+        dispatch(getMessage(message));
 
         setTimeout(() => {
           if (messageContainer.current) {
@@ -152,17 +164,40 @@ const Chat = () => {
           }
         });
       });
+      setTimeout(() => {
+        if (messageContainer.current) {
+          messageContainer.current.scrollTop = messageContainer.current.scrollHeight;
+        }
+      });
     }
   }, [currentChat, isActive]);
 
   const uncheckedMessages = chats.reduce((acc, chat) => {
-    const unreadMessages = chat.messages.filter((message) => !message.checked && message.nickname !== user.nickname);
+    const unreadMessages = chat.messages.filter((message) =>
+      message.checked.find((checkedBy) => checkedBy.userId === user.id && !checkedBy.isChecked),
+    );
     return acc + unreadMessages.length;
   }, 0);
 
   const openTeamChat = () => {
     const teamChat = chats.find((chat) => chat.team !== null);
-    if (teamChat) dispatch(setCurrentChat(teamChat));
+    if (teamChat) {
+      if (teamChat.messages.find((message) => message.checked.find((checkedBy) => checkedBy.userId === user.id && !checkedBy.isChecked))) {
+        const checkedMessages = teamChat.messages.filter((message) =>
+          message.checked.find((checkedBy) => checkedBy.userId === user.id && !checkedBy.isChecked) ? true : false,
+        );
+        const userIds: number[] = teamChat.members
+          .filter((member) => checkedMessages.find((message) => message.userId === member.id))
+          .map((member) => member.id);
+        ioSocket.emit('checkWholeChat', { messages: checkedMessages, userId: user.id, userIds: userIds });
+      }
+      dispatch(setCurrentChat(teamChat));
+      setTimeout(() => {
+        if (messageContainer.current) {
+          messageContainer.current.scrollTop = messageContainer.current.scrollHeight;
+        }
+      });
+    }
   };
 
   return fetchChatsStatus === 'pending' || fetchChatsStatus === 'idle' ? (
@@ -195,19 +230,18 @@ const Chat = () => {
             >
               Игроки
             </ChatType>
-            {user.teams.length !== 0 ||
-              (user.memberOf.length !== 0 && (
-                <ChatType
-                  onClick={() => {
-                    if (isPlayersChat) setIsPlayersChat(false);
+            {(user.teams.length !== 0 || user.memberOf.length !== 0) && (
+              <ChatType
+                onClick={() => {
+                  if (isPlayersChat) setIsPlayersChat(false);
 
-                    openTeamChat();
-                  }}
-                  $selected={!isPlayersChat}
-                >
-                  Команда
-                </ChatType>
-              ))}
+                  openTeamChat();
+                }}
+                $selected={!isPlayersChat}
+              >
+                Команда
+              </ChatType>
+            )}
           </ChatTypes>
           {chats.length !== 0 && isPlayersChat
             ? chats.map(
@@ -215,11 +249,19 @@ const Chat = () => {
                   !chat.team && (
                     <ChatListItem
                       data-unchecked={chat.messages.reduce(
-                        (acc, message) => (message.nickname !== user.nickname && !message.checked ? acc + 1 : acc),
+                        (acc, message) =>
+                          message.userId !== user.id &&
+                          message.checked.find((checkedBy) => checkedBy.userId === user.id && !checkedBy.isChecked)
+                            ? acc + 1
+                            : acc,
                         0,
                       )}
                       $messages={chat.messages.reduce(
-                        (acc, message) => (message.nickname !== user.nickname && !message.checked ? acc + 1 : acc),
+                        (acc, message) =>
+                          message.userId !== user.id &&
+                          message.checked.find((checkedBy) => checkedBy.userId === user.id && !checkedBy.isChecked)
+                            ? acc + 1
+                            : acc,
                         0,
                       )}
                       selected={chat.roomId === currentChat?.roomId}
@@ -295,10 +337,10 @@ const Chat = () => {
                   </p>
                 ) : (
                   currentChat.messages.map((message, index, messages) => (
-                    <MessageComponent $isuser={message.nickname === user?.nickname ? '1' : ''} key={message.id}>
+                    <MessageComponent $isuser={message.userId === user.id ? '1' : ''} key={message.id}>
                       {((index !== 0 && new Date(message.time).getDate() !== new Date(messages[index - 1].time).getDate()) ||
                         index === 0) && <b style={{ textAlign: 'center', margin: '10px 0' }}>{formatDate(message.time)}</b>}
-                      {message.nickname === user?.nickname ? <UserMessage message={message} /> : <PlayerMessage message={message} />}
+                      {message.userId === user.id ? <UserMessage message={message} /> : <PlayerMessage message={message} />}
                     </MessageComponent>
                   ))
                 )}
