@@ -6,9 +6,8 @@ import { messageToLink } from '../../util/MessageToLink';
 import { Done, DoneAll } from '@mui/icons-material';
 interface MessageProps {
   message: Message;
-  userId?: number;
 }
-const UserMessage: FC<MessageProps> = ({ message, userId }) => {
+const UserMessage: FC<MessageProps> = ({ message }) => {
   return (
     <MessageContainer>
       <MessageHeader>

@@ -30,6 +30,7 @@ import chatIcon from '../assets/images/chat.png';
 import { setCurrentChat } from '../redux/chatSlice';
 import { Chat } from '../types/Chat';
 import { changeChatState } from '../redux/modalSlice';
+import { ioSocket } from '../api/webSockets/socket';
 
 const TeamPage = () => {
   const user = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
@@ -108,6 +109,19 @@ const TeamPage = () => {
   const handleOpenChat = () => {
     dispatch(changeChatState(true));
     dispatch(setCurrentChat(currentTeam?.chat as Chat));
+    const teamChat = currentTeam?.chat as Chat;
+    if (teamChat) {
+      if (teamChat.messages.find((message) => message.checked.find((checkedBy) => checkedBy.userId === user.id && !checkedBy.isChecked))) {
+        const checkedMessages = teamChat.messages.filter((message) =>
+          message.checked.find((checkedBy) => checkedBy.userId === user.id && !checkedBy.isChecked) ? true : false,
+        );
+        const userIds: number[] = teamChat.members
+          .filter((member) => checkedMessages.find((message) => message.userId === member.id))
+          .map((member) => member.id);
+        ioSocket.emit('checkWholeChat', { messages: checkedMessages, userId: user.id, userIds: userIds });
+      }
+      dispatch(setCurrentChat(teamChat));
+    }
   };
 
   return currentTeam === null ? (

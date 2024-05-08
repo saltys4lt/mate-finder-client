@@ -35,6 +35,7 @@ const Chat = () => {
   const dispatch = useAppDispatch();
   const handleChangeChatState = (value: boolean) => {
     dispatch(changeChatState(value));
+    setIsPlayersChat(true);
     if (
       currentChat &&
       currentChat.messages.find((message) => message.checked.find((checkedBy) => checkedBy.userId === user.id && !checkedBy.isChecked))
@@ -43,7 +44,7 @@ const Chat = () => {
         message.checked.find((checkedBy) => checkedBy.userId === user.id && !checkedBy.isChecked),
       );
 
-      ioSocket.emit('checkWholeChat', { message: checkedMessages, userId: user.id });
+      ioSocket.emit('checkWholeChat', { messages: checkedMessages, userId: user.id });
     }
     setTimeout(() => {
       if (messageContainer.current) {
@@ -58,7 +59,7 @@ const Chat = () => {
         message.checked.find((checkedBy) => checkedBy.userId === user.id && !checkedBy.isChecked),
       );
 
-      ioSocket.emit('checkWholeChat', { message: checkedMessages, userId: user.id });
+      ioSocket.emit('checkWholeChat', { messages: checkedMessages, userId: user.id });
     }
     dispatch(setCurrentChat(chat));
 
@@ -163,6 +164,11 @@ const Chat = () => {
           }
         });
       });
+      setTimeout(() => {
+        if (messageContainer.current) {
+          messageContainer.current.scrollTop = messageContainer.current.scrollHeight;
+        }
+      });
     }
   }, [currentChat, isActive]);
 
@@ -180,8 +186,10 @@ const Chat = () => {
         const checkedMessages = teamChat.messages.filter((message) =>
           message.checked.find((checkedBy) => checkedBy.userId === user.id && !checkedBy.isChecked) ? true : false,
         );
-
-        ioSocket.emit('checkWholeChat', { message: checkedMessages, userId: user.id });
+        const userIds: number[] = teamChat.members
+          .filter((member) => checkedMessages.find((message) => message.userId === member.id))
+          .map((member) => member.id);
+        ioSocket.emit('checkWholeChat', { messages: checkedMessages, userId: user.id, userIds: userIds });
       }
       dispatch(setCurrentChat(teamChat));
       setTimeout(() => {
