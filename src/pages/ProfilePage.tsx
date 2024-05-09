@@ -363,7 +363,8 @@ const ProfilePage = () => {
                       </>
                     ) : (
                       <>
-                        {user.sentRequests.find((req) => req.fromUserId === user.id && req.toUserId === player.id) ? (
+                        {user.sentRequests.length !== 0 &&
+                        user.sentRequests.find((req) => req.fromUserId === user.id && req.toUserId === player.id) ? (
                           <CommonButton>
                             <img src={sendedFriendReq} alt='' />
                             Заявка отправлена

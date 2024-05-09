@@ -39,7 +39,7 @@ const Cs2PlayerListItem: FC<ListItemProps> = ({ player }) => {
       roomId: user.id.toString() + player.id.toString(),
       members: [
         {
-          user_avatar: player.user_avatar,
+          user_avatar: player.user_avatar as string,
           nickname: player.nickname,
           id: player.id,
         },
@@ -50,11 +50,11 @@ const Cs2PlayerListItem: FC<ListItemProps> = ({ player }) => {
         },
       ],
       messages: [],
-      team: false,
     } as Chat;
 
     const chat: Chat | undefined = chats?.find(
-      (chat) => chat.members.find((member) => member.id === user.id) && chat.members.find((member) => member.id === player.id),
+      (chat) =>
+        chat.members.find((member) => !chat.team && member.id === user.id) && chat.members.find((member) => member.id === player.id),
     );
     if (chat) {
       dispatch(setCurrentChat(chat));

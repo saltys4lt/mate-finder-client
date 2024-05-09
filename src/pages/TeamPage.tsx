@@ -31,6 +31,7 @@ import { setCurrentChat } from '../redux/chatSlice';
 import { Chat } from '../types/Chat';
 import { changeChatState } from '../redux/modalSlice';
 import { ioSocket } from '../api/webSockets/socket';
+import sendedRequestIcon from '../assets/images/sended-friend-req.png';
 
 const TeamPage = () => {
   const user = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
@@ -185,12 +186,26 @@ const TeamPage = () => {
                   <img src={groupInviteIcon} alt='' />
                   Пригласить друзей
                 </CommonButton>
-              ) : (
+              ) : user.memberOf.find((memberOf) => memberOf.teamId === currentTeam.id) ? (
                 <CommonButton>
                   {' '}
-                  <img src={groupInviteIcon} alt='' />
-                  Отправить запрос
+                  <img src={cancelIcom} alt='' />
+                  Покинуть команду
                 </CommonButton>
+              ) : user.requestsToTeam.find((req) => req.teamId === currentTeam.id) ? (
+                <CommonButton>
+                  {' '}
+                  <img src={sendedRequestIcon} alt='' />
+                  Ждет вашего ответа
+                </CommonButton>
+              ) : (
+                currentTeam.public && (
+                  <CommonButton>
+                    {' '}
+                    <img src={groupInviteIcon} alt='' />
+                    Отправить запрос
+                  </CommonButton>
+                )
               )}
             </TeamHeaderButtons>
           </TeamHeaderData>
