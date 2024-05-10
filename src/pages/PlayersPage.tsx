@@ -70,8 +70,6 @@ const PlayersPage = () => {
             maps: searchParams.getAll('maps'),
           });
         } else {
-          console.log('ds');
-          console.log(queryParams);
           setPlayersFilter({
             ...(queryParams as PlayersCs2Filters),
             roles: searchParams.getAll('roles'),

@@ -1,4 +1,3 @@
-import React from 'react';
 import styled from 'styled-components';
 import { useEffect, useState } from 'react';
 import Loader from '../components/Loader';
@@ -19,7 +18,7 @@ import copyCurrentUrl from '../util/copyCurrentUrl';
 import ClientUser from '../types/ClientUser';
 import FriendsInviteModal from '../components/FriendsInviteModal';
 import { FriendWithRole } from '../types/FriendWithRole';
-import { changeFriendsInviteModalState } from '../redux/modalSlice';
+import { changeFriendsInviteModalState, changeRequestToTeamModalState } from '../redux/modalSlice';
 import cancelIcom from '../assets/images/cancel-invite.png';
 import { TeamRequest } from '../types/TeamRequest';
 import Swal from 'sweetalert2';
@@ -32,7 +31,7 @@ import { Chat } from '../types/Chat';
 import { changeChatState } from '../redux/modalSlice';
 import { ioSocket } from '../api/webSockets/socket';
 import sendedRequestIcon from '../assets/images/sended-friend-req.png';
-
+import RequestToTeamModal from '../components/RequestToTeamModal';
 const TeamPage = () => {
   const user = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
 
@@ -125,6 +124,10 @@ const TeamPage = () => {
     }
   };
 
+  const handleOpenRequestToTeamModal = () => {
+    dispatch(changeRequestToTeamModalState(true));
+  };
+
   return currentTeam === null ? (
     <Loader />
   ) : (
@@ -137,6 +140,7 @@ const TeamPage = () => {
         ownerRole={currentTeam.ownerRole}
         teamId={currentTeam.id}
       />
+      <RequestToTeamModal team={currentTeam} />
       <TeamHeader>
         <HeaderBg />
         <Container>
@@ -200,7 +204,7 @@ const TeamPage = () => {
                 </CommonButton>
               ) : (
                 currentTeam.public && (
-                  <CommonButton>
+                  <CommonButton onClick={handleOpenRequestToTeamModal}>
                     {' '}
                     <img src={groupInviteIcon} alt='' />
                     Отправить запрос
