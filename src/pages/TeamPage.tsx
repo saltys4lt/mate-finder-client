@@ -32,10 +32,14 @@ import { changeChatState } from '../redux/modalSlice';
 import { ioSocket } from '../api/webSockets/socket';
 import sendedRequestIcon from '../assets/images/sended-friend-req.png';
 import RequestToTeamModal from '../components/RequestToTeamModal';
+import { useTeamRequests } from '../hooks/useTeamRequests';
+import confirmIcon from '../assets/images/confirm-edit.png';
+import { answerTeamRequest } from '../api/teamRequsts.ts/answerTeamRequest';
+import { leaveFromTeam } from '../api/teamRequsts.ts/leaveFromTeam';
 const TeamPage = () => {
   const user = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
 
-  const [isMembersSection, setIsMembersSection] = useState<boolean>(true);
+  const [section, setSection] = useState<number>(-1);
   const [urlTextCopied, setUrlTextCopied] = useState<boolean>(false);
   const [invitedFriends, setInvitedFriends] = useState<FriendWithRole[]>([]);
   const [roles, setRoles] = useState<string[]>([]);
@@ -43,6 +47,8 @@ const TeamPage = () => {
   const dispatch = useAppDispatch();
   const name = useParams().name;
   const [currentTeam, setCurrentTeam] = useState<Team | null>(null);
+  const [teamRequestsFromPlayers, teamRequestsFromTeam] = useTeamRequests(currentTeam?.teamRequests, user.id);
+
   useEffect(() => {
     (async () => {
       const team = await fetchTeam(name as string);
@@ -59,6 +65,7 @@ const TeamPage = () => {
           (role) => role.name,
         ),
       );
+
       setInvitedFriends([
         ...currentTeam.teamRequests
           .filter((req) => user.friends.find((friend) => friend.id === req.toUserId))
@@ -128,6 +135,21 @@ const TeamPage = () => {
     dispatch(changeRequestToTeamModalState(true));
   };
 
+  const handleLeaveFromTeam = () => {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Уверены ?',
+      text: 'Возможно это расстроит ваших товарищей по команде 😢',
+      confirmButtonText: 'Покинуть команду',
+      showCancelButton: true,
+      cancelButtonText: 'Отмена',
+    }).then((res) => {
+      if (res.isConfirmed) {
+        leaveFromTeam({ team: currentTeam as Team, userId: user.id, byOwner: false });
+      }
+    });
+  };
+
   return currentTeam === null ? (
     <Loader />
   ) : (
@@ -191,7 +213,7 @@ const TeamPage = () => {
                   Пригласить друзей
                 </CommonButton>
               ) : user.memberOf.find((memberOf) => memberOf.teamId === currentTeam.id) ? (
-                <CommonButton>
+                <CommonButton onClick={handleLeaveFromTeam}>
                   {' '}
                   <img src={cancelIcom} alt='' />
                   Покинуть команду
@@ -235,24 +257,35 @@ const TeamPage = () => {
           <div>
             <SectionType
               onClick={() => {
-                if (!isMembersSection) setIsMembersSection(true);
+                if (section !== -1) setSection(-1);
               }}
-              $selected={isMembersSection}
+              $selected={section === -1}
             >
               Участники ({currentTeam.members.length + 1})
             </SectionType>
-            {currentTeam.userId === user.id && currentTeam.teamRequests.length !== 0 && (
+            {currentTeam.userId === user.id && teamRequestsFromTeam.length !== 0 && (
               <SectionType
                 onClick={() => {
-                  if (isMembersSection) setIsMembersSection(false);
+                  if (section !== 0) setSection(0);
                 }}
-                $selected={!isMembersSection}
+                $selected={section === 0}
               >
-                Приглашенные ({currentTeam.teamRequests.length})
+                Приглашенные ({teamRequestsFromTeam.length})
+              </SectionType>
+            )}
+
+            {currentTeam.userId === user.id && teamRequestsFromPlayers.length !== 0 && (
+              <SectionType
+                onClick={() => {
+                  if (section !== 1) setSection(1);
+                }}
+                $selected={section === 1}
+              >
+                Заявки на вступление ({teamRequestsFromPlayers.length})
               </SectionType>
             )}
           </div>
-          {isMembersSection && (
+          {section === -1 && (
             <span>
               ELO в среднем: &nbsp;
               <span>
@@ -268,7 +301,7 @@ const TeamPage = () => {
         <MembersAndDescription>
           <MembersSection>
             <MembersList>
-              {isMembersSection ? (
+              {section === -1 && (
                 <>
                   {' '}
                   <MemberItem>
@@ -366,10 +399,11 @@ const TeamPage = () => {
                     </MemberItem>
                   ))}
                 </>
-              ) : (
+              )}{' '}
+              {section === 0 && (
                 <>
                   {' '}
-                  {currentTeam.teamRequests.map((req) => (
+                  {teamRequestsFromTeam.map((req) => (
                     <InvitedPlayer key={req.user?.id}>
                       <MemberItemHeader>
                         <MemberAvatar
@@ -425,6 +459,79 @@ const TeamPage = () => {
                       >
                         <img src={cancelIcom} alt='' /> Отменить приглашение
                       </CancelInviteButton>
+                    </InvitedPlayer>
+                  ))}
+                </>
+              )}
+              {section === 1 && (
+                <>
+                  {' '}
+                  {teamRequestsFromPlayers.map((req) => (
+                    <InvitedPlayer key={req.user?.id}>
+                      <MemberItemHeader>
+                        <MemberAvatar
+                          onClick={() => {
+                            navigate(`/profile/${req.user?.nickname}`);
+                          }}
+                          src={isDefaultAvatar(req.user?.user_avatar as string)}
+                          alt=''
+                        />
+                        <div>
+                          <div>
+                            <MemberLvl src={req.user?.cs2_data?.lvlImg} alt='' />
+                            <span> {req.user?.cs2_data?.elo} elo </span>
+                          </div>
+
+                          <MemberNickname
+                            onClick={() => {
+                              navigate(`/profile/${req.user?.nickname}`);
+                            }}
+                          >
+                            {req.user?.nickname}
+                          </MemberNickname>
+                        </div>
+                        <div
+                          style={{ marginLeft: 'auto', display: 'flex', flexDirection: 'row', alignItems: 'flex-start', columnGap: '5px' }}
+                        >
+                          <span style={{ fontSize: 14, marginTop: 8 }}>Заявка на роль:</span>
+                          <RoleLable>
+                            <img src={rolesIcons.get(req.roleId)} alt='' />
+                            {req.role?.name}
+                          </RoleLable>
+                        </div>
+                      </MemberItemHeader>
+                      <MemberCsDataRow>
+                        <MemberCsDataText>
+                          КД: &nbsp;<span>{req.user?.cs2_data?.kd}</span>
+                        </MemberCsDataText>
+                        <MemberCsDataText>
+                          Убийств в голову: &nbsp;<span>{req.user?.cs2_data?.hs} %</span>
+                        </MemberCsDataText>
+                        <MemberCsDataText>
+                          Матчи: &nbsp;<span>{req.user?.cs2_data?.matches}</span>
+                        </MemberCsDataText>
+
+                        <MemberCsDataText>
+                          Процент побед: &nbsp;<span>{req.user?.cs2_data?.winrate} %</span>
+                        </MemberCsDataText>
+                      </MemberCsDataRow>
+
+                      <ReqsButtons>
+                        <CancelReqButton
+                          onClick={() => {
+                            answerTeamRequest({ accept: false, req });
+                          }}
+                        >
+                          <img src={cancelIcom} alt='' /> Отклонить
+                        </CancelReqButton>{' '}
+                        <AcceptReqButton
+                          onClick={() => {
+                            answerTeamRequest({ accept: true, req });
+                          }}
+                        >
+                          <img src={confirmIcon} alt='' /> Принять
+                        </AcceptReqButton>
+                      </ReqsButtons>
                     </InvitedPlayer>
                   ))}
                 </>
@@ -605,6 +712,24 @@ const InvitedPlayer = styled(MemberItem)``;
 
 const CancelInviteButton = styled(CommonButton)`
   margin-top: 15px;
+`;
+
+const ReqsButtons = styled.div`
+  margin-top: 15px;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  column-gap: 15px;
+`;
+
+const AcceptReqButton = styled(CommonButton)`
+  border-color: green;
+  width: 130px;
+`;
+
+const CancelReqButton = styled(CommonButton)`
+  border-color: var(--main-red-color);
+  width: 130px;
 `;
 const MemberItemHeader = styled.div`
   width: 100%;

@@ -14,6 +14,7 @@ import {
   addTeamRequest,
   cancelTeamRequest,
   joinTeam,
+  leaveTeam,
   removeTeamRequest,
   setUserFriends,
   setUserReceivedFriendRequests,
@@ -25,13 +26,14 @@ import { useNavigate } from 'react-router-dom';
 import { TeamRequest } from '../types/TeamRequest';
 import { Membership } from '../types/Membership';
 import { answerTeamRequest } from '../api/teamRequsts.ts/answerTeamRequest';
-import { cancelRequest } from '../api/teamRequsts.ts/cancelRequest';
+import { useTeamRequests } from '../hooks/useTeamRequests';
+import Team from '../types/Team';
 const RequestsList = () => {
   const { receivedRequests, sentRequests, requestsToTeam, id } = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
   const isActive = useSelector((state: RootState) => state.modalReducer.requestsIsActive);
+  const [, teamRequestsFromTeam] = useTeamRequests(requestsToTeam, id);
   const dispatch = useAppDispatch();
   const [reqsType, setReqsType] = useState<'players' | 'teams'>('players');
-
   const navigate = useNavigate();
   useEffect(() => {
     ioSocket.emit('connected', id);
@@ -71,6 +73,9 @@ const RequestsList = () => {
     ioSocket.on('teamRequest', (teamReq: TeamRequest) => {
       dispatch(addTeamRequest(teamReq));
     });
+    ioSocket.on('leaveTeam', ({ team, userId, byOwner }: { team: Team; userId: number; byOwner: boolean }) => {
+      dispatch(leaveTeam({ team, userId, byOwner }));
+    });
     ioSocket.on('answerTeamRequest', (request: { req: TeamRequest | Membership; accept: boolean }) => {
       if (request.accept) {
         const acceptedReq = request.req as Membership;
@@ -94,7 +99,7 @@ const RequestsList = () => {
     };
   }, []);
 
-  return receivedRequests.length > 0 || sentRequests.length > 0 || requestsToTeam.length > 0 ? (
+  return receivedRequests.length > 0 || sentRequests.length > 0 || teamRequestsFromTeam.length > 0 ? (
     <>
       {isActive ? (
         <OpenRequestsContainer>

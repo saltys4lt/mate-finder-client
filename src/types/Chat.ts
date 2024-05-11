@@ -8,6 +8,7 @@ export interface ChatUser {
 }
 
 export interface Chat {
+  id?: number;
   team?: Team;
   roomId: string;
   messages: Message[];

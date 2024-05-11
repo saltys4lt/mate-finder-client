@@ -63,6 +63,7 @@ const TeamInviteModal: FC<TeamInviteModalProps> = ({ candidate }) => {
         roleId: selectedRole.id as number,
         teamId: selectedTeam.id as number,
         toUserId: candidate.id,
+        isFromTeam: true,
       };
       sendTeamRequest(request);
       setSelectedRole(null);

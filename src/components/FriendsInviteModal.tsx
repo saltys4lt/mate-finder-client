@@ -97,7 +97,7 @@ const FriendsInviteModal: FC<FriendsInviteModalProps> = ({ roles, ownerRole, inv
     if (teamId) {
       const roleId = Cs2PlayerRoles.find((role) => role.name === selectedFriend?.role)?.id;
       if (roleId) {
-        const newReq: TeamRequest = { roleId, teamId, toUserId: selectedFriend?.id as number };
+        const newReq: TeamRequest = { roleId, teamId, toUserId: selectedFriend?.id as number, isFromTeam: true };
         sendTeamRequest(newReq);
       }
     }

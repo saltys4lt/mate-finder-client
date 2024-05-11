@@ -4,7 +4,7 @@ import { RootState, useAppDispatch } from '../redux';
 import Team from '../types/Team';
 import styled from 'styled-components';
 import closeCross from '../assets/images/close-cross.png';
-import { changeRequestToTeamModalState, changeTeamInviteModalState } from '../redux/modalSlice';
+import { changeRequestToTeamModalState } from '../redux/modalSlice';
 import Player from '../types/Player';
 import Cs2Role from '../types/Cs2Role';
 import Cs2PlayerRoles from '../consts/Cs2PlayerRoles';
@@ -13,6 +13,7 @@ import { TeamRequest } from '../types/TeamRequest';
 import { sendTeamRequest } from '../api/teamRequsts.ts/sendTeamRequest';
 
 import Swal from 'sweetalert2';
+import { ioSocket } from '../api/webSockets/socket';
 interface ModalStatus {
   $active: boolean;
 }
@@ -23,6 +24,7 @@ interface SendRequestToTeamProps {
 
 const RequestToTeamModal: FC<SendRequestToTeamProps> = ({ team }) => {
   const requestToTeamModalIsActive = useSelector((state: RootState) => state.modalReducer.requestToTeamModalIsActive);
+  const id = useSelector((state: RootState) => state.userReducer.user?.id);
 
   const [selectedRole, setSelectedRole] = useState<Cs2Role | null>(null);
   const [otherRoles, setOtherRoles] = useState<Cs2Role[]>([]);
@@ -48,11 +50,12 @@ const RequestToTeamModal: FC<SendRequestToTeamProps> = ({ team }) => {
     return selectedRole?.name === role ? 'active' : '';
   };
 
-  const handleSendTeamInvite = () => {
+  const handleSendTeamRequest = () => {
+    const teamRequest: TeamRequest = { isFromTeam: false, roleId: selectedRole?.id as number, teamId: team.id, toUserId: id as number };
+    sendTeamRequest(teamRequest);
     setSelectedRole(null);
-
-    dispatch(changeTeamInviteModalState(false));
-    Swal.fire({ icon: 'success', titleText: 'Запрос отправлен!', timer: 2000, confirmButtonText: 'Понятно' });
+    dispatch(changeRequestToTeamModalState(false));
+    Swal.fire({ icon: 'success', titleText: 'Заявка отправлена!', timer: 2000, confirmButtonText: 'Понятно' });
   };
   return (
     <ModalContainer $active={requestToTeamModalIsActive}>
@@ -82,7 +85,7 @@ const RequestToTeamModal: FC<SendRequestToTeamProps> = ({ team }) => {
               </RoleCard>
             ))}
           </RolesContainer>
-          <StyledConfirmButton $isDisabled={!selectedRole} disabled={!selectedRole}>
+          <StyledConfirmButton $isDisabled={!selectedRole} disabled={!selectedRole} onClick={handleSendTeamRequest}>
             Отправить
           </StyledConfirmButton>
         </InnerContent>

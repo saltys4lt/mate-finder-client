@@ -10,4 +10,5 @@ export interface TeamRequest {
   user?: ClientUser;
   roleId: number;
   role?: Cs2Role;
+  isFromTeam: boolean;
 }

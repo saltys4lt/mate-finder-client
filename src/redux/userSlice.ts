@@ -180,6 +180,24 @@ const userSlice = createSlice({
         }
       }
     },
+    leaveTeam(state, action: PayloadAction<{ team: Team; userId: number; byOwner: boolean }>) {
+      if (state.user) {
+        const candidate = state.user.teams[0]?.members.find((member) => member.user.id === action.payload.userId);
+        if (candidate) {
+          console.log(candidate);
+          state.user.teams = state.user.teams.map((team) =>
+            action.payload.team.id === team.id
+              ? {
+                  ...team,
+                  members: team.members.filter((member) => member.user.id !== action.payload.userId),
+                }
+              : team,
+          );
+        } else {
+          state.user.memberOf = state.user.memberOf.filter((memberOf) => memberOf.teamId !== action.payload.team.id);
+        }
+      }
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(fetchUser.pending, (state) => {
@@ -382,6 +400,7 @@ export const {
   removeTeamRequest,
   resetStatus,
   cancelTeamRequest,
+  leaveTeam,
 } = userSlice.actions;
 
 export default userSlice.reducer;

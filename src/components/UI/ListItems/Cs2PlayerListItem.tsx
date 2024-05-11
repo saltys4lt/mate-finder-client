@@ -202,7 +202,8 @@ const Cs2ItemButton = styled(CommonButton)`
   }
 `;
 const PlayerAvatar = styled.img`
-  width: 100px;
+  width: 100%;
+  max-width: 100px;
   height: 100px;
   object-fit: cover;
   border-radius: 50%;
