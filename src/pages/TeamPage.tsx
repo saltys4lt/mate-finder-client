@@ -218,11 +218,22 @@ const TeamPage = () => {
                   <img src={cancelIcom} alt='' />
                   Покинуть команду
                 </CommonButton>
-              ) : user.requestsToTeam.find((req) => req.teamId === currentTeam.id) ? (
+              ) : user.requestsToTeam.find((req) => req.teamId === currentTeam.id && req.isFromTeam) ? (
                 <CommonButton>
                   {' '}
                   <img src={sendedRequestIcon} alt='' />
                   Ждет вашего ответа
+                </CommonButton>
+              ) : user.requestsToTeam.find((req) => req.teamId === currentTeam.id && !req.isFromTeam) ? (
+                <CommonButton
+                  onClick={() => {
+                    const req = user.requestsToTeam.find((req) => req.teamId === currentTeam.id && !req.isFromTeam) as TeamRequest;
+                    cancelRequest(req);
+                  }}
+                >
+                  {' '}
+                  <img src={cancelIcom} alt='' />
+                  Отменить заявку
                 </CommonButton>
               ) : (
                 currentTeam.public && (
@@ -238,21 +249,20 @@ const TeamPage = () => {
         </Container>
       </TeamHeader>
       <Container>
-        <NeededPlayersRow>
-          <p>Нужные игроки:</p>
-          <NeededPlayersList>
-            {currentTeam.neededRoles.length > 0 ? (
-              currentTeam.neededRoles.map((role) => (
+        {currentTeam.neededRoles.length > 0 && (
+          <NeededPlayersRow>
+            <p>Нужные игроки:</p>
+            <NeededPlayersList>
+              {currentTeam.neededRoles.map((role) => (
                 <RoleLable key={role.id}>
                   <img src={rolesIcons.get(role.id)} alt='' />
                   {role.name}
                 </RoleLable>
-              ))
-            ) : (
-              <></>
-            )}
-          </NeededPlayersList>
-        </NeededPlayersRow>
+              ))}
+            </NeededPlayersList>
+          </NeededPlayersRow>
+        )}
+
         <MembersSectionTitle>
           <div>
             <SectionType
