@@ -23,7 +23,7 @@ export const authorizedGameProfileRoutes = [
     ),
   },
   {
-    path: '/team-creator',
+    path: '/team-creator/:name?',
     element: (
       <Suspense fallback={<Loader />}>
         <TeamCreationPage />

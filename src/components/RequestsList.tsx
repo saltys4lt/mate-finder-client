@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import requestIcon from '../assets/images/friends.png';
 import closeCross from '../assets/images/close-cross.png';
@@ -10,24 +10,9 @@ import { changeReqsState } from '../redux/modalSlice';
 import CommonButton from './UI/CommonButton';
 import { friendRequestAnswer } from '../api/friendsRequests/friendRequestAnswer';
 import defaultUserIcon from '../assets/images/default-avatar.png';
-import {
-  addTeamRequest,
-  cancelTeamRequest,
-  joinTeam,
-  leaveTeam,
-  removeTeamRequest,
-  setUserFriends,
-  setUserReceivedFriendRequests,
-  setUserSentFriendRequests,
-} from '../redux/userSlice';
-import { ioSocket } from '../api/webSockets/socket';
-import { FriendRequest } from '../types/friendRequest';
 import { useNavigate } from 'react-router-dom';
-import { TeamRequest } from '../types/TeamRequest';
-import { Membership } from '../types/Membership';
 import { answerTeamRequest } from '../api/teamRequsts.ts/answerTeamRequest';
 import { useTeamRequests } from '../hooks/useTeamRequests';
-import Team from '../types/Team';
 import { useRequestEvents } from '../hooks/useRequestEvents';
 const RequestsList = () => {
   const { receivedRequests, sentRequests, requestsToTeam, id } = useSelector((state: RootState) => state.userReducer.user) as ClientUser;

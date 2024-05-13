@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAppDispatch } from '../redux';
 import { ioSocket } from '../api/webSockets/socket';
 import {
@@ -18,7 +18,20 @@ import { FriendRequest } from '../types/friendRequest';
 
 export const useRequestEvents = (id: number) => {
   const dispatch = useAppDispatch();
-  useEffect(() => {
+  const [serverReloaded, setIsServerReloaded] = useState<boolean>(true);
+  const setupEvents = () => {
+    ioSocket.on('connection', () => {
+      ioSocket.off('friendRequest');
+      ioSocket.off('friendRequestAction');
+      ioSocket.off('friendRequestToUser');
+      ioSocket.off('friendRequestActionToUser');
+      ioSocket.off('teamRequest');
+      ioSocket.off('leaveTeam');
+      ioSocket.off('answerTeamRequest');
+      ioSocket.off('cancelTeamRequest');
+      setIsServerReloaded(true);
+    });
+
     ioSocket.emit('connected', id);
 
     ioSocket.on('friendRequest', (req: FriendRequest) => {
@@ -76,18 +89,12 @@ export const useRequestEvents = (id: number) => {
         dispatch(cancelTeamRequest({ req, toMyTeam: false }));
       }
     });
-    ioSocket.on('connection', () => {
-      console.log('@@@@@@@@@@@@@@@@@');
-    });
-    ioSocket.on('disconnect', () => {
-      ioSocket.off('friendRequest');
-      ioSocket.off('friendRequestAction');
-      ioSocket.off('friendRequestToUser');
-      ioSocket.off('friendRequestActionToUser');
-      ioSocket.off('teamRequest');
-      ioSocket.off('leaveTeam');
-      ioSocket.off('answerTeamRequest');
-      ioSocket.off('cancelTeamRequest');
-    });
-  }, [id]);
+  };
+
+  useEffect(() => {
+    if (serverReloaded) {
+      setupEvents();
+      setIsServerReloaded(false);
+    }
+  }, [id, serverReloaded]);
 };

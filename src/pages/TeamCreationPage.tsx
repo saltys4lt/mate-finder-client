@@ -32,15 +32,18 @@ import isCreationStepButtonDisabled from '../util/isCreationStepButtonDisabled';
 import { TeamCreationDataValidation } from '../types/TeamCreationDataValidation';
 import { ErrorAlert } from '../components/AuthForms/RegistrationForm';
 import LoaderBackground from '../components/UI/LoaderBackground';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { sendTeamRequestsToFriends } from '../api/teamRequsts.ts/sendTeamRequestsToFriends';
-
+import Cookies from 'js-cookie';
 import { resetStatus } from '../redux/userSlice';
 const TeamCreationPage = () => {
+  const params = useParams();
+  console.log(params);
   const regex = /^[A-Za-z0-9А-Яа-я\s]+$/;
 
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const isEditMode = Cookies.get('team-edit-mode');
   const user = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
   const createTeamStatus = useSelector((state: RootState) => state.userReducer.createTeamStatus);
   const [availableGames, setAvailableGames] = useState<Option[]>(Games);
@@ -71,6 +74,7 @@ const TeamCreationPage = () => {
     neededRoles: [],
     teamRequests: [],
   });
+
   const [game, setGame] = useState<SingleValue<Option>>();
   const uploadAvatar = async (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length) return;
@@ -183,6 +187,32 @@ const TeamCreationPage = () => {
   };
 
   useEffect(() => {
+    if (params.name) {
+      const teamName: string = params.name;
+      const mbTeam = user.teams.find((team) => team.name === teamName);
+      if (mbTeam && Cookies.get('team-edit-mode') === 'true') {
+        setTeam(mbTeam);
+        setOwnerRole(mbTeam.ownerRole);
+        const friends = user.friends;
+        if (friends.length !== 0) {
+          const invitedFriendsFromTeam = mbTeam.teamRequests.filter((req) => friends.find((friend) => friend.id === req.toUserId));
+          setInvitedFriends([
+            ...invitedFriendsFromTeam.map(
+              (friend) =>
+                ({
+                  id: friend.id,
+                  nickname: friend.user?.nickname,
+                  user_avatar: friend.user?.user_avatar,
+                  role: friend.role?.name,
+                }) as FriendWithRole,
+            ),
+          ]);
+        }
+        setRoles(mbTeam.neededRoles.map((role) => role.name));
+      } else {
+        navigate(`/team/${teamName}`);
+      }
+    }
     if (checkUserGameProfile(user as ClientUser) === 2) {
       setGame({ image: '', label: 'Выберите игру', value: 'both' } as Option);
     }
@@ -348,6 +378,7 @@ const TeamCreationPage = () => {
     newTeam.teamRequests = invitedFriends.map((friend) => ({
       toUserId: friend.id,
       roleId: Cs2PlayerRoles.find((role) => role.name === friend.role)?.id as number,
+      isFromTeam: true,
     }));
     newTeam.neededRoles = finishedRoles;
     newTeam.ownerRole = ownerRole;
@@ -417,7 +448,7 @@ const TeamCreationPage = () => {
             </>
           )}
 
-          <TeamCreationTitle>Регистрация команды</TeamCreationTitle>
+          <TeamCreationTitle>{isEditMode ? 'Редактирование' : 'Регистрация'} команды</TeamCreationTitle>
           <hr style={{ marginTop: '-40px', width: '100%' }} />
           <InnerContainer>
             {creationStep === 1 && (

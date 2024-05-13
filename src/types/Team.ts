@@ -17,5 +17,5 @@ export default interface Team {
   neededRoles: Cs2Role[];
   teamRequests: TeamRequest[];
   members: Membership[];
-  chat: Chat;
+  chat?: Chat;
 }

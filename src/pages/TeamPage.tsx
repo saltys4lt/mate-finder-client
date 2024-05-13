@@ -36,6 +36,9 @@ import { useTeamRequests } from '../hooks/useTeamRequests';
 import confirmIcon from '../assets/images/confirm-edit.png';
 import { answerTeamRequest } from '../api/teamRequsts.ts/answerTeamRequest';
 import { leaveFromTeam } from '../api/teamRequsts.ts/leaveFromTeam';
+import editIcon from '../assets/images/edit-profile.png';
+import Cookies from 'js-cookie';
+
 const TeamPage = () => {
   const user = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
 
@@ -150,6 +153,22 @@ const TeamPage = () => {
     });
   };
 
+  const handleEditModeSwitch = () => {
+    Swal.fire({
+      icon: 'question',
+      title: 'Вход в режим редактирования',
+      text: 'Вы будете перенаправлены на странцу редактирования команды',
+      showCancelButton: true,
+      cancelButtonText: 'Отмена',
+      confirmButtonText: 'Перейти',
+    }).then((res) => {
+      if (res.isConfirmed) {
+        Cookies.set('team-edit-mode', 'true');
+        navigate(`/team-creator/${currentTeam?.name}`);
+      }
+    });
+  };
+
   return currentTeam === null ? (
     <Loader />
   ) : (
@@ -246,6 +265,12 @@ const TeamPage = () => {
               )}
             </TeamHeaderButtons>
           </TeamHeaderData>
+          {currentTeam.userId === user.id && (
+            <CommonButton style={{ marginTop: '15px' }} onClick={handleEditModeSwitch}>
+              <img src={editIcon} alt='' />
+              Редактировать
+            </CommonButton>
+          )}
         </Container>
       </TeamHeader>
       <Container>

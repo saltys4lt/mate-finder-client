@@ -92,7 +92,6 @@ const Chat = () => {
 
   useEffect(() => {
     dispatch(fetchChats());
-    ioSocket.on('connection', () => {});
 
     ioSocket.on('checkWholeChat', (checkedMessages: Message[]) => {
       dispatch(updateChatMessages(checkedMessages));
@@ -110,7 +109,6 @@ const Chat = () => {
       }
     });
     ioSocket.on('getMessage', (value: Message) => {
-      console.log(value);
       if (value.roomId === currentChat?.roomId && value.userId !== user.id && isActive) {
         ioSocket.emit('readMessage', { message: value, userId: user.id });
       }
@@ -127,15 +125,12 @@ const Chat = () => {
       console.log(value);
       dispatch(updateMessage(value));
     });
-    ioSocket.on('disconnect', () => {});
 
     if (messageContainer.current) {
       messageContainer.current.scrollTop = messageContainer.current.scrollHeight;
     }
-    ioSocket.emit('connection');
     return () => {
       dispatch(changeChatState(false));
-      ioSocket.removeAllListeners();
     };
   }, []);
 
