@@ -93,6 +93,13 @@ const chatSlice = createSlice({
 
     leaveTeamChat(state, action: PayloadAction<number>) {
       state.chats = state.chats.filter((chat) => chat.id === action.payload);
+      if (state.currentChat?.team) {
+        state.currentChat = null;
+      }
+    },
+
+    joinTeamChat(state, action: PayloadAction<Chat>) {
+      state.chats = [...state.chats, action.payload];
     },
     resetChats(state) {
       state.fetchChatsStatus = 'idle';
@@ -114,7 +121,7 @@ const chatSlice = createSlice({
   },
 });
 
-export const { setChats, setCurrentChat, getMessage, getChat, updateChatMessages, updateMessage, resetChats, leaveTeamChat } =
+export const { setChats, setCurrentChat, getMessage, getChat, updateChatMessages, updateMessage, resetChats, leaveTeamChat, joinTeamChat } =
   chatSlice.actions;
 
 export default chatSlice.reducer;

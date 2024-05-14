@@ -61,13 +61,10 @@ const TeamPage = () => {
     })();
   }, [user.teams]);
 
+  console.log(roles);
   useEffect(() => {
     if (currentTeam) {
-      setRoles(
-        Cs2PlayerRoles.filter((role) => (currentTeam.members.find((member) => member.roleId === role.id) ? true : false)).map(
-          (role) => role.name,
-        ),
-      );
+      setRoles(Cs2PlayerRoles.filter((role) => !currentTeam.members.find((member) => member.roleId === role.id)).map((role) => role.name));
 
       setInvitedFriends([
         ...currentTeam.teamRequests

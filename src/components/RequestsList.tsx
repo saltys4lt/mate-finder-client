@@ -14,6 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import { answerTeamRequest } from '../api/teamRequsts.ts/answerTeamRequest';
 import { useTeamRequests } from '../hooks/useTeamRequests';
 import { useRequestEvents } from '../hooks/useRequestEvents';
+import { ioSocket } from '../api/webSockets/socket';
 const RequestsList = () => {
   const { receivedRequests, sentRequests, requestsToTeam, id } = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
   const isActive = useSelector((state: RootState) => state.modalReducer.requestsIsActive);
@@ -26,6 +27,14 @@ const RequestsList = () => {
   useEffect(() => {
     return () => {
       dispatch(changeReqsState(false));
+      ioSocket.off('friendRequest');
+      ioSocket.off('friendRequestAction');
+      ioSocket.off('friendRequestToUser');
+      ioSocket.off('friendRequestActionToUser');
+      ioSocket.off('teamRequest');
+      ioSocket.off('leaveTeam');
+      ioSocket.off('answerTeamRequest');
+      ioSocket.off('cancelTeamRequest');
     };
   }, []);
 

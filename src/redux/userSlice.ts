@@ -149,7 +149,9 @@ const userSlice = createSlice({
         } else {
           state.user.memberOf.push(action.payload);
           state.user.requestsToTeam = state.user.requestsToTeam.filter((req) => req.teamId !== action.payload.teamId);
-          ioSocket.emit('join', action.payload.team.chat.roomId);
+          if (action.payload.team.chat) {
+            ioSocket.emit('join', action.payload.team.chat.roomId);
+          }
         }
       }
     },
@@ -380,7 +382,7 @@ const userSlice = createSlice({
       if (state.user) {
         state.createTeamStatus = 'fulfilled';
         state.user.teams?.push(action.payload);
-        ioSocket.emit('join', action.payload.chat.roomId);
+        if (action.payload.chat) ioSocket.emit('join', action.payload.chat.roomId as string);
       }
     });
   },

@@ -80,7 +80,7 @@ const Chat = () => {
           text: message,
           time: new Date(),
           userId: user.id,
-          checked: [...members.map((member) => ({ isChecked: false, userId: member.id }))],
+          checked: [...members.filter((member) => member.id !== user.id).map((member) => ({ isChecked: false, userId: member.id }))],
         };
         setMessage('');
         if (!currentChat?.team && currentChat?.messages.length === 0) {
@@ -131,6 +131,10 @@ const Chat = () => {
     }
     return () => {
       dispatch(changeChatState(false));
+      ioSocket.off('checkWholeChat');
+      ioSocket.off('firstMessage');
+      ioSocket.off('getMessage');
+      ioSocket.off('readMessage');
     };
   }, []);
 
@@ -169,7 +173,7 @@ const Chat = () => {
 
   const uncheckedMessages = chats.reduce((acc, chat) => {
     const unreadMessages = chat.messages.filter((message) =>
-      message.checked.find((checkedBy) => checkedBy.userId === user.id && !checkedBy.isChecked),
+      message?.checked.find((checkedBy) => checkedBy.userId === user.id && !checkedBy.isChecked),
     );
     return acc + unreadMessages.length;
   }, 0);

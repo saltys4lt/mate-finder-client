@@ -15,6 +15,8 @@ import { Membership } from '../types/Membership';
 import Team from '../types/Team';
 import { TeamRequest } from '../types/TeamRequest';
 import { FriendRequest } from '../types/friendRequest';
+import { joinTeamChat } from '../redux/chatSlice';
+import { Chat } from '../types/Chat';
 
 export const useRequestEvents = (id: number) => {
   const dispatch = useAppDispatch();
@@ -67,6 +69,7 @@ export const useRequestEvents = (id: number) => {
       return;
     });
     ioSocket.on('teamRequest', (teamReq: TeamRequest) => {
+      console.log('sdsdsdsdssdsdsdsd');
       dispatch(addTeamRequest(teamReq));
     });
     ioSocket.on('leaveTeam', ({ team, userId, byOwner }: { team: Team; userId: number; byOwner: boolean }) => {
@@ -76,6 +79,9 @@ export const useRequestEvents = (id: number) => {
       if (request.accept) {
         const acceptedReq = request.req as Membership;
         dispatch(joinTeam(acceptedReq));
+        const chat = acceptedReq.team?.chat as Chat;
+        console.log(chat);
+        dispatch(joinTeamChat(chat));
       } else {
         const deniedReq = request.req as TeamRequest;
 
@@ -95,6 +101,7 @@ export const useRequestEvents = (id: number) => {
     if (serverReloaded) {
       setupEvents();
       setIsServerReloaded(false);
+      return () => {};
     }
   }, [id, serverReloaded]);
 };

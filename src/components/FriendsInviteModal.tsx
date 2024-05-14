@@ -61,7 +61,7 @@ const FriendsInviteModal: FC<FriendsInviteModalProps> = ({ roles, ownerRole, inv
 
   useEffect(() => {
     setOtherRoles(
-      Cs2PlayerRoles.filter((role) => !roles.find((neededRole) => neededRole === role.name))
+      Cs2PlayerRoles.filter((role) => roles.find((neededRole) => neededRole === role.name))
         .filter((role) => role.name !== ownerRole)
         .map((role) => role.name),
     );
