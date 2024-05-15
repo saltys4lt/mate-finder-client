@@ -38,6 +38,8 @@ import Cookies from 'js-cookie';
 import { resetStatus } from '../redux/userSlice';
 import isDefaultAvatar from '../util/isDefaultAvatar';
 import rolesIcons from '../consts/rolesIcons';
+import { Membership } from '../types/Membership';
+import Cs2Role from '../types/Cs2Role';
 const TeamCreationPage = () => {
   const params = useParams();
 
@@ -137,7 +139,7 @@ const TeamCreationPage = () => {
   const handleGameChange = (game: SingleValue<Option>) => {
     setGame(game);
   };
-
+  console.log(team);
   const rolePlayersState = (role: string) => {
     if (roles.includes(role) && !invitedFriends.find((friend) => friend.role === role)) return 'active';
     if (role === ownerRole || (team.members.length !== 0 && team.members.find((member) => member.role.name === role))) return 'focus';
@@ -150,6 +152,43 @@ const TeamCreationPage = () => {
   console.log(roles);
   const changeOwnerRole = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const invitedFriend = invitedFriends.find((friend) => friend.role === e.target.value);
+    let mbMember: Membership | null | undefined = null;
+    if (isEditMode) {
+      mbMember = team.members.find((member) => member.role.name === e.target.value);
+      if (mbMember) {
+        await Swal.fire({
+          icon: 'warning',
+          title: 'Уверены?',
+          html: `
+  <div style="background-color: #f0f0f0; border-radius: 10px; padding: 10px;">
+  <p>Если вы выберите эту роль, то измените роля для в команде <strong>${mbMember.user.nickname}</strong> </p>
+  <div style="margin-top:10px; display: flex; column-gap:15px; justify-content:center; align-items: center; width:100%">
+    <img src="${isDefaultAvatar(mbMember.user.user_avatar)}" alt="Аватар" style="border-radius: 50%; width: 70px; height: 70px; object-fit:cover;">
+    <div style="margin-top: 10px;">${mbMember.user.nickname}</div>
+  </div>
+</div>
+  `,
+
+          confirmButtonText: 'Да',
+          confirmButtonColor: '#b42020',
+          showCancelButton: true,
+          cancelButtonText: 'Отмена',
+        }).then((res) => {
+          if (res.isConfirmed) {
+            const role = Cs2PlayerRoles.find((r) => r.name === ownerRole) as Cs2Role;
+            setTeam({
+              ...team,
+              members: [...team.members.map((member) => (member.id === mbMember?.id ? { ...member, role, roleId: role.id } : member))],
+            });
+            setOwnerRole(e.target.value);
+
+            if (roles.includes(e.target.value)) setRoles(roles.filter((role) => role !== e.target.value));
+          } else {
+            return;
+          }
+        });
+      }
+    }
     if (invitedFriend) {
       await Swal.fire({
         icon: 'warning',
@@ -179,8 +218,10 @@ const TeamCreationPage = () => {
         }
       });
     } else {
-      setOwnerRole(e.target.value);
-      if (roles.includes(e.target.value)) setRoles(roles.filter((role) => role !== e.target.value));
+      if (!mbMember && !invitedFriend) {
+        setOwnerRole(e.target.value);
+        if (roles.includes(e.target.value)) setRoles(roles.filter((role) => role !== e.target.value));
+      }
     }
   };
 
@@ -424,13 +465,25 @@ const TeamCreationPage = () => {
   console.log(team.members);
   return (
     <Main>
-      <FriendsInviteModal
-        roles={roles}
-        ownerRole={ownerRole}
-        invitedFriends={invitedFriends}
-        setInvitedFriends={setInvitedFriends}
-        setRoles={setRoles}
-      />
+      {isEditMode === 'true' && team.members.length !== 0 ? (
+        <FriendsInviteModal
+          roles={roles}
+          ownerRole={ownerRole}
+          invitedFriends={invitedFriends}
+          setInvitedFriends={setInvitedFriends}
+          setRoles={setRoles}
+          membersIds={team.members.map((member) => member.user.id as number)}
+        />
+      ) : (
+        <FriendsInviteModal
+          roles={roles}
+          ownerRole={ownerRole}
+          invitedFriends={invitedFriends}
+          setInvitedFriends={setInvitedFriends}
+          setRoles={setRoles}
+        />
+      )}
+
       <Container>
         <MainContainer>
           {createTeamStatus === 'pending' && (

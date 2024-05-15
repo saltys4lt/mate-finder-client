@@ -31,9 +31,18 @@ interface FriendsInviteModalProps {
   roles: string[];
   setRoles: (role: string[]) => void;
   teamId?: number;
+  membersIds?: number[];
 }
 
-const FriendsInviteModal: FC<FriendsInviteModalProps> = ({ roles, ownerRole, invitedFriends, setInvitedFriends, setRoles, teamId }) => {
+const FriendsInviteModal: FC<FriendsInviteModalProps> = ({
+  roles,
+  ownerRole,
+  invitedFriends,
+  setInvitedFriends,
+  setRoles,
+  teamId,
+  membersIds,
+}) => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [isActive, setIsActive] = useState<boolean>(false);
@@ -50,7 +59,13 @@ const FriendsInviteModal: FC<FriendsInviteModalProps> = ({ roles, ownerRole, inv
   };
 
   useEffect(() => {
-    setCurrentFriends(friends);
+    if (friends) {
+      let friendsList = friends.filter((friend) => !invitedFriends.find((iFriend) => iFriend.id === friend.id));
+      if (membersIds) {
+        friendsList = friendsList.filter((friend) => !membersIds.find((memberId) => memberId === friend.id));
+      }
+      setCurrentFriends(friendsList);
+    }
   }, [friends]);
 
   useLayoutEffect(() => {
