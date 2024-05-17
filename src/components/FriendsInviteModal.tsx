@@ -61,12 +61,13 @@ const FriendsInviteModal: FC<FriendsInviteModalProps> = ({
   useEffect(() => {
     if (friends) {
       let friendsList = friends.filter((friend) => !invitedFriends.find((iFriend) => iFriend.id === friend.id));
+
       if (membersIds) {
         friendsList = friendsList.filter((friend) => !membersIds.find((memberId) => memberId === friend.id));
       }
       setCurrentFriends(friendsList);
     }
-  }, [friends]);
+  }, [friends, membersIds]);
 
   useLayoutEffect(() => {
     if (friendsState || invitedFriendsState) {

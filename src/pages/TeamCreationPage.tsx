@@ -56,6 +56,7 @@ const TeamCreationPage = () => {
   const [creationStep, setCreationStep] = useState<number>(1);
   const [roles, setRoles] = useState<string[]>([]);
   const [invitedFriends, setInvitedFriends] = useState<FriendWithRole[]>([]);
+
   const [dataValidation, setDataValidation] = useState<TeamCreationDataValidation>({
     isNameValid: true,
     isDescriptionValid: true,
@@ -95,18 +96,15 @@ const TeamCreationPage = () => {
     }
     const avatar = e.target.files[0];
     const formData = new FormData();
-    console.log('Размер' + avatar.size);
+
     formData.append('avatar', avatar);
-    console.log(formData);
 
     uploadTeamAvatar(formData)
       .then((res) => {
         setTeam({ ...team, avatar: res as string });
         setAvatarIsLoading(false);
       })
-      .catch((e) => {
-        console.log(e);
-      });
+      .catch((e) => {});
   };
 
   const handleTeamNameChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -130,6 +128,7 @@ const TeamCreationPage = () => {
     }
     setTeam({ ...team, description: e.target.value });
   };
+
   const handleTeamTypeChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.value === 'true') {
       setTeam({ ...team, public: true });
@@ -139,7 +138,7 @@ const TeamCreationPage = () => {
   const handleGameChange = (game: SingleValue<Option>) => {
     setGame(game);
   };
-  console.log(team);
+
   const rolePlayersState = (role: string) => {
     if (roles.includes(role) && !invitedFriends.find((friend) => friend.role === role)) return 'active';
     if (role === ownerRole || (team.members.length !== 0 && team.members.find((member) => member.role.name === role))) return 'focus';
@@ -149,7 +148,7 @@ const TeamCreationPage = () => {
     if (!roles.includes(e.target.value)) setRoles([...roles, e.target.value]);
     else setRoles(roles.filter((role) => role !== e.target.value));
   };
-  console.log(roles);
+
   const changeOwnerRole = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const invitedFriend = invitedFriends.find((friend) => friend.role === e.target.value);
     let mbMember: Membership | null | undefined = null;
@@ -168,7 +167,6 @@ const TeamCreationPage = () => {
   </div>
 </div>
   `,
-
           confirmButtonText: 'Да',
           confirmButtonColor: '#b42020',
           showCancelButton: true,
@@ -416,6 +414,7 @@ const TeamCreationPage = () => {
         isCancel = true;
       }
     });
+
     if (isCancel) return;
     const newTeam: Team = team;
     newTeam.teamRequests = invitedFriends.map((friend) => ({
@@ -433,7 +432,7 @@ const TeamCreationPage = () => {
       handleCreateTeam();
     } else {
       const tempDataValidation = { ...dataValidation };
-      console.log(creationStep);
+
       if (creationStep === 2) {
         if (!regex.test(team.name)) {
           tempDataValidation.isNameValid = false;
@@ -462,7 +461,11 @@ const TeamCreationPage = () => {
       setCreationStep((prev) => prev + 1);
     }
   };
-  console.log(team.members);
+  let membersIds: number[] = [];
+  if (team && team.members.length !== 0) {
+    membersIds = team.members.map((member) => member.user.id as number);
+  }
+
   return (
     <Main>
       {isEditMode === 'true' && team.members.length !== 0 ? (
@@ -472,7 +475,7 @@ const TeamCreationPage = () => {
           invitedFriends={invitedFriends}
           setInvitedFriends={setInvitedFriends}
           setRoles={setRoles}
-          membersIds={team.members.map((member) => member.user.id as number)}
+          membersIds={membersIds}
         />
       ) : (
         <FriendsInviteModal
