@@ -160,7 +160,7 @@ const TeamPage = () => {
       confirmButtonText: 'Перейти',
     }).then((res) => {
       if (res.isConfirmed) {
-        Cookies.set('team-edit-mode', 'true');
+        Cookies.set('tem', 'true');
         navigate(`/team-creator/${currentTeam?.name}`);
       }
     });

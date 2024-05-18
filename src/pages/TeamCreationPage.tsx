@@ -40,6 +40,7 @@ import isDefaultAvatar from '../util/isDefaultAvatar';
 import rolesIcons from '../consts/rolesIcons';
 import { Membership } from '../types/Membership';
 import Cs2Role from '../types/Cs2Role';
+import { isDisabledRole } from '../util/isDisabledRole';
 const TeamCreationPage = () => {
   const params = useParams();
 
@@ -47,7 +48,7 @@ const TeamCreationPage = () => {
 
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const isEditMode = Cookies.get('team-edit-mode');
+  const isEditMode = Cookies.get('tem');
   const user = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
   const createTeamStatus = useSelector((state: RootState) => state.userReducer.createTeamStatus);
   const [availableGames, setAvailableGames] = useState<Option[]>(Games);
@@ -99,12 +100,10 @@ const TeamCreationPage = () => {
 
     formData.append('avatar', avatar);
 
-    uploadTeamAvatar(formData)
-      .then((res) => {
-        setTeam({ ...team, avatar: res as string });
-        setAvatarIsLoading(false);
-      })
-      .catch((e) => {});
+    uploadTeamAvatar(formData).then((res) => {
+      setTeam({ ...team, avatar: res as string });
+      setAvatarIsLoading(false);
+    });
   };
 
   const handleTeamNameChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -140,9 +139,15 @@ const TeamCreationPage = () => {
   };
 
   const rolePlayersState = (role: string) => {
+    if (isEditMode) {
+      if (team.members.length !== 0 && team.members.find((member) => member.role.name === role)) return 'focus';
+      if (team.teamRequests.find((tr) => tr.role?.name === role)) return 'focus';
+    }
+    if (invitedFriends.find((friend) => friend.role === role)) return 'focus';
     if (roles.includes(role) && !invitedFriends.find((friend) => friend.role === role)) return 'active';
-    if (role === ownerRole || (team.members.length !== 0 && team.members.find((member) => member.role.name === role))) return 'focus';
-    else return '';
+    if (role === ownerRole) return 'focus';
+
+    return '';
   };
   const changePlayersRoles = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!roles.includes(e.target.value)) setRoles([...roles, e.target.value]);
@@ -155,18 +160,36 @@ const TeamCreationPage = () => {
     if (isEditMode) {
       mbMember = team.members.find((member) => member.role.name === e.target.value);
       if (mbMember) {
+        const MemberAlert = () => {
+          return (
+            <div style={{ backgroundColor: '#f0f0f0', borderRadius: '10px', padding: '10px' }}>
+              <p>
+                Если вы выберите эту роль, то измените роль для <strong>{mbMember?.user.nickname}</strong> на <strong>{ownerRole}</strong>
+              </p>
+              <div
+                style={{
+                  marginTop: '10px',
+                  display: 'flex',
+                  columnGap: '15px',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  width: '100%',
+                }}
+              >
+                <img
+                  src={isDefaultAvatar(mbMember?.user.user_avatar)}
+                  alt='Аватар'
+                  style={{ borderRadius: '50%', width: '70px', height: '70px', objectFit: 'cover' }}
+                />
+                <div style={{ marginTop: '10px' }}>{mbMember?.user.nickname}</div>
+              </div>
+            </div>
+          );
+        };
         await Swal.fire({
           icon: 'warning',
           title: 'Уверены?',
-          html: `
-  <div style="background-color: #f0f0f0; border-radius: 10px; padding: 10px;">
-  <p>Если вы выберите эту роль, то измените роля для в команде <strong>${mbMember.user.nickname}</strong> </p>
-  <div style="margin-top:10px; display: flex; column-gap:15px; justify-content:center; align-items: center; width:100%">
-    <img src="${isDefaultAvatar(mbMember.user.user_avatar)}" alt="Аватар" style="border-radius: 50%; width: 70px; height: 70px; object-fit:cover;">
-    <div style="margin-top: 10px;">${mbMember.user.nickname}</div>
-  </div>
-</div>
-  `,
+          html: ReactDOMServer.renderToString(<MemberAlert />),
           confirmButtonText: 'Да',
           confirmButtonColor: '#b42020',
           showCancelButton: true,
@@ -231,7 +254,7 @@ const TeamCreationPage = () => {
     if (params.name) {
       const teamName: string = params.name;
       const mbTeam = user.teams.find((team) => team.name === teamName);
-      if (mbTeam && Cookies.get('team-edit-mode') === 'true') {
+      if (mbTeam && Cookies.get('tem') === 'true') {
         setTeam(mbTeam);
         setOwnerRole(mbTeam.ownerRole);
         const friends = user.friends;
@@ -266,7 +289,9 @@ const TeamCreationPage = () => {
       setAvailableGames([Games[1]]);
     }
 
-    return () => {};
+    return () => {
+      Cookies.remove('tem');
+    };
   }, []);
 
   useEffect(() => {
@@ -712,7 +737,7 @@ const TeamCreationPage = () => {
                           onChange={(e) => changePlayersRoles(e)}
                           value={role.name}
                           type='checkbox'
-                          disabled={role.name === ownerRole || team.members.find((member) => member.role.name === role.name) ? true : false}
+                          disabled={isDisabledRole(role, ownerRole, invitedFriends, isEditMode ? true : false, team)}
                         />
                         <RoleLabel className={rolePlayersState(role.name)} htmlFor={(index + 10).toString()}>
                           <img src={rolesIcons.get(role.id)} alt='' />
@@ -736,22 +761,38 @@ const TeamCreationPage = () => {
                     </RoleLableContainer>
                   ))}
                 </RolesContainer>
+
                 <div style={{ display: 'flex', columnGap: '10px', alignItems: 'center', color: '#fff', marginTop: 50 }}>
-                  <InviteFriendsButton
-                    disabled={invitedFriends.length === user.friends.length}
-                    onClick={() => {
-                      dispatch(changeFriendsInviteModalState(true));
-                    }}
-                  >
-                    <img src={friendsInviteIcon} alt='' />
-                    Пригласить друзей
-                  </InviteFriendsButton>
-                  <ErrorOutlineContainer>
-                    <ErrorOutline />
-                    <GameExplenation style={{ top: '-6em' }}>
-                      Список ролей для друзей будет состоять из тех ролей, которые вы выбрали выше
-                    </GameExplenation>
-                  </ErrorOutlineContainer>
+                  {!isEditMode ? (
+                    <>
+                      <InviteFriendsButton
+                        disabled={invitedFriends.length === user.friends.length || roles.length === 0}
+                        onClick={() => {
+                          dispatch(changeFriendsInviteModalState(true));
+                        }}
+                      >
+                        <img src={friendsInviteIcon} alt='' />
+                        Пригласить друзей
+                      </InviteFriendsButton>
+
+                      <ErrorOutlineContainer>
+                        <ErrorOutline />
+                        <GameExplenation style={{ top: '-6em' }}>
+                          Список ролей для друзей будет состоять из тех ролей, которые вы выбрали выше
+                        </GameExplenation>
+                      </ErrorOutlineContainer>
+                    </>
+                  ) : (
+                    <InviteFriendsButton
+                      disabled={invitedFriends.length === user.friends.length || roles.length === 0}
+                      onClick={() => {
+                        dispatch(changeFriendsInviteModalState(true));
+                      }}
+                    >
+                      <img src={friendsInviteIcon} alt='' />
+                      Приглашения
+                    </InviteFriendsButton>
+                  )}
                 </div>
 
                 {invitedFriends.length !== 0 && (
@@ -760,7 +801,7 @@ const TeamCreationPage = () => {
                       dispatch(changeInvitedFriendsModalState(true));
                     }}
                   >
-                    Приглашенные <div>{invitedFriends.length}</div>
+                    Будут приглашены <div>{invitedFriends.length}</div>
                   </InvitedFriendsButton>
                 )}
               </RolesData>
