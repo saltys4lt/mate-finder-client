@@ -171,19 +171,20 @@ const Chat = () => {
     }
   }, [currentChat, isActive]);
 
-  const uncheckedMessages = chats.reduce((acc, chat) => {
+  const uncheckedMessages = chats.reduce((_, chat) => {
     const unreadMessages = chat.messages.filter((message) =>
       message?.checked.find((checkedBy) => checkedBy.userId === user.id && !checkedBy.isChecked),
     );
-    return acc + unreadMessages.length;
-  }, 0);
 
+    return unreadMessages.length;
+  }, 0);
+  console.log(uncheckedMessages);
   const openTeamChat = () => {
     const teamChat = chats.find((chat) => chat.team !== null);
     if (teamChat) {
       if (teamChat.messages.find((message) => message.checked.find((checkedBy) => checkedBy.userId === user.id && !checkedBy.isChecked))) {
         const checkedMessages = teamChat.messages.filter((message) =>
-          message.checked.find((checkedBy) => checkedBy.userId === user.id && !checkedBy.isChecked) ? true : false,
+          message.checked.find((checkedBy) => checkedBy.userId === user.id && !checkedBy.isChecked),
         );
         const userIds: number[] = teamChat.members
           .filter((member) => checkedMessages.find((message) => message.userId === member.id))

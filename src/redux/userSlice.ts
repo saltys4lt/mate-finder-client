@@ -345,7 +345,7 @@ const userSlice = createSlice({
     });
     builder.addCase(updateUser.fulfilled, (state, action: PayloadAction<ClientUser>) => {
       state.updateUserStatus = 'fulfilled';
-      state.user = action.payload;
+      state.user = { ...state.user, ...action.payload };
     });
     builder.addCase(updateUser.rejected, (state) => {
       state.updateUserStatus = 'rejected';

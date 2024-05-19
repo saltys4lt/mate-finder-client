@@ -22,15 +22,15 @@ export const useRequestEvents = (id: number) => {
   const dispatch = useAppDispatch();
   const [serverReloaded, setIsServerReloaded] = useState<boolean>(true);
   const setupEvents = () => {
+    ioSocket.removeListener('friendRequest');
+    ioSocket.removeListener('friendRequestAction');
+    ioSocket.removeListener('friendRequestToUser');
+    ioSocket.removeListener('friendRequestActionToUser');
+    ioSocket.removeListener('teamRequest');
+    ioSocket.removeListener('leaveTeam');
+    ioSocket.removeListener('answerTeamRequest');
+    ioSocket.removeListener('cancelTeamRequest');
     ioSocket.on('connection', () => {
-      ioSocket.off('friendRequest');
-      ioSocket.off('friendRequestAction');
-      ioSocket.off('friendRequestToUser');
-      ioSocket.off('friendRequestActionToUser');
-      ioSocket.off('teamRequest');
-      ioSocket.off('leaveTeam');
-      ioSocket.off('answerTeamRequest');
-      ioSocket.off('cancelTeamRequest');
       setIsServerReloaded(true);
     });
 
@@ -69,7 +69,7 @@ export const useRequestEvents = (id: number) => {
       return;
     });
     ioSocket.on('teamRequest', (teamReq: TeamRequest) => {
-      console.log('sdsdsdsdssdsdsdsd');
+      console.log('@@@@@@@@@@@@@@@@@@@@');
       dispatch(addTeamRequest(teamReq));
     });
     ioSocket.on('leaveTeam', ({ team, userId, byOwner }: { team: Team; userId: number; byOwner: boolean }) => {
@@ -101,7 +101,6 @@ export const useRequestEvents = (id: number) => {
     if (serverReloaded) {
       setupEvents();
       setIsServerReloaded(false);
-      return () => {};
     }
   }, [id, serverReloaded]);
 };

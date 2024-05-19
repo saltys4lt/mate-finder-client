@@ -73,7 +73,7 @@ const TeamPage = () => {
             id: req.toUserId as number,
             nickname: req.user?.nickname as string,
             user_avatar: req.user?.user_avatar as string,
-            role: req.role?.name as string,
+            role: req.role,
           })),
         ...currentTeam.members
           .filter((member) => user.friends.find((friend) => friend.id === member.user.id))
@@ -81,7 +81,7 @@ const TeamPage = () => {
             id: member.user.id as number,
             nickname: member.user?.nickname as string,
             user_avatar: member.user?.user_avatar as string,
-            role: member.role?.name as string,
+            role: member.role,
           })),
       ]);
     }
@@ -138,7 +138,7 @@ const TeamPage = () => {
   const handleLeaveFromTeam = () => {
     Swal.fire({
       icon: 'warning',
-      title: 'Уверены ?',
+      title: 'Уверены, что хотите покинуть команду ?',
       text: 'Возможно это расстроит ваших товарищей по команде 😢',
       confirmButtonText: 'Покинуть команду',
       showCancelButton: true,
@@ -151,19 +151,24 @@ const TeamPage = () => {
   };
 
   const handleEditModeSwitch = () => {
-    Swal.fire({
-      icon: 'question',
-      title: 'Вход в режим редактирования',
-      text: 'Вы будете перенаправлены на странцу редактирования команды',
-      showCancelButton: true,
-      cancelButtonText: 'Отмена',
-      confirmButtonText: 'Перейти',
-    }).then((res) => {
-      if (res.isConfirmed) {
-        Cookies.set('tem', 'true');
-        navigate(`/team-creator/${currentTeam?.name}`);
-      }
-    });
+    if (currentTeam?.teamRequests.find((req) => !req.isFromTeam)) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'У вас есть нерассмотренные заявки на вступление.',
+        text: 'При редактировании вам нельзя будет как либо изменять роли в команде. Чтобы редактировать роли у вас не должно быть заявок от других игроков',
+        showCancelButton: true,
+        cancelButtonText: 'Отмена',
+        confirmButtonText: 'Продолжить',
+      }).then((res) => {
+        if (res.isConfirmed) {
+          Cookies.set('tem', 'true');
+          navigate(`/team-creator/${currentTeam?.name}`);
+        }
+      });
+    } else {
+      Cookies.set('tem', 'true');
+      navigate(`/team-creator/${currentTeam?.name}`);
+    }
   };
 
   return currentTeam === null ? (
