@@ -15,7 +15,7 @@ import { Membership } from '../types/Membership';
 import Team from '../types/Team';
 import { TeamRequest } from '../types/TeamRequest';
 import { FriendRequest } from '../types/friendRequest';
-import { joinTeamChat } from '../redux/chatSlice';
+import { joinTeamChat, leaveTeamChat } from '../redux/chatSlice';
 import { Chat } from '../types/Chat';
 
 export const useRequestEvents = (id: number) => {
@@ -69,19 +69,28 @@ export const useRequestEvents = (id: number) => {
       return;
     });
     ioSocket.on('teamRequest', (teamReq: TeamRequest) => {
-      console.log('@@@@@@@@@@@@@@@@@@@@');
       dispatch(addTeamRequest(teamReq));
     });
     ioSocket.on('leaveTeam', ({ team, userId, byOwner }: { team: Team; userId: number; byOwner: boolean }) => {
       dispatch(leaveTeam({ team, userId, byOwner }));
+      if (userId === id) {
+        dispatch(leaveTeamChat(team.chat?.id as number));
+      }
     });
     ioSocket.on('answerTeamRequest', (request: { req: TeamRequest | Membership; accept: boolean }) => {
       if (request.accept) {
         const acceptedReq = request.req as Membership;
         dispatch(joinTeam(acceptedReq));
-        const chat = acceptedReq.team?.chat as Chat;
-        console.log(chat);
-        dispatch(joinTeamChat(chat));
+
+        if (request.req.user?.id === id) {
+          const chat = acceptedReq.team?.chat as Chat;
+
+          dispatch(joinTeamChat({ chat }));
+        } else {
+          const chat = acceptedReq.team?.chat as Chat;
+
+          dispatch(joinTeamChat({ chat, member: request.req.user }));
+        }
       } else {
         const deniedReq = request.req as TeamRequest;
 

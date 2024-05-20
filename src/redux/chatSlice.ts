@@ -3,6 +3,7 @@ import { Chat } from '../types/Chat';
 import { Message } from '../types/Message';
 import fetchChats from './chatThunks/fetchChats';
 import { ioSocket } from '../api/webSockets/socket';
+import ClientUser from '../types/ClientUser';
 
 interface ChatInitialState {
   currentChat: Chat | null;
@@ -98,8 +99,33 @@ const chatSlice = createSlice({
       }
     },
 
-    joinTeamChat(state, action: PayloadAction<Chat>) {
-      state.chats = [...state.chats, action.payload];
+    joinTeamChat(state, action: PayloadAction<{ chat: Chat; member?: ClientUser }>) {
+      const chat = action.payload.chat;
+      if (action.payload.member) {
+        const newChatMember = action.payload.member;
+        if (state.currentChat?.id === chat.id) {
+          state.currentChat?.members.push({
+            id: newChatMember.id,
+            nickname: newChatMember.nickname,
+            user_avatar: newChatMember.user_avatar as string,
+          });
+        }
+        state.chats = state.chats.map((cChat) =>
+          cChat.id === chat.id
+            ? {
+                ...cChat,
+                members: [
+                  ...cChat.members,
+                  {
+                    id: newChatMember.id,
+                    nickname: newChatMember.nickname,
+                    user_avatar: newChatMember.user_avatar as string,
+                  },
+                ],
+              }
+            : cChat,
+        );
+      } else state.chats = [...state.chats, action.payload.chat];
     },
     resetChats(state) {
       state.fetchChatsStatus = 'idle';

@@ -75,12 +75,14 @@ const Chat = () => {
       const members = currentChat?.members.filter((member) => member.id !== user.id);
 
       if (members) {
+        const chatMembers = members.filter((member) => member.id !== user.id).map((member) => ({ isChecked: false, userId: member.id }));
+        console.log('@@@', chatMembers);
         const newMessage: Message = {
           roomId: currentChat?.roomId as string,
           text: message,
           time: new Date(),
           userId: user.id,
-          checked: [...members.filter((member) => member.id !== user.id).map((member) => ({ isChecked: false, userId: member.id }))],
+          checked: chatMembers,
         };
         setMessage('');
         if (!currentChat?.team && currentChat?.messages.length === 0) {

@@ -38,6 +38,7 @@ import { answerTeamRequest } from '../api/teamRequsts.ts/answerTeamRequest';
 import { leaveFromTeam } from '../api/teamRequsts.ts/leaveFromTeam';
 import editIcon from '../assets/images/edit-profile.png';
 import Cookies from 'js-cookie';
+import { fetchUpdatedTeam } from '../api/teamRequsts.ts/fetchUpdatedTeam';
 
 const TeamPage = () => {
   const user = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
@@ -57,6 +58,7 @@ const TeamPage = () => {
       const team = await fetchTeam(name as string);
       if (typeof team !== 'string') {
         setCurrentTeam(team as Team);
+        fetchUpdatedTeam(team.name, setCurrentTeam);
       }
     })();
   }, [user.teams]);

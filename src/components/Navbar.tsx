@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react';
 import logoImg from '../assets/images/header1-logo.jpeg';
 import logout from '../assets/images/logout.png';
 import { resetChats } from '../redux/chatSlice';
+import { ioSocket } from '../api/webSockets/socket';
 
 const Navbar = () => {
   const dispatch = useAppDispatch();
@@ -45,6 +46,7 @@ const Navbar = () => {
         Cookies.remove('token');
         dispatch(resetChats());
         dispatch(changeIsAuth(false));
+        ioSocket.emit('leaveAllRooms');
       }
     });
   };
