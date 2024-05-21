@@ -19,6 +19,7 @@ import { TeamRequest } from '../types/TeamRequest';
 import { Membership } from '../types/Membership';
 import { Status } from '../types/Status';
 import { ioSocket } from '../api/webSockets/socket';
+import updateTeam from './teamThunks/updateTeam';
 interface UserState {
   user: ClientUser | null;
   isAuth: boolean;
@@ -31,6 +32,7 @@ interface UserState {
   updateUserStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
   deleteCs2Status: 'idle' | 'pending' | 'fulfilled' | 'rejected';
   createTeamStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
+  updateTeamStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
 
   createUserError: string | null;
   fetchUserError: string | null;
@@ -59,6 +61,7 @@ const initialState: UserState = {
   deleteCs2Status: 'idle',
 
   createTeamStatus: 'idle',
+  updateTeamStatus: 'idle',
 };
 
 const userSlice = createSlice({
@@ -383,6 +386,14 @@ const userSlice = createSlice({
         state.createTeamStatus = 'fulfilled';
         state.user.teams?.push(action.payload);
         if (action.payload.chat) ioSocket.emit('join', action.payload.chat.roomId as string);
+      }
+    });
+
+    builder.addCase(updateTeam.fulfilled, (state, action: PayloadAction<Team>) => {
+      if (state.user) {
+        state.user.teams = state.user.teams.map((team) => (team.id === action.payload.id ? action.payload : team));
+
+        state.updateTeamStatus = 'fulfilled';
       }
     });
   },

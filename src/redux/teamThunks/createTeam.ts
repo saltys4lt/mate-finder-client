@@ -6,7 +6,7 @@ const baseUrl = import.meta.env.VITE_BASE_URL;
 
 export default createAsyncThunk('usersReducer/createTeam', async (data: Team, { rejectWithValue }) => {
   const response = axios
-    .post<Team>(`${baseUrl}/createTeam/${data.userId}`, data, { withCredentials: true })
+    .post<Team>(`${baseUrl}/create/${data.userId}`, data, { withCredentials: true })
     .then((res) => {
       return res.data;
     })

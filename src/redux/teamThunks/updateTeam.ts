@@ -6,7 +6,7 @@ const baseUrl = import.meta.env.VITE_BASE_URL;
 
 export default createAsyncThunk('usersReducer/updateTeam', async (data: Team, { rejectWithValue }) => {
   const response = axios
-    .patch<Team>(`${baseUrl}/updateTeam/${data.userId}`, data, { withCredentials: true })
+    .put<Team>(`${baseUrl}/update/${data.id}`, data, { withCredentials: true })
     .then((res) => {
       return res.data;
     })

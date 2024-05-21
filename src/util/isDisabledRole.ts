@@ -12,11 +12,11 @@ export const isDisabledRole = (
 ) => {
   if (isReqsToTeamExist) return true;
   if (ownerRole === role.name) return true;
-  if (invitedFriends.find((friend) => friend.role?.id === role.id)) return true;
+  // if (invitedFriends.find((friend) => friend.role?.id === role.id)) return true;
 
   if (isTeam) {
     if (team.members.find((member) => member.roleId === role.id)) return true;
-    if (team.teamRequests.find((tr) => tr.roleId === role.id)) return true;
+    // if (team.teamRequests.find((tr) => tr.roleId === role.id)) return true;
   }
 
   return false;
