@@ -58,8 +58,7 @@ const TeamPage = () => {
       const team = await fetchTeam(name as string);
       if (typeof team !== 'string') {
         setCurrentTeam(team as Team);
-        console.log('dsdsd', team.id);
-        fetchUpdatedTeam(team.id as number, setCurrentTeam);
+        if (team.userId !== user.id) fetchUpdatedTeam(team.id as number, setCurrentTeam);
       }
     })();
   }, [user.teams]);
