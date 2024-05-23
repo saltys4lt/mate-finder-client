@@ -48,7 +48,8 @@ import updateTeam from '../redux/teamThunks/updateTeam';
 const TeamCreationPage = () => {
   const params = useParams();
 
-  const regex = /^[A-Za-z0-9А-Яа-я\s]+$/;
+  const teamNameRegex = /^[A-Za-z0-9А-Яа-я\s]+$/;
+  const teamDescRegex = /^[A-Za-z0-9А-Яа-я\s.,!?:;(){}[\]"'-]+$/;
 
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -117,7 +118,7 @@ const TeamCreationPage = () => {
 
   const handleTeamNameChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (!dataValidation.isNameValid) {
-      if (dataValidation.nameError === 'format' && regex.test(team.name)) {
+      if (dataValidation.nameError === 'format' && teamNameRegex.test(team.name)) {
         setDataValidation({ ...dataValidation, nameError: null, isNameValid: true });
       } else if (dataValidation.nameError === 'length' && team.name.length < 16) {
         setDataValidation({ ...dataValidation, nameError: null, isNameValid: true });
@@ -127,8 +128,9 @@ const TeamCreationPage = () => {
   };
 
   const handleTeamDescChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
+    console.log(e.target.value);
     if (!dataValidation.isDescriptionValid) {
-      if (dataValidation.descError === 'format' && regex.test(team.description)) {
+      if (dataValidation.descError === 'format' && teamDescRegex.test(team.description)) {
         setDataValidation({ ...dataValidation, descError: null, isDescriptionValid: true });
       } else if (dataValidation.descError === 'length' && team.description.length < 150) {
         setDataValidation({ ...dataValidation, descError: null, isDescriptionValid: true });
@@ -136,7 +138,7 @@ const TeamCreationPage = () => {
     }
     setTeam({ ...team, description: e.target.value });
   };
-
+  console.log(team.description);
   const handleTeamTypeChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.value === 'true') {
       setTeam({ ...team, public: true });
@@ -279,6 +281,7 @@ const TeamCreationPage = () => {
               user_avatar: req.user?.user_avatar as string,
               role: req.role,
               lvlImg: req.user?.cs2_data?.lvlImg,
+              req,
             }));
           setBackupInvitedFriends(teamReqs);
           setInvitedFriends(teamReqs);
@@ -460,13 +463,14 @@ const TeamCreationPage = () => {
     const newTeam: Team = { ...team };
 
     newTeam.teamRequests = invitedFriends.map((friend) => ({
-      id: isEditMode ? friend.id : undefined,
+      id: isEditMode ? friend.req?.id : undefined,
       toUserId: friend.id,
       roleId: friend?.role?.id as number,
       isFromTeam: true,
     }));
     newTeam.neededRoles = finishedRoles;
     newTeam.ownerRole = ownerRole;
+
     if (isEditMode) {
       dispatch(updateTeam(newTeam));
     } else dispatch(createTeam(newTeam));
@@ -479,7 +483,10 @@ const TeamCreationPage = () => {
       const tempDataValidation = { ...dataValidation };
 
       if (creationStep === 2) {
-        if (!regex.test(team.name)) {
+        console.log(team.name);
+        console.log(team.description);
+
+        if (!teamNameRegex.test(team.name)) {
           tempDataValidation.isNameValid = false;
           tempDataValidation.nameError = 'format';
         } else if (team.name.length > 15) {
@@ -487,7 +494,7 @@ const TeamCreationPage = () => {
           tempDataValidation.nameError = 'length';
         }
 
-        if (!regex.test(team.description)) {
+        if (!teamDescRegex.test(team.description)) {
           tempDataValidation.isDescriptionValid = false;
           tempDataValidation.descError = 'format';
         } else if (team.description.length > 150) {
