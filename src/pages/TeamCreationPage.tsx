@@ -95,11 +95,11 @@ const TeamCreationPage = () => {
   const uploadAvatar = async (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length) return;
     setAvatarIsLoading(true);
-    if (e.target.files[0].size > 500 * 1024) {
+    if (e.target.files[0].size > 5000 * 1024) {
       Swal.fire({
         icon: 'error',
         titleText: 'Ошибка размера!',
-        text: 'Ваш файл превышает размер в 500 кб',
+        text: 'Ваш файл превышает размер в 5 мб ',
         confirmButtonText: 'Понятно',
       });
       setAvatarIsLoading(false);
@@ -153,9 +153,7 @@ const TeamCreationPage = () => {
     if (isEditMode) {
       if (isReqsToTeamExist) return 'focus';
       if (team.members.length !== 0 && team.members.find((member) => member.role.name === role)) return 'focus';
-      // if (team.teamRequests.find((tr) => tr.role?.name === role)) return 'focus';
     }
-    // if (invitedFriends.find((friend) => friend.role?.name === role)) return 'focus';
     if (roles.includes(role)) return 'active';
     if (role === ownerRole) return 'focus';
 
@@ -969,7 +967,6 @@ const TeamLogoContainer = styled(animated.div)`
 `;
 
 const TeamLogo = styled.div`
-  width: fit-content;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -977,9 +974,10 @@ const TeamLogo = styled.div`
 const TeamLogoImg = styled.img<{ loading: string }>`
   width: 100%;
   max-width: 200px;
-  max-height: 250px;
+  max-height: 200px;
 
   border-radius: 10px;
+  object-fit: cover;
   opacity: ${(p) => (p.loading === 'true' ? '0.4' : '1')};
 `;
 const ChangeAvatarButton = styled.button<{ loading: string }>`

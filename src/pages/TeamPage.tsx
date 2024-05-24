@@ -39,6 +39,8 @@ import { leaveFromTeam } from '../api/teamRequsts.ts/leaveFromTeam';
 import editIcon from '../assets/images/edit-profile.png';
 import Cookies from 'js-cookie';
 import { fetchUpdatedTeam } from '../api/teamRequsts.ts/fetchUpdatedTeam';
+import MemberActionsList from '../components/UI/TeamPageComponents/MemberActionsList';
+import axios from 'axios';
 
 const TeamPage = () => {
   const user = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
@@ -54,17 +56,34 @@ const TeamPage = () => {
   const [teamRequestsFromPlayers, teamRequestsFromTeam] = useTeamRequests(currentTeam?.teamRequests, user.id);
 
   useEffect(() => {
+    const source = axios.CancelToken.source();
     (async () => {
       const team = await fetchTeam(name as string);
       if (typeof team !== 'string') {
         setCurrentTeam(team as Team);
-        if (team.userId !== user.id) fetchUpdatedTeam(team.id as number, setCurrentTeam);
+        if (team.userId !== user.id) {
+          fetchUpdatedTeam(team.id as number, setCurrentTeam, source.token);
+        }
       }
     })();
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      source.cancel('Operation canceled by the user.');
+      console.log(event);
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      source.cancel('Operation canceled by the user.');
+    };
   }, [user.teams]);
 
-  console.log(roles);
   useEffect(() => {
+    if (currentTeam && currentTeam.name !== name) {
+      navigate(`/team/${currentTeam.name}`);
+    }
+
     if (currentTeam) {
       setRoles(Cs2PlayerRoles.filter((role) => !currentTeam.members.find((member) => member.roleId === role.id)).map((role) => role.name));
 
@@ -390,7 +409,8 @@ const TeamPage = () => {
                     </MemberCsDataRow>
                   </MemberItem>
                   {currentTeam.members.map((member) => (
-                    <MemberItem key={member.id}>
+                    <MemberItem key={member.id} $isOwner={user.id === currentTeam.userId}>
+                      <MemberActionsList />
                       <MemberItemHeader>
                         <MemberAvatar
                           onClick={() => {
@@ -737,14 +757,16 @@ const MembersList = styled.div`
   row-gap: 20px;
 `;
 
-const MemberItem = styled.div`
+const MemberItem = styled.div<{ $isOwner?: boolean }>`
   padding: 10px;
+  padding-top: ${(p) => p.$isOwner && '40px'};
   display: flex;
   flex-direction: column;
   width: 100%;
   max-width: 590px;
   background-color: #202020;
   border-radius: 5px;
+  position: relative;
 `;
 
 const InvitedPlayer = styled(MemberItem)``;
