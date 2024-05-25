@@ -1,9 +1,14 @@
-import { useState } from 'react';
+import { FC, useState } from 'react';
 import { useTransition, animated } from '@react-spring/web';
 import styled from 'styled-components';
 import editIcon from '../../../assets/images/edit.png';
 import kickPlayerIcon from '../../../assets/images/remove-player.png';
 import changeRoleIcon from '../../../assets/images/switch-role.png';
+import { Membership } from '../../../types/Membership';
+import Swal from 'sweetalert2';
+import isDefaultAvatar from '../../../util/isDefaultAvatar';
+import ReactDOMServer from 'react-dom/server';
+import RoleLable from '../RoleLable';
 
 const Container = styled.div`
   position: absolute;
@@ -80,7 +85,48 @@ const ActionsListItem = styled.li`
   }
 `;
 
-const MemberActionsList = () => {
+const MemberItem = styled.div`
+  width: 100%;
+  margin: 0 auto;
+  max-width: 350px;
+
+  background-color: #3c3c3c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  column-gap: 10px;
+  padding: 10px 10px;
+  border-radius: 5px;
+  > img {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 50%;
+  }
+  > span {
+    color: var(--main-text-color);
+    font-size: 18px;
+  }
+`;
+
+const KickPlayerContainer = styled.div`
+  width: 100%;
+
+  display: flex;
+  flex-direction: column;
+  row-gap: 10px;
+  justify-content: center;
+  p {
+    font-weight: 700;
+    font-size: 20px;
+  }
+`;
+
+interface MemberActionsListProps {
+  member: Membership;
+}
+
+const MemberActionsList: FC<MemberActionsListProps> = ({ member }) => {
   const [showList, setShowList] = useState(false);
 
   const transitions = useTransition(showList, {
@@ -89,6 +135,45 @@ const MemberActionsList = () => {
     leave: { transform: 'translateX(-20px)', opacity: 0 },
     config: { tension: 220, friction: 20 },
   });
+
+  const handleKickPlayer = () => {
+    const MemberRender = () => {
+      const memberUser = member.user;
+      return (
+        <KickPlayerContainer>
+          <p>Выгнать игрока:</p>
+          <MemberItem>
+            <img src={memberUser.user_avatar} alt='' />
+            <span>{memberUser.nickname}</span>
+            <RoleLable role={member.role} />
+          </MemberItem>
+        </KickPlayerContainer>
+      );
+    };
+
+    Swal.fire({
+      html: ReactDOMServer.renderToString(<MemberRender />),
+      icon: 'question',
+      cancelButtonText: 'Отмена',
+      showCancelButton: true,
+      confirmButtonText: 'Подтвердить',
+      confirmButtonColor: 'red',
+      didOpen: () => {
+        document.body.classList.add('swal2-shown');
+      },
+      willClose: () => {
+        document.body.classList.remove('swal2-shown');
+      },
+    }).then((res) => {
+      if (res.isConfirmed) {
+        //
+      } else {
+        return;
+      }
+    });
+  };
+
+  const handleChangeRole = () => {};
 
   return (
     <Container>
@@ -104,7 +189,7 @@ const MemberActionsList = () => {
                   <ActionsListItem>
                     Изменить роль <img src={changeRoleIcon} alt='' />
                   </ActionsListItem>
-                  <ActionsListItem>
+                  <ActionsListItem onClick={handleKickPlayer}>
                     Выгнать <img src={kickPlayerIcon} alt='' />
                   </ActionsListItem>
                 </ActionsList>

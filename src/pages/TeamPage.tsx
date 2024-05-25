@@ -410,7 +410,7 @@ const TeamPage = () => {
                   </MemberItem>
                   {currentTeam.members.map((member) => (
                     <MemberItem key={member.id} $isOwner={user.id === currentTeam.userId}>
-                      <MemberActionsList />
+                      <MemberActionsList member={member} />
                       <MemberItemHeader>
                         <MemberAvatar
                           onClick={() => {
