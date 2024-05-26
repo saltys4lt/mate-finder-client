@@ -9,6 +9,8 @@ import Swal from 'sweetalert2';
 import isDefaultAvatar from '../../../util/isDefaultAvatar';
 import ReactDOMServer from 'react-dom/server';
 import RoleLable from '../RoleLable';
+import kickPlayer from '../../../redux/teamThunks/kickPlayer';
+import { useAppDispatch } from '../../../redux';
 
 const Container = styled.div`
   position: absolute;
@@ -128,7 +130,7 @@ interface MemberActionsListProps {
 
 const MemberActionsList: FC<MemberActionsListProps> = ({ member }) => {
   const [showList, setShowList] = useState(false);
-
+  const dispatch = useAppDispatch();
   const transitions = useTransition(showList, {
     from: { transform: 'translateX(-20px)', opacity: 0 },
     enter: { transform: 'translateX(0)', opacity: 1 },
@@ -158,15 +160,9 @@ const MemberActionsList: FC<MemberActionsListProps> = ({ member }) => {
       showCancelButton: true,
       confirmButtonText: 'Подтвердить',
       confirmButtonColor: 'red',
-      didOpen: () => {
-        document.body.classList.add('swal2-shown');
-      },
-      willClose: () => {
-        document.body.classList.remove('swal2-shown');
-      },
     }).then((res) => {
       if (res.isConfirmed) {
-        //
+        dispatch(kickPlayer(member.id as number));
       } else {
         return;
       }

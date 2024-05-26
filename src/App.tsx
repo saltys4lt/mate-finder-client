@@ -13,14 +13,17 @@ import Header from './components/Header';
 import styled from 'styled-components';
 import Chat from './components/chat/Chat';
 import RequestsList from './components/RequestsList';
+import fetchUpdatedUser from './redux/userThunks/fetchUpdatedUser';
+import axios, { CancelTokenSource } from 'axios';
 
 function App() {
   const token = Cookies.get('token');
   const _gc = Cookies.get('_gc');
   const dispatch = useAppDispatch();
   const check = useSelector((state: RootState) => state.userReducer.checkUserStatus);
+  const isAuth = useSelector((state: RootState) => state.userReducer.isAuth);
   const user = useSelector((state: RootState) => state.userReducer.user);
-
+  const [cancelToken, setCancelToken] = useState<CancelTokenSource | null>(null);
   useEffect(() => {
     if (token) {
       dispatch(setPendingForCheck());
@@ -52,6 +55,15 @@ function App() {
     };
   }, []);
   const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    if (isAuth) {
+      const source = axios.CancelToken.source();
+      setCancelToken(source);
+      dispatch(fetchUpdatedUser(source.token));
+    } else {
+      if (cancelToken) cancelToken.cancel();
+    }
+  }, [isAuth]);
 
   return (
     <BrowserRouter>

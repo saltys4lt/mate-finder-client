@@ -12,23 +12,21 @@ const GlobalStyle = createGlobalStyle`
   list-style: none;
 
 }
-
+html{
+    scrollbar-gutter: stable;
+}
 body{
   background-color:#1a1a1d;
     font-family: 'montserrat';
     padding: 0 !important;
 
-  margin-right: calc(-1 * (100vw - 100%));
+
 
 }
 
-html{
-  overflow-x: hidden;
-}
-&::-webkit-scrollbar {
+
+  &::-webkit-scrollbar {
     width: 12px;
-    
-   
   }
 
   &::-webkit-scrollbar-track {

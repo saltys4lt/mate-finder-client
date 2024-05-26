@@ -20,6 +20,8 @@ import { Membership } from '../types/Membership';
 import { Status } from '../types/Status';
 import { ioSocket } from '../api/webSockets/socket';
 import updateTeam from './teamThunks/updateTeam';
+import fetchUpdatedUser from './userThunks/fetchUpdatedUser';
+import kickPlayer from './teamThunks/kickPlayer';
 interface UserState {
   user: ClientUser | null;
   isAuth: boolean;
@@ -285,6 +287,17 @@ const userSlice = createSlice({
     });
     builder.addCase(checkUserIsAuth.rejected, (state) => {
       state.checkUserStatus = 'rejected';
+    });
+    builder.addCase(fetchUpdatedUser.fulfilled, (state, action: PayloadAction<ClientUser>) => {
+      state.user = action.payload;
+    });
+
+    builder.addCase(kickPlayer.fulfilled, (state, action: PayloadAction<Membership>) => {
+      if (state.user?.teams) {
+        state.user.teams = state.user?.teams.map((team) =>
+          team.id === action.payload.teamId ? { ...team, members: team.members.filter((member) => member.id !== action.payload.id) } : team,
+        );
+      }
     });
 
     //cs2

@@ -40,7 +40,7 @@ import editIcon from '../assets/images/edit-profile.png';
 import Cookies from 'js-cookie';
 import { fetchUpdatedTeam } from '../api/teamRequsts.ts/fetchUpdatedTeam';
 import MemberActionsList from '../components/UI/TeamPageComponents/MemberActionsList';
-import axios from 'axios';
+import axios, { CancelTokenSource } from 'axios';
 
 const TeamPage = () => {
   const user = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
@@ -53,10 +53,12 @@ const TeamPage = () => {
   const dispatch = useAppDispatch();
   const name = useParams().name;
   const [currentTeam, setCurrentTeam] = useState<Team | null>(null);
+  const [cancelToken, setCancelToken] = useState<CancelTokenSource | null>(null);
   const [teamRequestsFromPlayers, teamRequestsFromTeam] = useTeamRequests(currentTeam?.teamRequests, user.id);
 
   useEffect(() => {
     const source = axios.CancelToken.source();
+    setCancelToken(source);
     (async () => {
       const team = await fetchTeam(name as string);
       if (typeof team !== 'string') {
@@ -66,17 +68,6 @@ const TeamPage = () => {
         }
       }
     })();
-    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      source.cancel('Operation canceled by the user.');
-      console.log(event);
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      source.cancel('Operation canceled by the user.');
-    };
   }, [user.teams]);
 
   useEffect(() => {
@@ -106,6 +97,10 @@ const TeamPage = () => {
           })),
       ]);
     }
+
+    return () => {
+      if (cancelToken) cancelToken.cancel();
+    };
   }, [currentTeam]);
 
   const ownerRole: Cs2Role = Cs2PlayerRoles.find((role) => role.name === currentTeam?.ownerRole) as Cs2Role;
