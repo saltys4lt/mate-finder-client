@@ -4,18 +4,31 @@ import axios, { CancelToken } from 'axios';
 
 const baseUrl = import.meta.env.VITE_BASE_URL;
 
-export default createAsyncThunk('usersReducer/fetchUpdatedUser', async (cancelToken: CancelToken) => {
-  const subscribe = async (): Promise<any> => {
-    try {
-      const response = await axios.get<ClientUser>(`${baseUrl}/fetchUpdatedUser`, { withCredentials: true, cancelToken });
-      if (response.data) {
-        return Promise.resolve(response).then(() => subscribe());
+const fetchUpdatedUser = createAsyncThunk(
+  'usersReducer/fetchUpdatedUser',
+  async ({ id, cancelToken }: { id: number; cancelToken: CancelToken }, { dispatch }) => {
+    const subscribe = async (): Promise<ClientUser | undefined> => {
+      try {
+        const response = await axios.get<ClientUser>(`${baseUrl}/fetchUpdatedUser`, {
+          withCredentials: true,
+          cancelToken,
+          params: { id },
+        });
+        if (response.data) {
+          dispatch(fetchUpdatedUser({ id, cancelToken }));
+          return response.data;
+        }
+      } catch (e) {
+        if (!axios.isCancel(e)) {
+          setTimeout(() => {
+            dispatch(fetchUpdatedUser({ id, cancelToken }));
+          }, 500);
+        }
+        throw e;
       }
-    } catch (e) {
-      setTimeout(() => {
-        subscribe();
-      }, 500);
-    }
-  };
-  return subscribe();
-});
+    };
+    return await subscribe();
+  },
+);
+
+export default fetchUpdatedUser;

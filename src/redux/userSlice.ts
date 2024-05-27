@@ -288,8 +288,8 @@ const userSlice = createSlice({
     builder.addCase(checkUserIsAuth.rejected, (state) => {
       state.checkUserStatus = 'rejected';
     });
-    builder.addCase(fetchUpdatedUser.fulfilled, (state, action: PayloadAction<ClientUser>) => {
-      state.user = action.payload;
+    builder.addCase(fetchUpdatedUser.fulfilled, (state, action: PayloadAction<ClientUser | undefined>) => {
+      if (action.payload) state.user = { ...action.payload };
     });
 
     builder.addCase(kickPlayer.fulfilled, (state, action: PayloadAction<Membership>) => {

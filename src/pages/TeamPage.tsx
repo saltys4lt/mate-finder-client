@@ -44,6 +44,7 @@ import axios, { CancelTokenSource } from 'axios';
 
 const TeamPage = () => {
   const user = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
+  const teams = useSelector((state: RootState) => state.userReducer.user?.teams) as Team[];
 
   const [section, setSection] = useState<number>(-1);
   const [urlTextCopied, setUrlTextCopied] = useState<boolean>(false);
@@ -68,7 +69,7 @@ const TeamPage = () => {
         }
       }
     })();
-  }, [user.teams]);
+  }, [teams]);
 
   useEffect(() => {
     if (currentTeam && currentTeam.name !== name) {
@@ -97,10 +98,7 @@ const TeamPage = () => {
           })),
       ]);
     }
-
-    return () => {
-      if (cancelToken) cancelToken.cancel();
-    };
+    return () => {};
   }, [currentTeam]);
 
   const ownerRole: Cs2Role = Cs2PlayerRoles.find((role) => role.name === currentTeam?.ownerRole) as Cs2Role;
@@ -405,7 +403,8 @@ const TeamPage = () => {
                   </MemberItem>
                   {currentTeam.members.map((member) => (
                     <MemberItem key={member.id} $isOwner={user.id === currentTeam.userId}>
-                      <MemberActionsList member={member} />
+                      {user.id === currentTeam.userId && <MemberActionsList member={member} />}
+
                       <MemberItemHeader>
                         <MemberAvatar
                           onClick={() => {

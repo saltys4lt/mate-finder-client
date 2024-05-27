@@ -14,7 +14,7 @@ import styled from 'styled-components';
 import Chat from './components/chat/Chat';
 import RequestsList from './components/RequestsList';
 import fetchUpdatedUser from './redux/userThunks/fetchUpdatedUser';
-import axios, { CancelTokenSource } from 'axios';
+import axios, { CancelToken, CancelTokenSource } from 'axios';
 
 function App() {
   const token = Cookies.get('token');
@@ -59,7 +59,7 @@ function App() {
     if (isAuth) {
       const source = axios.CancelToken.source();
       setCancelToken(source);
-      dispatch(fetchUpdatedUser(source.token));
+      dispatch(fetchUpdatedUser({ id: user?.id as number, cancelToken: source.token }));
     } else {
       if (cancelToken) cancelToken.cancel();
     }
