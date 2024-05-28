@@ -10,7 +10,7 @@ import updateCs2Data from './cs2Thunks/updateCs2Data';
 import updateUser from './userThunks/updateUser';
 import deleteCs2Data from './cs2Thunks/deleteCs2Data';
 import defaultUserAvatar from '../assets/images/default-avatar.png';
-import { FriendRequestWithAction } from '../types/friendRequest';
+import { FriendRequest, FriendRequestWithAction } from '../types/friendRequest';
 import fetchUserFriendsData from './userThunks/fetchUserFriendsData';
 import { UserFriendsData } from '../types/UserFriendsData';
 import Team from '../types/Team';
@@ -101,6 +101,17 @@ const userSlice = createSlice({
           state.user.receivedRequests = state.user.receivedRequests.filter((req) => req.fromUser.nickname !== action.payload.nickname);
         } else {
           state.user.sentRequests = state.user.sentRequests.filter((req) => req.toUser.nickname !== action.payload.nickname);
+        }
+      }
+    },
+    removeFriendRequest(state, action: PayloadAction<FriendRequestWithAction>) {
+      if (state.user) {
+        const { req, denied } = action.payload;
+        if (denied === 0) {
+          if (state.user?.sentRequests) state.user.sentRequests = state.user?.sentRequests.filter((sReq) => sReq.id !== req.id);
+        }
+        if (denied === 1) {
+          if (state.user?.receivedRequests) state.user.receivedRequests = state.user?.receivedRequests.filter((sReq) => sReq.id !== req.id);
         }
       }
     },
@@ -427,6 +438,7 @@ export const {
   resetStatus,
   cancelTeamRequest,
   leaveTeam,
+  removeFriendRequest,
 } = userSlice.actions;
 
 export default userSlice.reducer;

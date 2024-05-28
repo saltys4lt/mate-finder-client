@@ -40,9 +40,12 @@ import editIcon from '../assets/images/edit-profile.png';
 import Cookies from 'js-cookie';
 import { fetchUpdatedTeam } from '../api/teamRequsts.ts/fetchUpdatedTeam';
 import MemberActionsList from '../components/UI/TeamPageComponents/MemberActionsList';
-import axios, { CancelTokenSource } from 'axios';
+import axios from 'axios';
+import ChangeMemberRoleModal from '../components/ChangeMemberRoleModal';
+import { Membership } from '../types/Membership';
 
 const TeamPage = () => {
+  const name = useParams().name;
   const user = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
   const teams = useSelector((state: RootState) => state.userReducer.user?.teams) as Team[];
 
@@ -52,14 +55,12 @@ const TeamPage = () => {
   const [roles, setRoles] = useState<string[]>([]);
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const name = useParams().name;
+  const [selectedMember, setSelectedMember] = useState<Membership | null>(null);
   const [currentTeam, setCurrentTeam] = useState<Team | null>(null);
-  const [cancelToken, setCancelToken] = useState<CancelTokenSource | null>(null);
   const [teamRequestsFromPlayers, teamRequestsFromTeam] = useTeamRequests(currentTeam?.teamRequests, user.id);
 
   useEffect(() => {
     const source = axios.CancelToken.source();
-    setCancelToken(source);
     (async () => {
       const team = await fetchTeam(name as string);
       if (typeof team !== 'string') {
@@ -69,6 +70,10 @@ const TeamPage = () => {
         }
       }
     })();
+
+    return () => {
+      source.cancel();
+    };
   }, [teams]);
 
   useEffect(() => {
@@ -185,6 +190,8 @@ const TeamPage = () => {
     }
   };
 
+  console.log(roles);
+  console.log(currentTeam?.neededRoles);
   return currentTeam === null ? (
     <Loader />
   ) : (
@@ -196,6 +203,12 @@ const TeamPage = () => {
         setInvitedFriends={setInvitedFriends}
         ownerRole={currentTeam.ownerRole}
         teamId={currentTeam.id}
+      />
+      <ChangeMemberRoleModal
+        member={selectedMember}
+        members={currentTeam.members}
+        neededRoles={[...currentTeam.neededRoles, ...currentTeam.members.map((member) => ({ ...member.role }))]}
+        team={currentTeam}
       />
       <RequestToTeamModal team={currentTeam} />
       <TeamHeader>
@@ -403,7 +416,7 @@ const TeamPage = () => {
                   </MemberItem>
                   {currentTeam.members.map((member) => (
                     <MemberItem key={member.id} $isOwner={user.id === currentTeam.userId}>
-                      {user.id === currentTeam.userId && <MemberActionsList member={member} />}
+                      {user.id === currentTeam.userId && <MemberActionsList setMember={setSelectedMember} member={member} />}
 
                       <MemberItemHeader>
                         <MemberAvatar

@@ -6,6 +6,7 @@ import {
   cancelTeamRequest,
   joinTeam,
   leaveTeam,
+  removeFriendRequest,
   removeTeamRequest,
   setUserFriends,
   setUserReceivedFriendRequests,
@@ -30,6 +31,8 @@ export const useRequestEvents = (id: number) => {
     ioSocket.removeListener('leaveTeam');
     ioSocket.removeListener('answerTeamRequest');
     ioSocket.removeListener('cancelTeamRequest');
+    ioSocket.removeListener('cancelFriendRequest');
+
     ioSocket.on('connection', () => {
       setIsServerReloaded(true);
     });
@@ -67,6 +70,14 @@ export const useRequestEvents = (id: number) => {
         }
       }
       return;
+    });
+
+    ioSocket.on('cancelFriendRequest', (req: FriendRequest) => {
+      if (req.fromUserId === id) {
+        dispatch(removeFriendRequest({ req, denied: 0 }));
+      } else {
+        dispatch(removeFriendRequest({ req, denied: 1 }));
+      }
     });
     ioSocket.on('teamRequest', (teamReq: TeamRequest) => {
       dispatch(addTeamRequest(teamReq));

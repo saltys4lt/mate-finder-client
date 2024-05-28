@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import { FC } from 'react';
 import styled from 'styled-components';
 import CommonButton from './CommonButton';
 import Cs2Role from '../../types/Cs2Role';

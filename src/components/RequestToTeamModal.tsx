@@ -5,7 +5,6 @@ import Team from '../types/Team';
 import styled from 'styled-components';
 import closeCross from '../assets/images/close-cross.png';
 import { changeRequestToTeamModalState } from '../redux/modalSlice';
-import Player from '../types/Player';
 import Cs2Role from '../types/Cs2Role';
 import Cs2PlayerRoles from '../consts/Cs2PlayerRoles';
 import ConfirmButton from './UI/ConfirmButton';
@@ -13,7 +12,7 @@ import { TeamRequest } from '../types/TeamRequest';
 import { sendTeamRequest } from '../api/teamRequsts.ts/sendTeamRequest';
 
 import Swal from 'sweetalert2';
-import { ioSocket } from '../api/webSockets/socket';
+import rolesIcons from '../consts/rolesIcons';
 interface ModalStatus {
   $active: boolean;
 }
@@ -80,6 +79,7 @@ const RequestToTeamModal: FC<SendRequestToTeamProps> = ({ team }) => {
                   type='checkbox'
                 />
                 <RoleLabel className={selectedRoleState(role.name)} htmlFor={(index + 50).toString()}>
+                  <img src={rolesIcons.get(role.id)} alt='' />
                   {role.name}
                 </RoleLabel>
               </RoleCard>
@@ -182,11 +182,21 @@ const RoleLabel = styled.label`
   background-color: #181818;
   padding: 5px 10px;
   border-radius: 7px;
-  display: block;
+  display: flex;
+  justify-content: center;
+  column-gap: 10px;
   width: 130px;
   text-align: center;
   font-size: 16px;
   color: #d1cfcf;
+
+  img {
+    display: block;
+    width: 20px;
+    height: 20px;
+    object-fit: cover;
+    filter: invert(0.5);
+  }
   &:hover {
     border-color: #fff;
     cursor: pointer;

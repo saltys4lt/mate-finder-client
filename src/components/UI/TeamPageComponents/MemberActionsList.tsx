@@ -6,11 +6,11 @@ import kickPlayerIcon from '../../../assets/images/remove-player.png';
 import changeRoleIcon from '../../../assets/images/switch-role.png';
 import { Membership } from '../../../types/Membership';
 import Swal from 'sweetalert2';
-import isDefaultAvatar from '../../../util/isDefaultAvatar';
 import ReactDOMServer from 'react-dom/server';
 import RoleLable from '../RoleLable';
 import kickPlayer from '../../../redux/teamThunks/kickPlayer';
 import { useAppDispatch } from '../../../redux';
+import { changeMemberRoleModal } from '../../../redux/modalSlice';
 
 const Container = styled.div`
   position: absolute;
@@ -126,9 +126,10 @@ const KickPlayerContainer = styled.div`
 
 interface MemberActionsListProps {
   member: Membership;
+  setMember: (member: Membership) => void;
 }
 
-const MemberActionsList: FC<MemberActionsListProps> = ({ member }) => {
+const MemberActionsList: FC<MemberActionsListProps> = ({ member, setMember }) => {
   const [showList, setShowList] = useState(false);
   const dispatch = useAppDispatch();
   const transitions = useTransition(showList, {
@@ -169,7 +170,10 @@ const MemberActionsList: FC<MemberActionsListProps> = ({ member }) => {
     });
   };
 
-  const handleChangeRole = () => {};
+  const handleChangeRole = () => {
+    setMember(member);
+    dispatch(changeMemberRoleModal(true));
+  };
 
   return (
     <Container>
@@ -182,7 +186,7 @@ const MemberActionsList: FC<MemberActionsListProps> = ({ member }) => {
             item && (
               <ListContainer style={styles}>
                 <ActionsList>
-                  <ActionsListItem>
+                  <ActionsListItem onClick={handleChangeRole}>
                     Изменить роль <img src={changeRoleIcon} alt='' />
                   </ActionsListItem>
                   <ActionsListItem onClick={handleKickPlayer}>

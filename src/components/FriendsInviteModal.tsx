@@ -256,6 +256,7 @@ const FriendsInviteModal: FC<FriendsInviteModalProps> = ({
                           type='checkbox'
                         />
                         <RoleLabel className={selectedFriendRoleState(role)} htmlFor={(index + 20).toString()}>
+                          <img src={rolesIcons.get(Cs2PlayerRoles.find((cs2role) => cs2role.name === role)?.id as number)} alt='' />
                           {role}
                         </RoleLabel>
                       </RoleCard>
@@ -549,19 +550,19 @@ const RoleLabel = styled.label`
   padding: 5px 10px;
   border-radius: 7px;
   display: flex;
-  column-gap: 10px;
+  justify-content: center;
   align-items: center;
   width: 130px;
   text-align: center;
   font-size: 16px;
-
   color: #d1cfcf;
-  > img {
-    object-fit: cover;
-    filter: invert(0.5);
+  column-gap: 10px;
+  img {
     display: block;
     width: 20px;
     height: 20px;
+    object-fit: cover;
+    filter: invert(0.5);
   }
   &:hover {
     border-color: #fff;

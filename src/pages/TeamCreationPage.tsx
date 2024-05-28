@@ -404,8 +404,15 @@ const TeamCreationPage = () => {
       });
     }
     if (isCancel) return;
+    let finishedRoles: Cs2Role[] = [];
+    if (!isEditMode) {
+      finishedRoles = Cs2PlayerRoles.filter((role) => roles.find((r) => r === role.name));
+    } else {
+      finishedRoles = Cs2PlayerRoles.filter((role) => roles.find((r) => r === role.name)).filter(
+        (role) => !team.members.some((member) => member.roleId === role.id),
+      );
+    }
 
-    const finishedRoles = Cs2PlayerRoles.filter((role) => roles.find((r) => r === role.name));
     const CreatedTeam = () => {
       return (
         <div>

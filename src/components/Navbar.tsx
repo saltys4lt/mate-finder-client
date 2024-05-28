@@ -47,6 +47,14 @@ const Navbar = () => {
         dispatch(resetChats());
         dispatch(changeIsAuth(false));
         ioSocket.emit('leaveAllRooms');
+        ioSocket.removeListener('friendRequest');
+        ioSocket.removeListener('friendRequestAction');
+        ioSocket.removeListener('friendRequestToUser');
+        ioSocket.removeListener('friendRequestActionToUser');
+        ioSocket.removeListener('teamRequest');
+        ioSocket.removeListener('leaveTeam');
+        ioSocket.removeListener('answerTeamRequest');
+        ioSocket.removeListener('cancelTeamRequest');
       }
     });
   };

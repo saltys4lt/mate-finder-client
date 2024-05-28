@@ -14,31 +14,35 @@ import { useNavigate } from 'react-router-dom';
 import { answerTeamRequest } from '../api/teamRequsts.ts/answerTeamRequest';
 import { useTeamRequests } from '../hooks/useTeamRequests';
 import { useRequestEvents } from '../hooks/useRequestEvents';
-import { ioSocket } from '../api/webSockets/socket';
+import cancelIcon from '../assets/images/cancel-invite.png';
+import { cancelFriendRequest } from '../api/friendsRequests/cancelFriendRequest';
 const RequestsList = () => {
   const { receivedRequests, sentRequests, requestsToTeam, id } = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
   const isActive = useSelector((state: RootState) => state.modalReducer.requestsIsActive);
-  const [, teamRequestsFromTeam] = useTeamRequests(requestsToTeam, id);
+  const [teamRequestsFromPlayers, teamRequestsFromTeam] = useTeamRequests(requestsToTeam, id);
+  const myTeamReqsSent = teamRequestsFromPlayers.filter((req) => req.toUserId === id);
+  const myTeamReqsReceived = teamRequestsFromTeam.filter((req) => req.toUserId === id);
+
   const dispatch = useAppDispatch();
-  const [reqsType, setReqsType] = useState<'players' | 'teams'>('players');
+  const [reqCategory, setReqCategory] = useState<'players' | 'teams'>('players');
+  const [reqsType, setReqsType] = useState<'incoming' | 'outgoing'>('incoming');
+
   const navigate = useNavigate();
 
   useRequestEvents(id);
   useEffect(() => {
     return () => {
       dispatch(changeReqsState(false));
-      ioSocket.off('friendRequest');
-      ioSocket.off('friendRequestAction');
-      ioSocket.off('friendRequestToUser');
-      ioSocket.off('friendRequestActionToUser');
-      ioSocket.off('teamRequest');
-      ioSocket.off('leaveTeam');
-      ioSocket.off('answerTeamRequest');
-      ioSocket.off('cancelTeamRequest');
     };
   }, []);
 
-  return receivedRequests.length > 0 || sentRequests.length > 0 || teamRequestsFromTeam.length > 0 ? (
+  useEffect(() => {
+    if (receivedRequests.length + sentRequests.length + requestsToTeam.length === 0) {
+      dispatch(changeReqsState(false));
+    }
+  }, [receivedRequests, sentRequests, requestsToTeam]);
+
+  return receivedRequests.length > 0 || sentRequests.length > 0 || requestsToTeam.length > 0 ? (
     <>
       {isActive ? (
         <OpenRequestsContainer>
@@ -50,65 +54,89 @@ const RequestsList = () => {
             >
               <img src={closeCross} alt='' />
             </CloseButton>
-            <ReqsHeader>Заявки</ReqsHeader>
+            <ReqsHeaderContainer>
+              <ReqsHeader
+                onClick={() => {
+                  if (reqsType !== 'incoming') setReqsType('incoming');
+                }}
+                data-reqs={receivedRequests.length + myTeamReqsReceived.length}
+                $teamsReqs={receivedRequests.length + myTeamReqsReceived.length}
+                $selected={reqsType === 'incoming'}
+              >
+                Входящие заявки
+              </ReqsHeader>
+              <ReqsHeader
+                onClick={() => {
+                  if (reqsType !== 'outgoing') setReqsType('outgoing');
+                }}
+                $selected={reqsType === 'outgoing'}
+                data-reqs={myTeamReqsSent.length + sentRequests.length}
+                $teamsReqs={myTeamReqsSent.length + sentRequests.length}
+              >
+                Мои заявки
+              </ReqsHeader>
+            </ReqsHeaderContainer>
+
             <ReqsType>
               <ReqName
                 onClick={() => {
-                  if (reqsType !== 'players') setReqsType('players');
+                  if (reqCategory !== 'players') setReqCategory('players');
                 }}
-                data-reqs={receivedRequests.length}
-                $friendsReqs={receivedRequests.length}
-                $selected={reqsType === 'players'}
+                data-reqs={reqsType === 'incoming' ? receivedRequests.length : sentRequests.length}
+                $friendsReqs={reqsType === 'incoming' ? receivedRequests.length : sentRequests.length}
+                $selected={reqCategory === 'players'}
               >
-                Игроки
+                В друзья
               </ReqName>
               <ReqName
                 onClick={() => {
-                  if (reqsType !== 'teams') setReqsType('teams');
+                  if (reqCategory !== 'teams') setReqCategory('teams');
                 }}
-                $selected={reqsType === 'teams'}
-                $teamsReqs={requestsToTeam.length}
-                data-reqs={requestsToTeam.length}
+                $selected={reqCategory === 'teams'}
+                $teamsReqs={reqsType === 'incoming' ? myTeamReqsReceived.length : myTeamReqsSent.length}
+                data-reqs={reqsType === 'incoming' ? myTeamReqsReceived.length : myTeamReqsSent.length}
               >
-                Команды
+                В команду
               </ReqName>
             </ReqsType>
             <ReqsList>
-              {reqsType === 'players' ? (
-                <>
-                  {receivedRequests.map((req) => (
-                    <ReqItem
-                      key={req.id}
-                      onClick={() => {
-                        navigate(`/profile/${req.fromUser.nickname}`);
-                        dispatch(changeReqsState(false));
-                      }}
-                    >
-                      <img src={req.fromUser.user_avatar ? req.fromUser.user_avatar : defaultUserIcon} alt='' />
-                      <span>{req.fromUser.nickname}</span>
-                      <CommonButton
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          friendRequestAnswer({ accept: true, requestId: req.id as number });
+              {reqsType === 'incoming' ? (
+                reqCategory === 'players' ? (
+                  receivedRequests.length > 0 ? (
+                    receivedRequests.map((req) => (
+                      <ReqItem
+                        key={req.id}
+                        onClick={() => {
+                          navigate(`/profile/${req.fromUser.nickname}`);
+                          dispatch(changeReqsState(false));
                         }}
                       >
-                        Принять
-                      </CommonButton>
-                      <CommonButton
-                        onClick={(e) => {
-                          e.stopPropagation();
+                        <img src={req.fromUser.user_avatar ? req.fromUser.user_avatar : defaultUserIcon} alt='' />
+                        <span>{req.fromUser.nickname}</span>
+                        <CommonButton
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            friendRequestAnswer({ accept: true, requestId: req.id as number });
+                          }}
+                        >
+                          Принять
+                        </CommonButton>
+                        <CommonButton
+                          onClick={(e) => {
+                            e.stopPropagation();
 
-                          friendRequestAnswer({ accept: false, requestId: req.id as number });
-                        }}
-                      >
-                        Отклонить
-                      </CommonButton>
-                    </ReqItem>
-                  ))}
-                </>
-              ) : (
-                <>
-                  {requestsToTeam.map((req) => (
+                            friendRequestAnswer({ accept: false, requestId: req.id as number });
+                          }}
+                        >
+                          Отклонить
+                        </CommonButton>
+                      </ReqItem>
+                    ))
+                  ) : (
+                    <ZeroReqsHeader>Нет входящих заявок в друзья</ZeroReqsHeader>
+                  )
+                ) : teamRequestsFromTeam.length > 0 ? (
+                  teamRequestsFromTeam.map((req) => (
                     <TeamReqItem
                       key={req.id}
                       onClick={() => {
@@ -144,8 +172,78 @@ const RequestsList = () => {
                         </CommonButton>
                       </TeamActionButtons>
                     </TeamReqItem>
-                  ))}
-                </>
+                  ))
+                ) : (
+                  <ZeroReqsHeader>Нет входящих заявок в команду</ZeroReqsHeader>
+                )
+              ) : reqCategory === 'players' ? (
+                sentRequests.length > 0 ? (
+                  sentRequests.map((req) => (
+                    <ReqItem
+                      key={req.id}
+                      onClick={() => {
+                        navigate(`/profile/${req.toUser.nickname}`);
+                        dispatch(changeReqsState(false));
+                      }}
+                    >
+                      <img src={req.toUser.user_avatar ? req.toUser.user_avatar : defaultUserIcon} alt='' />
+                      <span>{req.toUser.nickname}</span>
+
+                      <CommonButton
+                        onClick={(e) => {
+                          e.stopPropagation();
+
+                          cancelFriendRequest(req?.id as number);
+                        }}
+                      >
+                        <img src={cancelIcon} alt='' />
+                        Отменить
+                      </CommonButton>
+                    </ReqItem>
+                  ))
+                ) : (
+                  <ZeroReqsHeader>Нет отправленных заявок в друзья</ZeroReqsHeader>
+                )
+              ) : myTeamReqsSent.length > 0 ? (
+                myTeamReqsSent.map((req) => (
+                  <TeamReqItem
+                    key={req.id}
+                    onClick={() => {
+                      navigate(`/team/${req.team?.name}`);
+                    }}
+                  >
+                    <TeamReqItemData>
+                      <div>
+                        <img src={req.team?.avatar} alt='' />
+                        <span>{req.team?.name}</span>
+                      </div>
+                      <span>
+                        Приглашение на роль: <span>{req.role?.name}</span>
+                      </span>
+                    </TeamReqItemData>
+                    <TeamActionButtons>
+                      <CommonButton
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          answerTeamRequest({ accept: true, req: req });
+                        }}
+                      >
+                        Принять
+                      </CommonButton>
+                      <CommonButton
+                        onClick={(e) => {
+                          e.stopPropagation();
+
+                          answerTeamRequest({ accept: false, req: req });
+                        }}
+                      >
+                        Отклонить
+                      </CommonButton>
+                    </TeamActionButtons>
+                  </TeamReqItem>
+                ))
+              ) : (
+                <ZeroReqsHeader>Нет входящих заявок в команду</ZeroReqsHeader>
               )}
             </ReqsList>
           </OpenRequests>
@@ -157,8 +255,8 @@ const RequestsList = () => {
           }}
         >
           <RequestsButtonInnerContainer
-            data-reqs={receivedRequests.length + requestsToTeam.length}
-            $requests={receivedRequests.length + requestsToTeam.length}
+            data-reqs={receivedRequests.length + myTeamReqsReceived.length}
+            $requests={receivedRequests.length + myTeamReqsReceived.length}
           >
             <RequestsButton>
               <img src={requestIcon} alt='' />
@@ -225,7 +323,7 @@ const OpenRequestsContainer = styled.div`
   bottom: 100px;
   right: 20px;
   background-color: #343434;
-  width: 400px;
+  width: 450px;
   height: 400px;
   z-index: 10;
 `;
@@ -252,17 +350,56 @@ const CloseButton = styled.button`
   }
 `;
 
-const ReqsHeader = styled.h3`
+const ReqsHeaderContainer = styled.div`
+  width: 100%;
+  display: flex;
+  column-gap: 20px;
+  justify-content: center;
+  align-items: center;
+`;
+
+const ReqsHeader = styled.h3<{ $selected: boolean; $friendsReqs?: number; $teamsReqs?: number }>`
+  position: relative;
+
   color: var(--main-text-color);
   text-align: center;
+  opacity: ${(p) => (p.$selected ? '1' : '0.5')};
+  &:hover {
+    opacity: 1;
+    cursor: pointer;
+  }
+  &::before {
+    content: ${(p) => {
+      if (p.$friendsReqs) {
+        return p.$friendsReqs != 0 ? 'attr(data-reqs)' : '';
+      }
+      if (p.$teamsReqs) {
+        return p.$teamsReqs != 0 ? 'attr(data-reqs)' : '';
+      }
+    }};
+    font-weight: 400;
+    font-size: 14px;
+    position: absolute;
+    display: block;
+    text-align: center;
+    border-radius: 50%;
+    background-color: #cf2b2b;
+    width: 16px;
+    height: 16px;
+    color: #fff;
+    right: -4px;
+    top: -4px;
+    pointer-events: none;
+    z-index: 1;
+  }
 `;
 const ReqsType = styled.div`
+  margin-top: 30px;
   display: flex;
   justify-content: space-around;
   align-items: center;
   width: 100%;
   border-bottom: 1px solid #fff;
-  margin-top: 15px;
 `;
 const ReqName = styled.span<{ $selected: boolean; $friendsReqs?: number; $teamsReqs?: number }>`
   position: relative;
@@ -381,6 +518,12 @@ const TeamReqItemData = styled.div`
       color: #de3434;
     }
   }
+`;
+
+const ZeroReqsHeader = styled.h3`
+  color: var(--main-text-color);
+  text-align: center;
+  margin-top: 20%;
 `;
 
 export default RequestsList;
