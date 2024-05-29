@@ -43,6 +43,7 @@ import MemberActionsList from '../components/UI/TeamPageComponents/MemberActions
 import axios from 'axios';
 import ChangeMemberRoleModal from '../components/ChangeMemberRoleModal';
 import { Membership } from '../types/Membership';
+import deleteTeamIcon from '../assets/images/delete.png';
 
 const TeamPage = () => {
   const name = useParams().name;
@@ -127,8 +128,10 @@ const TeamPage = () => {
       confirmButtonText: 'Подтвердить',
       confirmButtonColor: 'red',
     }).then((res) => {
-      if (res.isConfirmed) cancelRequest(req);
-      else return;
+      if (res.isConfirmed && currentTeam) {
+        if (currentTeam.teamRequests.length - 1 === 0) setSection(-1);
+        cancelRequest(req);
+      } else return;
     });
   };
 
@@ -151,6 +154,73 @@ const TeamPage = () => {
   };
 
   const handleOpenRequestToTeamModal = () => {
+    if (user.teams.length !== 0) {
+      const userTeam: Team = user.teams[0];
+      const TeamOwnerClause = () => {
+        return (
+          <div style={{ width: '100%', display: 'flex', alignItems: 'center', flexDirection: 'column', rowGap: '15px' }}>
+            <h3 style={{ fontSize: 19 }}> У вас уже есть своя команда</h3>
+            <div
+              style={{
+                width: '80%',
+                padding: '15px',
+                borderRadius: '10px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                rowGap: '15px',
+                backgroundColor: '#333',
+              }}
+            >
+              <img style={{ width: 70, height: 70, objectFit: 'cover' }} src={userTeam.avatar} alt='' />
+              <h2 style={{ color: 'var(--main-text-color)' }}>{userTeam.name}</h2>
+            </div>
+          </div>
+        );
+      };
+
+      Swal.fire({
+        html: ReactDOMServer.renderToString(<TeamOwnerClause />),
+        confirmButtonText: 'Понятно',
+        timer: 3000,
+        timerProgressBar: true,
+      });
+      return;
+    }
+    if (user.memberOf.length !== 0) {
+      const userTeam: Team = user.memberOf[0].team;
+      const TeamMemberClause = () => {
+        return (
+          <div style={{ width: '100%', display: 'flex', alignItems: 'center', flexDirection: 'column', rowGap: '15px' }}>
+            <h3 style={{ fontSize: 19 }}> Вы уже состоите в команде</h3>
+            <div
+              style={{
+                width: '70%',
+                padding: '15px',
+                borderRadius: '10px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                rowGap: '15px',
+                backgroundColor: '#333',
+              }}
+            >
+              <img style={{ width: 70, height: 70, objectFit: 'cover' }} src={userTeam.avatar} alt='' />
+              <h2 style={{ color: 'var(--main-text-color)' }}>{userTeam.name}</h2>
+            </div>
+          </div>
+        );
+      };
+
+      Swal.fire({
+        html: ReactDOMServer.renderToString(<TeamMemberClause />),
+        confirmButtonText: 'Понятно',
+        timer: 3000,
+        timerProgressBar: true,
+      });
+      return;
+    }
+
     dispatch(changeRequestToTeamModalState(true));
   };
 
@@ -190,8 +260,6 @@ const TeamPage = () => {
     }
   };
 
-  console.log(roles);
-  console.log(currentTeam?.neededRoles);
   return currentTeam === null ? (
     <Loader />
   ) : (
@@ -212,6 +280,12 @@ const TeamPage = () => {
       />
       <RequestToTeamModal team={currentTeam} />
       <TeamHeader>
+        {currentTeam.userId === user.id && (
+          <CommonButton style={{ position: 'absolute', top: '20px', right: '25px', zIndex: 1 }}>
+            <img src={deleteTeamIcon} alt='' />
+          </CommonButton>
+        )}
+
         <HeaderBg />
         <Container>
           <TeamHeaderData>
@@ -586,6 +660,7 @@ const TeamPage = () => {
                         <CancelReqButton
                           onClick={() => {
                             answerTeamRequest({ accept: false, req });
+                            if (currentTeam.teamRequests.length - 1 === 0) setSection(-1);
                           }}
                         >
                           <img src={cancelIcom} alt='' /> Отклонить
@@ -593,6 +668,7 @@ const TeamPage = () => {
                         <AcceptReqButton
                           onClick={() => {
                             answerTeamRequest({ accept: true, req });
+                            if (currentTeam.teamRequests.length - 1 === 0) setSection(-1);
                           }}
                         >
                           <img src={confirmIcon} alt='' /> Принять
@@ -622,6 +698,8 @@ const Main = styled.main`
 
 const TeamHeader = styled.div`
   width: 100%;
+  position: relative;
+
   min-height: 250px;
   overflow: hidden;
 `;

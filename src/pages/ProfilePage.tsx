@@ -23,6 +23,7 @@ import { storage } from '../firebase/firebase';
 import updateUser from '../redux/userThunks/updateUser';
 import UpdatedUserData from '../types/UpdatedUserData';
 import Swal from 'sweetalert2';
+import cancelReqIcon from '../assets/images/cancel-invite.png';
 import deleteCs2Data from '../redux/cs2Thunks/deleteCs2Data';
 import { changeChatState, changeGameProfileState, changeTeamInviteModalState } from '../redux/modalSlice';
 import defaultUserAvatar from '../assets/images/default-avatar.png';
@@ -32,6 +33,7 @@ import groupInviteIcon from '../assets/images/group-invite.png';
 import closeCross from '../assets/images/close-cross.png';
 import sendedFriendReq from '../assets/images/sended-friend-req.png';
 import inFriendsIcon from '../assets/images/in-friends-icon.png';
+import removeFriendIcon from '../assets/images/remove-player.png';
 
 import confirmEditIcon from '../assets/images/confirm-edit.png';
 import editProfileIcon from '../assets/images/edit-profile.png';
@@ -41,14 +43,18 @@ import sendMessageIcon from '../assets/images/send-message.png';
 import cs2ProfilePicture from '../assets/images/cs2-profile-pic.jpeg';
 import valorantProfilePicture from '../assets/images/valorant-profile-pic.jpg';
 import dropDownArrow from '../assets/images/drop-down-arrow.png';
-import headerBg from '../assets/images/profile-bg.webp';
+import headerBg from '../assets/images/profile-bg.png';
 import { setCurrentChat } from '../redux/chatSlice';
 import { Chat } from '../types/Chat';
 import { sendFriendRequest } from '../api/friendsRequests/sendFriendRequest';
 import inGroupIcon from '../assets/images/in-group-icon.png';
+import { useTransition, animated } from '@react-spring/web';
 
 import ReactDOMServer from 'react-dom/server';
 import TeamInviteModal from '../components/TeamInviteModal';
+import { cancelFriendRequest } from '../api/friendsRequests/cancelFriendRequest';
+import { friendRequestAnswer } from '../api/friendsRequests/friendRequestAnswer';
+import { deleteFromFriends } from '../api/friendsRequests/deleteFromFriends';
 const ProfilePage = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -66,11 +72,17 @@ const ProfilePage = () => {
   const [urlTextCopied, setUrlTextCopied] = useState<boolean>(false);
   const [filename, setFileName] = useState<string>('');
   const [avatarIsLoading, setAvatarIsLoading] = useState<boolean>(false);
+  const [showRemoveFriend, setShowRemoveFriend] = useState<boolean>(false);
   const [updatedUserData, setUpdatedUserData] = useState<UpdatedUserData>({
     description: profileUser?.description ?? '',
     user_avatar: profileUser?.user_avatar ?? '',
   });
-
+  const transitions = useTransition(showRemoveFriend, {
+    from: { transform: 'translateY(-20px)', opacity: 0 },
+    enter: { transform: 'translateY(0)', opacity: 1 },
+    leave: { transform: 'translateY(-20px)', opacity: 0 },
+    config: { tension: 220, friction: 20 },
+  });
   useEffect(() => {
     if (user?.nickname === nickname) {
       setProfileUser(user);
@@ -365,24 +377,101 @@ const ProfilePage = () => {
                       <>
                         {user.sentRequests.length !== 0 &&
                         user.sentRequests.find((req) => req.fromUserId === user.id && req.toUserId === player.id) ? (
-                          <CommonButton>
-                            <img src={sendedFriendReq} alt='' />
-                            Заявка отправлена
-                          </CommonButton>
-                        ) : user.receivedRequests.find((req) => req.toUserId === user.id && req.fromUserId === player.id) ? (
-                          <InFriendLabel
-                            onClick={(e) => {
-                              e.stopPropagation();
-                            }}
+                          <FriendButtonContainer
+                            onMouseEnter={() => setShowRemoveFriend(true)}
+                            onMouseLeave={() => setShowRemoveFriend(false)}
                           >
-                            <img src={sendedFriendReq} alt='' />
-                            Ждет вашего ответа
-                          </InFriendLabel>
+                            <CommonButton style={{ position: 'relative' }}>
+                              <img src={sendedFriendReq} alt='' />
+                              Заявка отправлена
+                            </CommonButton>
+                            {transitions(
+                              (styles, item) =>
+                                item && (
+                                  <RemoveFriendContainer style={styles}>
+                                    <RemoveFriendButton
+                                      onClick={() => {
+                                        const id = user.sentRequests.find((req) => req.toUserId === profileUser.id)?.id as number;
+                                        if (id) {
+                                          cancelFriendRequest(id);
+                                        }
+                                      }}
+                                    >
+                                      <img src={removeFriendIcon} alt='' />
+                                      Отменить заявку
+                                    </RemoveFriendButton>
+                                  </RemoveFriendContainer>
+                                ),
+                            )}
+                          </FriendButtonContainer>
+                        ) : user.receivedRequests.find((req) => req.toUserId === user.id && req.fromUserId === player.id) ? (
+                          <FriendButtonContainer
+                            onMouseEnter={() => setShowRemoveFriend(true)}
+                            onMouseLeave={() => setShowRemoveFriend(false)}
+                          >
+                            <CommonButton style={{ position: 'relative' }}>
+                              <img src={sendedFriendReq} alt='' />
+                              Ждет вашего ответа
+                            </CommonButton>
+                            {transitions(
+                              (styles, item) =>
+                                item && (
+                                  <RemoveFriendContainer style={{ ...styles, bottom: '-70px' }}>
+                                    <ActionsList>
+                                      <RemoveFriendButton
+                                        onClick={() => {
+                                          const id = user.receivedRequests.find((req) => req.fromUserId === profileUser.id)?.id as number;
+                                          if (id) {
+                                            friendRequestAnswer({ accept: true, requestId: id });
+                                          }
+                                        }}
+                                      >
+                                        <img src={confirmEditIcon} alt='' />
+                                        Принять
+                                      </RemoveFriendButton>
+                                      <RemoveFriendButton
+                                        onClick={() => {
+                                          const id = user.receivedRequests.find((req) => req.fromUserId === profileUser.id)?.id as number;
+                                          if (id) {
+                                            friendRequestAnswer({ accept: false, requestId: id });
+                                          }
+                                        }}
+                                      >
+                                        <img src={cancelReqIcon} alt='' />
+                                        Отклонить
+                                      </RemoveFriendButton>
+                                    </ActionsList>
+                                  </RemoveFriendContainer>
+                                ),
+                            )}
+                          </FriendButtonContainer>
                         ) : user.friends.find((friend) => friend.id === player.id) ? (
-                          <InFriendLabel>
-                            <img src={inFriendsIcon} alt='' />
-                            Ваш друг
-                          </InFriendLabel>
+                          <FriendButtonContainer
+                            onMouseEnter={() => setShowRemoveFriend(true)}
+                            onMouseLeave={() => setShowRemoveFriend(false)}
+                          >
+                            <CommonButton style={{ position: 'relative', width: '190px' }}>
+                              <img src={inFriendsIcon} alt='' />У вас в друзьях
+                            </CommonButton>
+                            {transitions(
+                              (styles, item) =>
+                                item && (
+                                  <RemoveFriendContainer style={styles}>
+                                    <RemoveFriendButton
+                                      onClick={() => {
+                                        const id = profileUser.id;
+                                        if (id) {
+                                          deleteFromFriends(user.id, id, user.nickname);
+                                        }
+                                      }}
+                                    >
+                                      <img src={removeFriendIcon} alt='' />
+                                      Удалить из друзей
+                                    </RemoveFriendButton>
+                                  </RemoveFriendContainer>
+                                ),
+                            )}
+                          </FriendButtonContainer>
                         ) : (
                           <CommonButton
                             onClick={() => {
@@ -569,7 +658,7 @@ const ProfileHeader = styled.div`
   min-height: 250px;
   padding: 16px;
   position: relative;
-  overflow: hidden;
+
   &::before {
     content: '';
     position: absolute;
@@ -582,7 +671,6 @@ const ProfileHeader = styled.div`
     background-position: center;
     background-size: cover;
     background-repeat: no-repeat;
-    filter: blur(5px);
   }
   @media (max-width: 650px) {
     min-height: 330px;
@@ -703,6 +791,7 @@ const SocialButtons = styled.div`
   flex-wrap: wrap;
 `;
 const InFriendLabel = styled(CommonButton)`
+  min-width: 190px;
   &:hover {
     background-color: #181818;
     border-color: #565656;
@@ -987,4 +1076,49 @@ const Team = styled.div`
     }
   }
 `;
+
+const FriendButtonContainer = styled.div`
+  position: relative;
+`;
+
+const RemoveFriendContainer = styled(animated.div)`
+  position: absolute;
+  width: 100%;
+  background-color: #202020;
+  bottom: -30px;
+  border: 1px solid #3f3f3f;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 1;
+  &:hover {
+    cursor: pointer;
+  }
+`;
+
+const RemoveFriendButton = styled.div`
+  width: 100%;
+  column-gap: 10px;
+  display: flex;
+  align-items: center;
+  border-radius: 5px;
+  color: var(--main-text-color);
+  font-size: 14px;
+  padding: 3px;
+  img {
+    width: 25px;
+    height: 25px;
+    filter: invert(0.8);
+  }
+
+  &:hover {
+    background-color: #575757;
+  }
+`;
+
+const ActionsList = styled.ul`
+  display: flex;
+  flex-direction: column;
+  row-gap: 10px;
+`;
+
 export default ProfilePage;

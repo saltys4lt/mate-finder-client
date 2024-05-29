@@ -4,6 +4,7 @@ import { ioSocket } from '../api/webSockets/socket';
 import {
   addTeamRequest,
   cancelTeamRequest,
+  deleteFriend,
   joinTeam,
   leaveTeam,
   removeFriendRequest,
@@ -70,6 +71,10 @@ export const useRequestEvents = (id: number) => {
         }
       }
       return;
+    });
+
+    ioSocket.on('deleteFromFriends', (id: number) => {
+      dispatch(deleteFriend(id));
     });
 
     ioSocket.on('cancelFriendRequest', (req: FriendRequest) => {

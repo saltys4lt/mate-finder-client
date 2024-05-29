@@ -10,7 +10,7 @@ import updateCs2Data from './cs2Thunks/updateCs2Data';
 import updateUser from './userThunks/updateUser';
 import deleteCs2Data from './cs2Thunks/deleteCs2Data';
 import defaultUserAvatar from '../assets/images/default-avatar.png';
-import { FriendRequest, FriendRequestWithAction } from '../types/friendRequest';
+import { FriendRequestWithAction } from '../types/friendRequest';
 import fetchUserFriendsData from './userThunks/fetchUserFriendsData';
 import { UserFriendsData } from '../types/UserFriendsData';
 import Team from '../types/Team';
@@ -22,6 +22,7 @@ import { ioSocket } from '../api/webSockets/socket';
 import updateTeam from './teamThunks/updateTeam';
 import fetchUpdatedUser from './userThunks/fetchUpdatedUser';
 import kickPlayer from './teamThunks/kickPlayer';
+import deleteTeam from './teamThunks/deleteTeam';
 interface UserState {
   user: ClientUser | null;
   isAuth: boolean;
@@ -35,7 +36,7 @@ interface UserState {
   deleteCs2Status: 'idle' | 'pending' | 'fulfilled' | 'rejected';
   createTeamStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
   updateTeamStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
-
+  deleteTeamStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
   createUserError: string | null;
   fetchUserError: string | null;
   refillCs2DataError: string | null;
@@ -64,6 +65,7 @@ const initialState: UserState = {
 
   createTeamStatus: 'idle',
   updateTeamStatus: 'idle',
+  deleteTeamStatus: 'idle',
 };
 
 const userSlice = createSlice({
@@ -104,6 +106,12 @@ const userSlice = createSlice({
         }
       }
     },
+    deleteFriend(state, action: PayloadAction<number>) {
+      if (state.user) {
+        state.user.friends = state.user.friends.filter((friend) => friend.id !== action.payload);
+      }
+    },
+
     removeFriendRequest(state, action: PayloadAction<FriendRequestWithAction>) {
       if (state.user) {
         const { req, denied } = action.payload;
@@ -311,6 +319,12 @@ const userSlice = createSlice({
       }
     });
 
+    builder.addCase(deleteTeam.fulfilled, (state, action: PayloadAction<number>) => {
+      if (state.user && action.payload) {
+        state.user.teams = [];
+      }
+    });
+
     //cs2
     builder.addCase(refillCs2Data.pending, (state) => {
       state.refillCs2DataStatus = 'pending';
@@ -439,6 +453,7 @@ export const {
   cancelTeamRequest,
   leaveTeam,
   removeFriendRequest,
+  deleteFriend,
 } = userSlice.actions;
 
 export default userSlice.reducer;
