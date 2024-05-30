@@ -18,6 +18,11 @@ import createTeam from './teamThunks/createTeam';
 import { TeamRequest } from '../types/TeamRequest';
 import { Membership } from '../types/Membership';
 import { Status } from '../types/Status';
+import { ioSocket } from '../api/webSockets/socket';
+import updateTeam from './teamThunks/updateTeam';
+import fetchUpdatedUser from './userThunks/fetchUpdatedUser';
+import kickPlayer from './teamThunks/kickPlayer';
+import deleteTeam from './teamThunks/deleteTeam';
 interface UserState {
   user: ClientUser | null;
   isAuth: boolean;
@@ -30,7 +35,8 @@ interface UserState {
   updateUserStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
   deleteCs2Status: 'idle' | 'pending' | 'fulfilled' | 'rejected';
   createTeamStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
-
+  updateTeamStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
+  deleteTeamStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
   createUserError: string | null;
   fetchUserError: string | null;
   refillCs2DataError: string | null;
@@ -58,6 +64,8 @@ const initialState: UserState = {
   deleteCs2Status: 'idle',
 
   createTeamStatus: 'idle',
+  updateTeamStatus: 'idle',
+  deleteTeamStatus: 'idle',
 };
 
 const userSlice = createSlice({
@@ -98,6 +106,23 @@ const userSlice = createSlice({
         }
       }
     },
+    deleteFriend(state, action: PayloadAction<number>) {
+      if (state.user) {
+        state.user.friends = state.user.friends.filter((friend) => friend.id !== action.payload);
+      }
+    },
+
+    removeFriendRequest(state, action: PayloadAction<FriendRequestWithAction>) {
+      if (state.user) {
+        const { req, denied } = action.payload;
+        if (denied === 0) {
+          if (state.user?.sentRequests) state.user.sentRequests = state.user?.sentRequests.filter((sReq) => sReq.id !== req.id);
+        }
+        if (denied === 1) {
+          if (state.user?.receivedRequests) state.user.receivedRequests = state.user?.receivedRequests.filter((sReq) => sReq.id !== req.id);
+        }
+      }
+    },
     setUserReceivedFriendRequests(state, action: PayloadAction<FriendRequestWithAction>) {
       if (state.user) {
         if (action.payload.denied === -1) {
@@ -126,36 +151,77 @@ const userSlice = createSlice({
     },
     addTeamRequest(state, action: PayloadAction<TeamRequest>) {
       if (state.user) {
-        state.user.requestsToTeam.push(action.payload);
+        if (state.user.teams?.find((team) => team.id === action.payload.teamId)) {
+          state.user.teams = state.user.teams?.map((team) =>
+            team.id === action.payload.teamId ? { ...team, teamRequests: [...team.teamRequests, action.payload] } : team,
+          );
+        } else state.user.requestsToTeam.push(action.payload);
       }
     },
     joinTeam(state, action: PayloadAction<Membership>) {
       if (state.user) {
         if (state.user.teams?.find((team) => team.id === action.payload.teamId)) {
-          state.user.teams?.map((team) =>
-            team.id === action.payload.id
+          state.user.teams = state.user.teams?.map((team) =>
+            team.id === action.payload.teamId
               ? {
                   ...team,
-                  teamRequests: team.teamRequests.filter((req) => req.id !== action.payload.id),
-                  members: [...team.members, action.payload.user],
+                  teamRequests: team.teamRequests.filter((req) => req.teamId !== action.payload.teamId),
+                  members: [...team.members, action.payload],
                 }
               : team,
           );
         } else {
           state.user.memberOf.push(action.payload);
-          state.user.requestsToTeam = state.user.requestsToTeam.filter((req) => req.id !== action.payload.id);
+          state.user.requestsToTeam = state.user.requestsToTeam.filter((req) => req.teamId !== action.payload.teamId);
+          if (action.payload.team.chat) {
+            ioSocket.emit('join', action.payload.team.chat.roomId);
+          }
         }
       }
     },
     removeTeamRequest(state, action: PayloadAction<TeamRequest>) {
       if (state.user) {
-        if (state.user.teams?.find((team) => team.id === action.payload.id)) {
-          state.user.teams?.map((team) =>
-            team.id === action.payload.id
+        if (state.user.teams?.find((team) => team.id === action.payload.teamId)) {
+          state.user.teams = state.user.teams?.map((team) =>
+            team.id === action.payload.teamId
               ? { ...team, teamRequests: team.teamRequests.filter((req) => req.id !== action.payload.id) }
               : team,
           );
         } else state.user.requestsToTeam = state.user.requestsToTeam.filter((req) => req.id !== action.payload.id);
+      }
+    },
+    cancelTeamRequest(state, action: PayloadAction<{ req: TeamRequest; toMyTeam: boolean }>) {
+      if (state.user) {
+        if (action.payload.toMyTeam) {
+          state.user.teams = state.user.teams.map((team) =>
+            action.payload.req.teamId === team.id
+              ? {
+                  ...team,
+                  teamRequests: team.teamRequests.filter((req) => req.id !== action.payload.req.id),
+                }
+              : team,
+          );
+        } else {
+          state.user.requestsToTeam = state.user.requestsToTeam.filter((req) => req.id !== action.payload.req.id);
+        }
+      }
+    },
+    leaveTeam(state, action: PayloadAction<{ team: Team; userId: number; byOwner: boolean }>) {
+      if (state.user) {
+        const candidate = state.user.teams[0]?.members.find((member) => member.user.id === action.payload.userId);
+        if (candidate) {
+          console.log(candidate);
+          state.user.teams = state.user.teams.map((team) =>
+            action.payload.team.id === team.id
+              ? {
+                  ...team,
+                  members: team.members.filter((member) => member.user.id !== action.payload.userId),
+                }
+              : team,
+          );
+        } else {
+          state.user.memberOf = state.user.memberOf.filter((memberOf) => memberOf.teamId !== action.payload.team.id);
+        }
       }
     },
   },
@@ -241,6 +307,24 @@ const userSlice = createSlice({
     builder.addCase(checkUserIsAuth.rejected, (state) => {
       state.checkUserStatus = 'rejected';
     });
+    builder.addCase(fetchUpdatedUser.fulfilled, (state, action: PayloadAction<ClientUser | undefined>) => {
+      if (action.payload) state.user = { ...action.payload };
+    });
+
+    builder.addCase(kickPlayer.fulfilled, (state, action: PayloadAction<Membership>) => {
+      if (state.user?.teams) {
+        state.user.teams = state.user?.teams.map((team) =>
+          team.id === action.payload.teamId ? { ...team, members: team.members.filter((member) => member.id !== action.payload.id) } : team,
+        );
+      }
+    });
+
+    builder.addCase(deleteTeam.fulfilled, (state, action: PayloadAction<number>) => {
+      if (state.user && action.payload) {
+        state.user.teams = [];
+        state.deleteTeamStatus = 'fulfilled';
+      }
+    });
 
     //cs2
     builder.addCase(refillCs2Data.pending, (state) => {
@@ -303,7 +387,7 @@ const userSlice = createSlice({
     });
     builder.addCase(updateUser.fulfilled, (state, action: PayloadAction<ClientUser>) => {
       state.updateUserStatus = 'fulfilled';
-      state.user = action.payload;
+      state.user = { ...state.user, ...action.payload };
     });
     builder.addCase(updateUser.rejected, (state) => {
       state.updateUserStatus = 'rejected';
@@ -340,6 +424,15 @@ const userSlice = createSlice({
       if (state.user) {
         state.createTeamStatus = 'fulfilled';
         state.user.teams?.push(action.payload);
+        if (action.payload.chat) ioSocket.emit('join', action.payload.chat.roomId as string);
+      }
+    });
+
+    builder.addCase(updateTeam.fulfilled, (state, action: PayloadAction<Team>) => {
+      if (state.user) {
+        state.user.teams = state.user.teams.map((team) => (team.id === action.payload.id ? action.payload : team));
+
+        state.updateTeamStatus = 'fulfilled';
       }
     });
   },
@@ -358,6 +451,10 @@ export const {
   joinTeam,
   removeTeamRequest,
   resetStatus,
+  cancelTeamRequest,
+  leaveTeam,
+  removeFriendRequest,
+  deleteFriend,
 } = userSlice.actions;
 
 export default userSlice.reducer;

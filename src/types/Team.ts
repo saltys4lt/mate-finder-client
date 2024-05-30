@@ -1,6 +1,7 @@
+import { Chat } from './Chat';
 import ClientUser from './ClientUser';
 import Cs2Role from './Cs2Role';
-import Player from './Player';
+import { Membership } from './Membership';
 import { TeamRequest } from './TeamRequest';
 
 export default interface Team {
@@ -15,5 +16,6 @@ export default interface Team {
   public: boolean;
   neededRoles: Cs2Role[];
   teamRequests: TeamRequest[];
-  members: Player[];
+  members: Membership[];
+  chat?: Chat;
 }

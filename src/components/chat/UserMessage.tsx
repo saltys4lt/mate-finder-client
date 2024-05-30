@@ -16,7 +16,7 @@ const UserMessage: FC<MessageProps> = ({ message }) => {
       <MessageText>
         {messageToLink(message.text)}
 
-        {message.checked ? (
+        {message.checked.find((checkedBy) => checkedBy.isChecked) ? (
           <DoneAll style={{ position: 'absolute', fontSize: 18, right: '6px', bottom: '3px' }} />
         ) : (
           <Done style={{ position: 'absolute', fontSize: 18, right: '6px', bottom: '2px' }} />

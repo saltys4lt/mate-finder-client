@@ -3,6 +3,7 @@ import { Chat } from '../types/Chat';
 import { Message } from '../types/Message';
 import fetchChats from './chatThunks/fetchChats';
 import { ioSocket } from '../api/webSockets/socket';
+import ClientUser from '../types/ClientUser';
 
 interface ChatInitialState {
   currentChat: Chat | null;
@@ -90,6 +91,42 @@ const chatSlice = createSlice({
         state.currentChat = { ...state.currentChat, messages: updatedChatMessages };
       }
     },
+
+    leaveTeamChat(state, action: PayloadAction<number>) {
+      state.chats = state.chats.filter((chat) => chat.id === action.payload);
+      if (state.currentChat?.team) {
+        state.currentChat = null;
+      }
+    },
+
+    joinTeamChat(state, action: PayloadAction<{ chat: Chat; member?: ClientUser }>) {
+      const chat = action.payload.chat;
+      if (action.payload.member) {
+        const newChatMember = action.payload.member;
+        if (state.currentChat?.id === chat.id) {
+          state.currentChat?.members.push({
+            id: newChatMember.id,
+            nickname: newChatMember.nickname,
+            user_avatar: newChatMember.user_avatar as string,
+          });
+        }
+        state.chats = state.chats.map((cChat) =>
+          cChat.id === chat.id
+            ? {
+                ...cChat,
+                members: [
+                  ...cChat.members,
+                  {
+                    id: newChatMember.id,
+                    nickname: newChatMember.nickname,
+                    user_avatar: newChatMember.user_avatar as string,
+                  },
+                ],
+              }
+            : cChat,
+        );
+      } else state.chats = [...state.chats, action.payload.chat];
+    },
     resetChats(state) {
       state.fetchChatsStatus = 'idle';
       state.currentChat = null;
@@ -110,6 +147,7 @@ const chatSlice = createSlice({
   },
 });
 
-export const { setChats, setCurrentChat, getMessage, getChat, updateChatMessages, updateMessage, resetChats } = chatSlice.actions;
+export const { setChats, setCurrentChat, getMessage, getChat, updateChatMessages, updateMessage, resetChats, leaveTeamChat, joinTeamChat } =
+  chatSlice.actions;
 
 export default chatSlice.reducer;

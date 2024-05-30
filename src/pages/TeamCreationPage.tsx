@@ -23,6 +23,8 @@ import Cs2PlayerRoles from '../consts/Cs2PlayerRoles';
 import ConfirmButton from '../components/UI/ConfirmButton';
 import CommonButton from '../components/UI/CommonButton';
 import friendsInviteIcon from '../assets/images/friends.png';
+import sendedInviteIcon from '../assets/images/sended-friend-req.png';
+
 import { changeFriendsInviteModalState, changeInvitedFriendsModalState } from '../redux/modalSlice';
 import FriendsInviteModal from '../components/FriendsInviteModal';
 import { FriendWithRole } from '../types/FriendWithRole';
@@ -32,23 +34,40 @@ import isCreationStepButtonDisabled from '../util/isCreationStepButtonDisabled';
 import { TeamCreationDataValidation } from '../types/TeamCreationDataValidation';
 import { ErrorAlert } from '../components/AuthForms/RegistrationForm';
 import LoaderBackground from '../components/UI/LoaderBackground';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { sendTeamRequestsToFriends } from '../api/teamRequsts.ts/sendTeamRequestsToFriends';
-
+import Cookies from 'js-cookie';
 import { resetStatus } from '../redux/userSlice';
+import isDefaultAvatar from '../util/isDefaultAvatar';
+import rolesIcons from '../consts/rolesIcons';
+import { Membership } from '../types/Membership';
+import Cs2Role from '../types/Cs2Role';
+import { isDisabledRole } from '../util/isDisabledRole';
+import updateTeam from '../redux/teamThunks/updateTeam';
+
 const TeamCreationPage = () => {
-  const regex = /^[A-Za-z0-9А-Яа-я\s]+$/;
+  const params = useParams();
+
+  const teamNameRegex = /^[A-Za-z0-9А-Яа-я\s]+$/;
+  const teamDescRegex = /^[A-Za-z0-9А-Яа-я\s.,!?:;(){}[\]"'-]+$/;
 
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const isEditMode = Cookies.get('tem');
   const user = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
   const createTeamStatus = useSelector((state: RootState) => state.userReducer.createTeamStatus);
+  const updateTeamStatus = useSelector((state: RootState) => state.userReducer.updateTeamStatus);
+
   const [availableGames, setAvailableGames] = useState<Option[]>(Games);
   const [avatarIsLoading, setAvatarIsLoading] = useState<boolean>(false);
   const [ownerRole, setOwnerRole] = useState<string>('');
   const [creationStep, setCreationStep] = useState<number>(1);
   const [roles, setRoles] = useState<string[]>([]);
   const [invitedFriends, setInvitedFriends] = useState<FriendWithRole[]>([]);
+  const [backupTeam, setBackupTeam] = useState<Team | null>(null);
+  const [backupInvitedFriends, setBackupInvitedFriends] = useState<FriendWithRole[] | null>(null);
+  const [backupRoles, setBackUpRoles] = useState<string[] | null>(null);
+
   const [dataValidation, setDataValidation] = useState<TeamCreationDataValidation>({
     isNameValid: true,
     isDescriptionValid: true,
@@ -71,15 +90,16 @@ const TeamCreationPage = () => {
     neededRoles: [],
     teamRequests: [],
   });
+
   const [game, setGame] = useState<SingleValue<Option>>();
   const uploadAvatar = async (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length) return;
     setAvatarIsLoading(true);
-    if (e.target.files[0].size > 500 * 1024) {
+    if (e.target.files[0].size > 5000 * 1024) {
       Swal.fire({
         icon: 'error',
         titleText: 'Ошибка размера!',
-        text: 'Ваш файл превышает размер в 500 кб',
+        text: 'Ваш файл превышает размер в 5 мб ',
         confirmButtonText: 'Понятно',
       });
       setAvatarIsLoading(false);
@@ -87,23 +107,18 @@ const TeamCreationPage = () => {
     }
     const avatar = e.target.files[0];
     const formData = new FormData();
-    console.log('Размер' + avatar.size);
-    formData.append('avatar', avatar);
-    console.log(formData);
 
-    uploadTeamAvatar(formData)
-      .then((res) => {
-        setTeam({ ...team, avatar: res as string });
-        setAvatarIsLoading(false);
-      })
-      .catch((e) => {
-        console.log(e);
-      });
+    formData.append('avatar', avatar);
+
+    uploadTeamAvatar(formData).then((res) => {
+      setTeam({ ...team, avatar: res as string });
+      setAvatarIsLoading(false);
+    });
   };
 
   const handleTeamNameChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (!dataValidation.isNameValid) {
-      if (dataValidation.nameError === 'format' && regex.test(team.name)) {
+      if (dataValidation.nameError === 'format' && teamNameRegex.test(team.name)) {
         setDataValidation({ ...dataValidation, nameError: null, isNameValid: true });
       } else if (dataValidation.nameError === 'length' && team.name.length < 16) {
         setDataValidation({ ...dataValidation, nameError: null, isNameValid: true });
@@ -113,8 +128,9 @@ const TeamCreationPage = () => {
   };
 
   const handleTeamDescChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
+    console.log(e.target.value);
     if (!dataValidation.isDescriptionValid) {
-      if (dataValidation.descError === 'format' && regex.test(team.description)) {
+      if (dataValidation.descError === 'format' && teamDescRegex.test(team.description)) {
         setDataValidation({ ...dataValidation, descError: null, isDescriptionValid: true });
       } else if (dataValidation.descError === 'length' && team.description.length < 150) {
         setDataValidation({ ...dataValidation, descError: null, isDescriptionValid: true });
@@ -122,6 +138,7 @@ const TeamCreationPage = () => {
     }
     setTeam({ ...team, description: e.target.value });
   };
+  console.log(team.description);
   const handleTeamTypeChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.value === 'true') {
       setTeam({ ...team, public: true });
@@ -133,17 +150,76 @@ const TeamCreationPage = () => {
   };
 
   const rolePlayersState = (role: string) => {
-    if (roles.includes(role) && !invitedFriends.find((friend) => friend.role === role)) return 'active';
-    if (role === ownerRole || !ownerRole || invitedFriends.find((friend) => friend.role === role)) return 'focus';
-    else return '';
+    if (isEditMode) {
+      if (isReqsToTeamExist) return 'focus';
+      if (team.members.length !== 0 && team.members.find((member) => member.role.name === role)) return 'focus';
+    }
+    if (roles.includes(role)) return 'active';
+    if (role === ownerRole) return 'focus';
+
+    return '';
   };
   const changePlayersRoles = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!roles.includes(e.target.value)) setRoles([...roles, e.target.value]);
     else setRoles(roles.filter((role) => role !== e.target.value));
   };
-  console.log(roles);
+
   const changeOwnerRole = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const invitedFriend = invitedFriends.find((friend) => friend.role === e.target.value);
+    const invitedFriend = invitedFriends.find((friend) => friend.role?.name === e.target.value);
+    let mbMember: Membership | null | undefined = null;
+    if (isEditMode) {
+      mbMember = team.members.find((member) => member.role.name === e.target.value);
+      if (mbMember) {
+        const MemberAlert = () => {
+          return (
+            <div style={{ backgroundColor: '#f0f0f0', borderRadius: '10px', padding: '10px' }}>
+              <p>
+                Если вы выберите эту роль, то измените роль для <strong>{mbMember?.user.nickname}</strong> на <strong>{ownerRole}</strong>
+              </p>
+              <div
+                style={{
+                  marginTop: '10px',
+                  display: 'flex',
+                  columnGap: '15px',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  width: '100%',
+                }}
+              >
+                <img
+                  src={isDefaultAvatar(mbMember?.user.user_avatar)}
+                  alt='Аватар'
+                  style={{ borderRadius: '50%', width: '70px', height: '70px', objectFit: 'cover' }}
+                />
+                <div style={{ marginTop: '10px' }}>{mbMember?.user.nickname}</div>
+              </div>
+            </div>
+          );
+        };
+        await Swal.fire({
+          icon: 'warning',
+          title: 'Уверены?',
+          html: ReactDOMServer.renderToString(<MemberAlert />),
+          confirmButtonText: 'Да',
+          confirmButtonColor: '#b42020',
+          showCancelButton: true,
+          cancelButtonText: 'Отмена',
+        }).then((res) => {
+          if (res.isConfirmed) {
+            const role = Cs2PlayerRoles.find((r) => r.name === ownerRole) as Cs2Role;
+            setTeam({
+              ...team,
+              members: [...team.members.map((member) => (member.id === mbMember?.id ? { ...member, role, roleId: role.id } : member))],
+            });
+            setOwnerRole(e.target.value);
+
+            if (roles.includes(e.target.value)) setRoles(roles.filter((role) => role !== e.target.value));
+          } else {
+            return;
+          }
+        });
+      }
+    }
     if (invitedFriend) {
       await Swal.fire({
         icon: 'warning',
@@ -152,7 +228,7 @@ const TeamCreationPage = () => {
   <div style="background-color: #f0f0f0; border-radius: 10px; padding: 10px;">
   <p>Если вы выберите эту роль, то приглашение для <strong>${invitedFriend.nickname}</strong> будет отменено</p>
   <div style="margin-top:10px; display: flex; column-gap:15px; justify-content:center; align-items: center; width:100%">
-    <img src="${invitedFriend.user_avatar}" alt="Аватар" style="border-radius: 50%; width: 70px; height: 70px; object-fit:cover;">
+    <img src="${isDefaultAvatar(invitedFriend.user_avatar)}" alt="Аватар" style="border-radius: 50%; width: 70px; height: 70px; object-fit:cover;">
     <div style="margin-top: 10px;">${invitedFriend.nickname}</div>
   </div>
 </div>
@@ -173,16 +249,47 @@ const TeamCreationPage = () => {
         }
       });
     } else {
-      setOwnerRole(e.target.value);
-      if (roles.includes(e.target.value)) setRoles(roles.filter((role) => role !== e.target.value));
+      if (!mbMember && !invitedFriend) {
+        setOwnerRole(e.target.value);
+        if (roles.includes(e.target.value)) setRoles(roles.filter((role) => role !== e.target.value));
+      }
     }
   };
 
   const ownerRoleState = (role: string) => {
+    if (isReqsToTeamExist) return 'focus';
     return ownerRole === role ? 'active' : '';
   };
 
   useEffect(() => {
+    if (params.name) {
+      const teamName: string = params.name;
+      const mbTeam = user.teams.find((team) => team.name === teamName);
+      if (mbTeam && Cookies.get('tem') === 'true') {
+        setBackupTeam(mbTeam);
+        setTeam(mbTeam);
+        setOwnerRole(mbTeam.ownerRole);
+        const friends = user.friends;
+        if (friends.length !== 0) {
+          const teamReqs: FriendWithRole[] = mbTeam.teamRequests
+            .filter((req) => req.isFromTeam)
+            .map((req) => ({
+              id: req.toUserId,
+              nickname: req.user?.nickname as string,
+              user_avatar: req.user?.user_avatar as string,
+              role: req.role,
+              lvlImg: req.user?.cs2_data?.lvlImg,
+              req,
+            }));
+          setBackupInvitedFriends(teamReqs);
+          setInvitedFriends(teamReqs);
+        }
+        setBackUpRoles(mbTeam.neededRoles.map((role) => role.name));
+        setRoles(mbTeam.neededRoles.map((role) => role.name));
+      } else {
+        navigate(`/team/${teamName}`);
+      }
+    }
     if (checkUserGameProfile(user as ClientUser) === 2) {
       setGame({ image: '', label: 'Выберите игру', value: 'both' } as Option);
     }
@@ -195,18 +302,20 @@ const TeamCreationPage = () => {
       setAvailableGames([Games[1]]);
     }
 
-    return () => {};
+    return () => {
+      // Cookies.remove('tem');
+    };
   }, []);
 
   useEffect(() => {
-    if (createTeamStatus === 'fulfilled') {
-      sendTeamRequestsToFriends((user.teams as Team[])[0].teamRequests); //мб потом переписать надо хуита
+    if (!isEditMode && createTeamStatus === 'fulfilled') {
+      sendTeamRequestsToFriends((user.teams as Team[])[0].teamRequests);
       dispatch(resetStatus('createTeamStatus'));
       const teamName = (user.teams as Team[])[0].name;
       Swal.fire({
         icon: 'success',
         title: 'Успех!',
-        text: `Ваша команда ${teamName} создана! Хотите перейти в профиль команды?`,
+        text: `Ваша команда ${teamName} создана! Перейти в профиль команды?`,
         showCancelButton: true,
         cancelButtonText: 'Нет',
         confirmButtonText: 'Да',
@@ -217,8 +326,27 @@ const TeamCreationPage = () => {
           navigate(`/profile/${user.nickname}`);
         }
       });
+    } else {
+      if (updateTeamStatus === 'fulfilled') {
+        dispatch(resetStatus('updateTeamStatus'));
+        const teamName = (user.teams as Team[])[0].name;
+        Cookies.remove('tem');
+        Swal.fire({
+          icon: 'success',
+          text: `Ваша команда ${teamName} отредактирована! Перейти в профиль команды?`,
+          showCancelButton: true,
+          cancelButtonText: 'Нет',
+          confirmButtonText: 'Да',
+        }).then((res) => {
+          if (res.isConfirmed) {
+            navigate(`/team/${teamName}`);
+          } else {
+            navigate(`/profile/${user.nickname}`);
+          }
+        });
+      }
     }
-  }, [createTeamStatus]);
+  }, [createTeamStatus, updateTeamStatus]);
 
   const openFileExplorer = () => {
     document.getElementById('file__input')?.click();
@@ -246,23 +374,9 @@ const TeamCreationPage = () => {
 
   const handleCreateTeam = async () => {
     let isCancel: boolean = false;
-    if (roles.length !== 4) {
-      await Swal.fire({
-        icon: 'question',
-        titleText: 'Уверены?',
-        text: 'У вас остались невыбранные роли для нужных игроков.',
-        showCancelButton: true,
-        cancelButtonText: 'Отмена',
-        confirmButtonText: 'Продолжить',
-      }).then((res) => {
-        if (!res.isConfirmed) {
-          isCancel = true;
-        }
-      });
-    }
     if (isCancel) return;
 
-    if (invitedFriends.length !== 0) {
+    if (!isEditMode && invitedFriends.length !== 0) {
       const InvitedFriendsRender = () => {
         return (
           <>
@@ -291,11 +405,15 @@ const TeamCreationPage = () => {
       });
     }
     if (isCancel) return;
+    let finishedRoles: Cs2Role[] = [];
+    if (!isEditMode) {
+      finishedRoles = Cs2PlayerRoles.filter((role) => roles.find((r) => r === role.name));
+    } else {
+      finishedRoles = Cs2PlayerRoles.filter((role) => roles.find((r) => r === role.name)).filter(
+        (role) => !team.members.some((member) => member.roleId === role.id),
+      );
+    }
 
-    const neededRoles = roles.filter((role) => !invitedFriends.find((friend) => friend.role === role));
-    const finishedRoles = Cs2PlayerRoles.filter(
-      (role) => !invitedFriends.find((friend) => friend.role === role.name) && roles.find((innerRole) => innerRole === role.name),
-    );
     const CreatedTeam = () => {
       return (
         <div>
@@ -313,7 +431,7 @@ const TeamCreationPage = () => {
                   </TeamType>
                   <OwnerNickname>
                     <span>Создатель: </span>
-                    {team.user.nickname}
+                    {user.nickname}
                   </OwnerNickname>
                 </div>
               </LeftContainerHeader>
@@ -323,8 +441,11 @@ const TeamCreationPage = () => {
             <RightCreatedTeamContainer>
               <CreatedTeamRoles>
                 <RolesTitle>Нужные игроки</RolesTitle>
-                {neededRoles.map((role) => (
-                  <CreatedTeamRoleLabel key={role}>{role}</CreatedTeamRoleLabel>
+                {finishedRoles.map((role) => (
+                  <CreatedTeamRoleLabel key={role.id}>
+                    <img src={rolesIcons.get(role.id)} alt='' />
+                    {role.name}
+                  </CreatedTeamRoleLabel>
                 ))}
               </CreatedTeamRoles>
             </RightCreatedTeamContainer>
@@ -337,21 +458,28 @@ const TeamCreationPage = () => {
       html: ReactDOMServer.renderToString(<CreatedTeam />),
       showCancelButton: true,
       cancelButtonText: 'Отмена',
-      confirmButtonText: 'Создать',
+      confirmButtonText: isEditMode ? 'Обновить' : 'Создать',
     }).then((res) => {
       if (!res.isConfirmed) {
         isCancel = true;
       }
     });
+
     if (isCancel) return;
-    const newTeam: Team = team;
+    const newTeam: Team = { ...team };
+
     newTeam.teamRequests = invitedFriends.map((friend) => ({
+      id: isEditMode ? friend.req?.id : undefined,
       toUserId: friend.id,
-      roleId: Cs2PlayerRoles.find((role) => role.name === friend.role)?.id as number,
+      roleId: friend?.role?.id as number,
+      isFromTeam: true,
     }));
     newTeam.neededRoles = finishedRoles;
     newTeam.ownerRole = ownerRole;
-    dispatch(createTeam(newTeam));
+    console.log(newTeam.teamRequests);
+    if (isEditMode) {
+      dispatch(updateTeam(newTeam));
+    } else dispatch(createTeam(newTeam));
   };
 
   const handleChangeStep = () => {
@@ -359,9 +487,12 @@ const TeamCreationPage = () => {
       handleCreateTeam();
     } else {
       const tempDataValidation = { ...dataValidation };
-      console.log(creationStep);
+
       if (creationStep === 2) {
-        if (!regex.test(team.name)) {
+        console.log(team.name);
+        console.log(team.description);
+
+        if (!teamNameRegex.test(team.name)) {
           tempDataValidation.isNameValid = false;
           tempDataValidation.nameError = 'format';
         } else if (team.name.length > 15) {
@@ -369,7 +500,7 @@ const TeamCreationPage = () => {
           tempDataValidation.nameError = 'length';
         }
 
-        if (!regex.test(team.description)) {
+        if (!teamDescRegex.test(team.description)) {
           tempDataValidation.isDescriptionValid = false;
           tempDataValidation.descError = 'format';
         } else if (team.description.length > 150) {
@@ -388,16 +519,61 @@ const TeamCreationPage = () => {
       setCreationStep((prev) => prev + 1);
     }
   };
+  let membersIds: number[] = [];
+  let isReqsToTeamExist: boolean = false;
+  if (isEditMode === 'true') {
+    if (team.members.length !== 0) {
+      membersIds = team.members.map((member) => member.user.id as number);
+    }
+    if (team.teamRequests.find((req) => !req.isFromTeam)) {
+      isReqsToTeamExist = true;
+    }
+  }
+
+  const cancelEdit = () => {
+    if (
+      JSON.stringify(team) !== JSON.stringify(backupTeam) ||
+      ownerRole !== backupTeam?.ownerRole ||
+      invitedFriends.length !== backupInvitedFriends?.length ||
+      JSON.stringify(roles) !== JSON.stringify(backupRoles)
+    ) {
+      Swal.fire({
+        icon: 'question',
+        showCancelButton: true,
+        text: 'Некоторые данные были изменены, вы точно хотите отменить изменения и выйти?',
+        cancelButtonText: 'Нет',
+        confirmButtonText: 'Отменить и выйти',
+      }).then((res) => {
+        if (res.isConfirmed) {
+          navigate(`/team/${team.name}`);
+        }
+      });
+    } else {
+      navigate(`/team/${team.name}`);
+    }
+  };
 
   return (
     <Main>
-      <FriendsInviteModal
-        roles={roles}
-        ownerRole={ownerRole}
-        invitedFriends={invitedFriends}
-        setInvitedFriends={setInvitedFriends}
-        setRoles={setRoles}
-      />
+      {isEditMode === 'true' && team.members.length !== 0 ? (
+        <FriendsInviteModal
+          roles={roles}
+          ownerRole={ownerRole}
+          invitedFriends={invitedFriends}
+          setInvitedFriends={setInvitedFriends}
+          setRoles={setRoles}
+          membersIds={membersIds}
+        />
+      ) : (
+        <FriendsInviteModal
+          roles={roles}
+          ownerRole={ownerRole}
+          invitedFriends={invitedFriends}
+          setInvitedFriends={setInvitedFriends}
+          setRoles={setRoles}
+        />
+      )}
+
       <Container>
         <MainContainer>
           {createTeamStatus === 'pending' && (
@@ -417,7 +593,17 @@ const TeamCreationPage = () => {
             </>
           )}
 
-          <TeamCreationTitle>Регистрация команды</TeamCreationTitle>
+          <TeamCreationTitle>
+            {isEditMode ? 'Редактирование' : 'Регистрация'} команды{' '}
+            {isEditMode && (
+              <ErrorOutlineContainer>
+                <ErrorOutline />
+                <GameExplenation style={{ top: '-10px', right: '-200px' }}>
+                  Все изменения, которые вы совершаете вступят в силу только после полного завершения редактирования
+                </GameExplenation>
+              </ErrorOutlineContainer>
+            )}
+          </TeamCreationTitle>
           <hr style={{ marginTop: '-40px', width: '100%' }} />
           <InnerContainer>
             {creationStep === 1 && (
@@ -592,8 +778,10 @@ const TeamCreationPage = () => {
                         type='radio'
                         onChange={(e) => changeOwnerRole(e)}
                         value={role.name}
+                        disabled={isReqsToTeamExist}
                       />
                       <RoleLabel className={ownerRoleState(role.name)} htmlFor={(index + 1).toString()}>
+                        <img src={rolesIcons.get(role.id)} alt='' />
                         {role.name}
                       </RoleLabel>
                     </RoleCard>
@@ -622,49 +810,85 @@ const TeamCreationPage = () => {
                           onChange={(e) => changePlayersRoles(e)}
                           value={role.name}
                           type='checkbox'
-                          disabled={
-                            role.name === ownerRole || !ownerRole || invitedFriends.find((friend) => friend.role === role.name)
-                              ? true
-                              : false
-                          }
+                          disabled={isDisabledRole(role, ownerRole, invitedFriends, isEditMode ? true : false, team, isReqsToTeamExist)}
                         />
                         <RoleLabel className={rolePlayersState(role.name)} htmlFor={(index + 10).toString()}>
+                          <img src={rolesIcons.get(role.id)} alt='' />
+
                           {role.name}
                         </RoleLabel>
                       </RoleCard>
                       {role.name === ownerRole && <span>Вы</span>}
-                      {invitedFriends.length !== 0 &&
-                        role.name === (invitedFriends.find((friend) => friend.role === role.name)?.role as string) && (
-                          <img src={invitedFriends.find((friend) => friend.role === role.name)?.user_avatar as string} />
-                        )}
+                      {team.members.length !== 0 && (
+                        <>
+                          {role.name === (team.members.find((member) => member.roleId === role.id)?.role.name as string) && (
+                            <InvitedFriendLable>
+                              <span>{team.members.find((member) => member.roleId === role.id)?.user.nickname as string}</span>
+                              <img
+                                src={isDefaultAvatar(team.members.find((member) => member.roleId === role.id)?.user.user_avatar as string)}
+                              />
+                            </InvitedFriendLable>
+                          )}
+                        </>
+                      )}
                     </RoleLableContainer>
                   ))}
                 </RolesContainer>
+
                 <div style={{ display: 'flex', columnGap: '10px', alignItems: 'center', color: '#fff', marginTop: 50 }}>
-                  <InviteFriendsButton
-                    disabled={roles.length === 4 || invitedFriends.length === user.friends.length}
-                    onClick={() => {
-                      dispatch(changeFriendsInviteModalState(true));
-                    }}
-                  >
-                    <img src={friendsInviteIcon} alt='' />
-                    Пригласить друзей
-                  </InviteFriendsButton>
-                  <ErrorOutlineContainer>
-                    <ErrorOutline />
-                    <GameExplenation style={{ top: '-6em' }}>
-                      Роль для друга можно выбрать только из оставшихся ролей сверху.
-                    </GameExplenation>
-                  </ErrorOutlineContainer>
+                  {!isEditMode ? (
+                    <>
+                      <InviteFriendsButton
+                        disabled={invitedFriends.length === user.friends.length || roles.length === 0}
+                        onClick={() => {
+                          dispatch(changeFriendsInviteModalState(true));
+                        }}
+                      >
+                        <img src={friendsInviteIcon} alt='' />
+                        Пригласить друзей
+                      </InviteFriendsButton>
+
+                      <ErrorOutlineContainer>
+                        <ErrorOutline />
+                        <GameExplenation style={{ top: '-6em' }}>
+                          Список ролей для друзей будет состоять из тех ролей, которые вы выбрали выше
+                        </GameExplenation>
+                      </ErrorOutlineContainer>
+                    </>
+                  ) : (
+                    <>
+                      {invitedFriends.length !== 0 && (
+                        <>
+                          {' '}
+                          <InvitedFriendsButton
+                            disabled={invitedFriends.length === 0}
+                            onClick={() => {
+                              dispatch(changeInvitedFriendsModalState(true));
+                            }}
+                          >
+                            <img src={sendedInviteIcon} alt='' />
+                            Ваши приглашения
+                            <div>{invitedFriends.length}</div>
+                          </InvitedFriendsButton>
+                          <ErrorOutlineContainer>
+                            <ErrorOutline />
+                            <GameExplenation style={{ top: '-5em', right: '-12em' }}>
+                              Список всех приглашенных вами игроков.
+                            </GameExplenation>
+                          </ErrorOutlineContainer>
+                        </>
+                      )}
+                    </>
+                  )}
                 </div>
 
-                {invitedFriends.length !== 0 && (
+                {invitedFriends.length !== 0 && !isEditMode && (
                   <InvitedFriendsButton
                     onClick={() => {
                       dispatch(changeInvitedFriendsModalState(true));
                     }}
                   >
-                    Приглашенные <div>{invitedFriends.length}</div>
+                    Будут приглашены <div>{invitedFriends.length}</div>
                   </InvitedFriendsButton>
                 )}
               </RolesData>
@@ -679,12 +903,13 @@ const TeamCreationPage = () => {
                   Назад
                 </ConfirmButton>
               )}
+              {creationStep === 1 && isEditMode && <ConfirmButton onClick={cancelEdit}>Отменить</ConfirmButton>}
               <TeamCreationConfirm
                 onClick={handleChangeStep}
                 $isDisabled={creationStep !== 4 && !isCreationStepButtonDisabled(dataValidation, creationStep, ownerRole)}
                 disabled={creationStep !== 4 && !isCreationStepButtonDisabled(dataValidation, creationStep, ownerRole)}
               >
-                {creationStep !== 4 ? 'Далее' : 'Создать команду'}
+                {creationStep !== 4 ? 'Далее' : isEditMode ? 'Завершить' : 'Создать команду'}
               </TeamCreationConfirm>
             </StepButtons>
           </InnerContainer>
@@ -738,6 +963,8 @@ const InnerContainer = styled.div`
 
 const TeamCreationTitle = styled.h2`
   color: var(--main-text-color);
+  display: flex;
+  column-gap: 10px;
 `;
 
 const TeamLogoContainer = styled(animated.div)`
@@ -748,7 +975,6 @@ const TeamLogoContainer = styled(animated.div)`
 `;
 
 const TeamLogo = styled.div`
-  width: fit-content;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -756,9 +982,10 @@ const TeamLogo = styled.div`
 const TeamLogoImg = styled.img<{ loading: string }>`
   width: 100%;
   max-width: 200px;
-  max-height: 250px;
+  max-height: 200px;
 
   border-radius: 10px;
+  object-fit: cover;
   opacity: ${(p) => (p.loading === 'true' ? '0.4' : '1')};
 `;
 const ChangeAvatarButton = styled.button<{ loading: string }>`
@@ -904,17 +1131,18 @@ const StepButtons = styled.div`
 const RolesContainer = styled.div`
   display: flex;
   width: 80%;
+
   justify-content: center;
 
   column-gap: 10px;
+  margin-top: -5px;
   flex-wrap: wrap;
 `;
 
 const RoleCard = styled.div`
-  margin-top: 15px;
-
   display: flex;
   justify-content: center;
+  margin-top: 20px;
 `;
 
 const RoleCheckbox = styled.input`
@@ -922,15 +1150,28 @@ const RoleCheckbox = styled.input`
 `;
 const RoleLableContainer = styled.div`
   position: relative;
-  > img {
+  > span {
     position: absolute;
-    width: 30px;
-    height: 30px;
+    color: var(--main-text-color);
+    right: 0;
+    top: -1px;
+  }
+`;
+
+const InvitedFriendLable = styled.div`
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  column-gap: 5px;
+  top: -1px;
+  right: 0;
+  > img {
+    width: 23px;
+    height: 23px;
     object-fit: cover;
     border-radius: 50%;
 
-    top: -1px;
-    right: -1px;
     transition: transform 0.1s ease-in-out;
   }
 
@@ -938,19 +1179,20 @@ const RoleLableContainer = styled.div`
     transform: scale(1.2);
   }
   > span {
-    position: absolute;
-    top: -1px;
-    right: -1px;
-
+    font-size: 12px;
     color: var(--main-text-color);
   }
 `;
+
 const RoleLabel = styled.label`
   border: 2px solid #565656;
   background-color: #181818;
-  padding: 5px 10px;
+  padding: 5px 7px;
   border-radius: 7px;
-  display: block;
+  display: flex;
+  align-items: center;
+  column-gap: 10px;
+  justify-content: center;
   width: 130px;
   text-align: center;
   font-size: 16px;
@@ -977,6 +1219,14 @@ const RoleLabel = styled.label`
   user-select: none;
   &:hover {
     cursor: pointer;
+  }
+
+  > img {
+    object-fit: cover;
+    filter: invert(0.5);
+    display: block;
+    width: 20px;
+    height: 20px;
   }
 `;
 
@@ -1106,7 +1356,9 @@ const CreatedTeamRoleLabel = styled(RoleLabel)`
   background-color: #181818;
   padding: 5px 10px;
   border-radius: 7px;
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 130px;
   text-align: center;
   font-size: 16px;

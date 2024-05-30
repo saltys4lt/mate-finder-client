@@ -9,6 +9,7 @@ import MatchesPage from '../pages/MatchesPage';
 import NewsPage from '../pages/NewsPage';
 import { Navigate } from 'react-router-dom';
 import TeamPage from '../pages/TeamPage';
+import NotFoundPage from '../pages/NotFoundPage';
 const HomePage = lazy(() => import('../pages/HomePage'));
 const ProfilePage = lazy(() => import('../pages/ProfilePage'));
 
@@ -23,7 +24,7 @@ export const authorizedGameProfileRoutes = [
     ),
   },
   {
-    path: '/team-creator',
+    path: '/team-creator/:name?',
     element: (
       <Suspense fallback={<Loader />}>
         <TeamCreationPage />
@@ -46,7 +47,7 @@ export const authorizedGameProfileRoutes = [
       </Suspense>
     ),
   },
-  { path: '*', element: <Navigate to='/' replace={true} /> },
+  { path: '*', element: <Navigate to='/404' replace={true} /> },
 ];
 
 export const privateRoutes = [
@@ -82,11 +83,15 @@ export const privateRoutes = [
       </Suspense>
     ),
   },
-
-  { path: '*', element: <Navigate to='/' replace={true} /> },
+  {
+    path: '/404',
+    element: <NotFoundPage />,
+  },
+  { path: '*', element: <Navigate to='/404' replace={true} /> },
 ];
 
 export const publicRoutes = [
   { path: '/', element: <StartPage /> },
+
   { path: '*', element: <Navigate to='/' replace={true} /> },
 ];

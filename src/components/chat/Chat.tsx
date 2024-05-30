@@ -26,6 +26,7 @@ const Chat = () => {
   const chats: IChat[] = useSelector((state: RootState) => state.chatReducer.chats) as IChat[];
   const fetchChatsStatus = useSelector((state: RootState) => state.chatReducer.fetchChatsStatus);
   const currentChat = useSelector((state: RootState) => state.chatReducer.currentChat);
+  const [isPlayersChat, setIsPlayersChat] = useState<boolean>(true);
   const navigate = useNavigate();
   const user: ClientUser = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
   const messageContainer = useRef<HTMLDivElement>(null);
@@ -34,11 +35,16 @@ const Chat = () => {
   const dispatch = useAppDispatch();
   const handleChangeChatState = (value: boolean) => {
     dispatch(changeChatState(value));
-    if (currentChat && currentChat.messages.find((message) => !message.checked && message.nickname !== user.nickname)) {
-      ioSocket.emit(
-        'checkWholeChat',
-        currentChat.messages.filter((message) => message.nickname !== user.nickname && !message.checked),
+    setIsPlayersChat(true);
+    if (
+      currentChat &&
+      currentChat.messages.find((message) => message.checked.find((checkedBy) => checkedBy.userId === user.id && !checkedBy.isChecked))
+    ) {
+      const checkedMessages = currentChat.messages.filter((message) =>
+        message.checked.find((checkedBy) => checkedBy.userId === user.id && !checkedBy.isChecked),
       );
+
+      ioSocket.emit('checkWholeChat', { messages: checkedMessages, userId: user.id });
     }
     setTimeout(() => {
       if (messageContainer.current) {
@@ -48,11 +54,12 @@ const Chat = () => {
   };
 
   const handleChangeChat = (chat: IChat) => {
-    if (chat.messages.find((message) => !message.checked && message.nickname !== user.nickname)) {
-      ioSocket.emit(
-        'checkWholeChat',
-        chat.messages.filter((message) => message.nickname !== user.nickname && !message.checked),
+    if (chat.messages.find((message) => message.checked.find((checkedBy) => checkedBy.userId === user.id && !checkedBy.isChecked))) {
+      const checkedMessages = chat.messages.filter((message) =>
+        message.checked.find((checkedBy) => checkedBy.userId === user.id && !checkedBy.isChecked),
       );
+
+      ioSocket.emit('checkWholeChat', { messages: checkedMessages, userId: user.id });
     }
     dispatch(setCurrentChat(chat));
 
@@ -65,23 +72,28 @@ const Chat = () => {
 
   const handleSendMessage = () => {
     if (message) {
-      const newMessage: Message = {
-        roomId: currentChat?.roomId as string,
-        nickname: user?.nickname as string,
-        text: message,
-        time: new Date(),
-        checked: false,
-      };
-      setMessage('');
-      if (currentChat?.messages.length === 0) {
-        ioSocket.emit('firstMessage', { ...currentChat, messages: [newMessage] });
-      } else ioSocket.emit('sendMessage', newMessage);
+      const members = currentChat?.members.filter((member) => member.id !== user.id);
+
+      if (members) {
+        const chatMembers = members.filter((member) => member.id !== user.id).map((member) => ({ isChecked: false, userId: member.id }));
+        console.log('@@@', chatMembers);
+        const newMessage: Message = {
+          roomId: currentChat?.roomId as string,
+          text: message,
+          time: new Date(),
+          userId: user.id,
+          checked: chatMembers,
+        };
+        setMessage('');
+        if (!currentChat?.team && currentChat?.messages.length === 0) {
+          ioSocket.emit('firstMessage', { ...currentChat, messages: [newMessage] });
+        } else ioSocket.emit('sendMessage', newMessage);
+      }
     }
   };
 
   useEffect(() => {
     dispatch(fetchChats());
-    ioSocket.on('connection', () => {});
 
     ioSocket.on('checkWholeChat', (checkedMessages: Message[]) => {
       dispatch(updateChatMessages(checkedMessages));
@@ -99,8 +111,8 @@ const Chat = () => {
       }
     });
     ioSocket.on('getMessage', (value: Message) => {
-      if (value.roomId === currentChat?.roomId && value.nickname !== user.nickname && isActive) {
-        ioSocket.emit('readMessage', value);
+      if (value.roomId === currentChat?.roomId && value.userId !== user.id && isActive) {
+        ioSocket.emit('readMessage', { message: value, userId: user.id });
       }
       dispatch(getMessage(value));
 
@@ -112,17 +124,19 @@ const Chat = () => {
     });
 
     ioSocket.on('readMessage', (value: Message) => {
+      console.log(value);
       dispatch(updateMessage(value));
     });
-    ioSocket.on('disconnect', () => {});
 
     if (messageContainer.current) {
       messageContainer.current.scrollTop = messageContainer.current.scrollHeight;
     }
-    ioSocket.emit('connection');
     return () => {
       dispatch(changeChatState(false));
-      ioSocket.removeAllListeners();
+      ioSocket.off('checkWholeChat');
+      ioSocket.off('firstMessage');
+      ioSocket.off('getMessage');
+      ioSocket.off('readMessage');
     };
   }, []);
 
@@ -134,13 +148,16 @@ const Chat = () => {
 
   useEffect(() => {
     if (currentChat || isActive) {
+      if (currentChat?.team) {
+        setIsPlayersChat(false);
+      }
       ioSocket.removeListener('getMessage');
-      ioSocket.on('getMessage', (value: Message) => {
-        if (isActive && value.roomId === currentChat?.roomId && value.nickname !== user.nickname) {
-          ioSocket.emit('readMessage', value);
+      ioSocket.on('getMessage', (message: Message) => {
+        if (isActive && message.roomId === currentChat?.roomId && message.userId !== user.id) {
+          ioSocket.emit('readMessage', { message, userId: user.id });
         }
 
-        dispatch(getMessage(value));
+        dispatch(getMessage(message));
 
         setTimeout(() => {
           if (messageContainer.current) {
@@ -148,13 +165,42 @@ const Chat = () => {
           }
         });
       });
+      setTimeout(() => {
+        if (messageContainer.current) {
+          messageContainer.current.scrollTop = messageContainer.current.scrollHeight;
+        }
+      });
     }
   }, [currentChat, isActive]);
 
-  const uncheckedMessages = chats.reduce((acc, chat) => {
-    const unreadMessages = chat.messages.filter((message) => !message.checked && message.nickname !== user.nickname);
-    return acc + unreadMessages.length;
+  const uncheckedMessages = chats.reduce((_, chat) => {
+    const unreadMessages = chat.messages.filter((message) =>
+      message?.checked.find((checkedBy) => checkedBy.userId === user.id && !checkedBy.isChecked),
+    );
+
+    return unreadMessages.length;
   }, 0);
+  console.log(uncheckedMessages);
+  const openTeamChat = () => {
+    const teamChat = chats.find((chat) => chat.team !== null);
+    if (teamChat) {
+      if (teamChat.messages.find((message) => message.checked.find((checkedBy) => checkedBy.userId === user.id && !checkedBy.isChecked))) {
+        const checkedMessages = teamChat.messages.filter((message) =>
+          message.checked.find((checkedBy) => checkedBy.userId === user.id && !checkedBy.isChecked),
+        );
+        const userIds: number[] = teamChat.members
+          .filter((member) => checkedMessages.find((message) => message.userId === member.id))
+          .map((member) => member.id);
+        ioSocket.emit('checkWholeChat', { messages: checkedMessages, userId: user.id, userIds: userIds });
+      }
+      dispatch(setCurrentChat(teamChat));
+      setTimeout(() => {
+        if (messageContainer.current) {
+          messageContainer.current.scrollTop = messageContainer.current.scrollHeight;
+        }
+      });
+    }
+  };
 
   return fetchChatsStatus === 'pending' || fetchChatsStatus === 'idle' ? (
     <ChatButtonContainer>
@@ -177,101 +223,147 @@ const Chat = () => {
           <img src={closeCross} alt='' />
         </CloseButton>
         <ChatList>
-          {chats.length !== 0 ? (
-            chats.map((chat) => (
-              <ChatListItem
-                data-unchecked={chat.messages.reduce(
-                  (acc, message) => (message.nickname !== user.nickname && !message.checked ? acc + 1 : acc),
-                  0,
-                )}
-                $messages={chat.messages.reduce(
-                  (acc, message) => (message.nickname !== user.nickname && !message.checked ? acc + 1 : acc),
-                  0,
-                )}
-                selected={chat.roomId === currentChat?.roomId}
-                key={chat.roomId}
-                onClick={() => handleChangeChat(chat)}
+          <ChatTypes>
+            <ChatType
+              onClick={() => {
+                if (!isPlayersChat) setIsPlayersChat(true);
+              }}
+              $selected={isPlayersChat}
+            >
+              Игроки
+            </ChatType>
+            {(user.teams.length !== 0 || user.memberOf.length !== 0) && (
+              <ChatType
+                onClick={() => {
+                  if (isPlayersChat) setIsPlayersChat(false);
+
+                  openTeamChat();
+                }}
+                $selected={!isPlayersChat}
               >
-                {!chat.team ? (
-                  <>
-                    <img
-                      src={
-                        chat.members.find((member) => member.id !== user?.id)?.user_avatar
-                          ? chat.members.find((member) => member.id !== user?.id)?.user_avatar
-                          : defaultUserAvatar
-                      }
-                      alt=''
-                    />{' '}
-                    <PartnerNickname>{chat.members.find((member) => member.id !== user?.id)?.nickname}</PartnerNickname>
-                  </>
-                ) : (
-                  <>team</>
-                )}
-              </ChatListItem>
-            ))
-          ) : (
-            <h3 style={{ textAlign: 'center', color: 'var(--main-text-color)' }}> У вас нет активных чатов</h3>
-          )}
+                Команда
+              </ChatType>
+            )}
+          </ChatTypes>
+          {chats.length !== 0 && isPlayersChat
+            ? chats.map(
+                (chat) =>
+                  !chat.team && (
+                    <ChatListItem
+                      data-unchecked={chat.messages.reduce(
+                        (acc, message) =>
+                          message.userId !== user.id &&
+                          message.checked.find((checkedBy) => checkedBy.userId === user.id && !checkedBy.isChecked)
+                            ? acc + 1
+                            : acc,
+                        0,
+                      )}
+                      $messages={chat.messages.reduce(
+                        (acc, message) =>
+                          message.userId !== user.id &&
+                          message.checked.find((checkedBy) => checkedBy.userId === user.id && !checkedBy.isChecked)
+                            ? acc + 1
+                            : acc,
+                        0,
+                      )}
+                      selected={chat.roomId === currentChat?.roomId}
+                      key={chat.roomId}
+                      onClick={() => handleChangeChat(chat)}
+                    >
+                      <>
+                        <img
+                          src={
+                            chat.members.find((member) => member.id !== user?.id)?.user_avatar
+                              ? chat.members.find((member) => member.id !== user?.id)?.user_avatar
+                              : defaultUserAvatar
+                          }
+                          alt=''
+                        />{' '}
+                        <PartnerNickname>{chat.members.find((member) => member.id !== user?.id)?.nickname}</PartnerNickname>
+                      </>
+                    </ChatListItem>
+                  ),
+              )
+            : isPlayersChat && <h3 style={{ textAlign: 'center', color: 'var(--main-text-color)' }}> У вас нет активных чатов</h3>}
         </ChatList>
 
         <CurrentChat>
           {currentChat ? (
-            !currentChat.team ? (
-              <>
-                <CurrentChatHeader
-                  onClick={() => {
-                    navigate(`/profile/${currentChat.members.find((member) => member.id !== user?.id)?.nickname}`);
-                  }}
-                >
-                  <img
-                    src={
-                      currentChat.members.find((member) => member.id !== user?.id)?.user_avatar
-                        ? currentChat.members.find((member) => member.id !== user?.id)?.user_avatar
-                        : defaultUserAvatar
-                    }
-                    alt=''
-                  />{' '}
-                  <span>{currentChat.members.find((member) => member.id !== user?.id)?.nickname}</span>
-                </CurrentChatHeader>
-                <MessagesContainer ref={messageContainer}>
-                  {currentChat.messages.length === 0 ? (
-                    <p style={{ color: 'var(--main-text-color)', textAlign: 'center', marginTop: 20 }}>
-                      Это будет ваше первое сообщение для{' '}
-                      <span style={{ fontWeight: 700, color: '#f6f6f6', fontSize: 16 }}>
-                        {currentChat.members.find((member) => member.id !== user?.id)?.nickname}
-                      </span>
-                      <br /> Насладитесь моментом перед отправкой :3
-                    </p>
-                  ) : (
-                    currentChat.messages.map((message, index, messages) => (
-                      <MessageComponent $isuser={message.nickname === user?.nickname ? '1' : ''} key={message.id}>
-                        {((index !== 0 && new Date(message.time).getDate() !== new Date(messages[index - 1].time).getDate()) ||
-                          index === 0) && <b style={{ textAlign: 'center', margin: '10px 0' }}>{formatDate(message.time)}</b>}
-                        {message.nickname === user?.nickname ? <UserMessage message={message} /> : <PlayerMessage message={message} />}
-                      </MessageComponent>
-                    ))
-                  )}
-                </MessagesContainer>
-                <SendMessageContainer
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    handleSendMessage();
-                  }}
-                >
-                  <CommonInput
-                    style={{ borderRadius: '5px 0 0 5px' }}
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder='Сообщение'
-                  />
-                  <SendMessageButton type='submit'>
-                    <img src={sendMessageIcon} alt='' />
-                  </SendMessageButton>
-                </SendMessageContainer>
-              </>
-            ) : (
-              <CurrentChatHeader>team</CurrentChatHeader>
-            )
+            <>
+              <CurrentChatHeader
+                onClick={() => {
+                  if (currentChat.team) {
+                    navigate(`/team/${currentChat.team.name}`);
+                  } else navigate(`/profile/${currentChat.members.find((member) => member.id !== user?.id)?.nickname}`);
+                }}
+              >
+                {currentChat.team ? (
+                  <>
+                    {' '}
+                    <img src={currentChat.team.avatar} alt='' /> <span>{currentChat.team.name}</span>
+                  </>
+                ) : (
+                  <>
+                    <img
+                      src={
+                        currentChat.members.find((member) => member.id !== user?.id)?.user_avatar
+                          ? currentChat.members.find((member) => member.id !== user?.id)?.user_avatar
+                          : defaultUserAvatar
+                      }
+                      alt=''
+                    />{' '}
+                    <span>{currentChat.members.find((member) => member.id !== user?.id)?.nickname}</span>
+                  </>
+                )}
+              </CurrentChatHeader>
+              <MessagesContainer ref={messageContainer}>
+                {currentChat.messages.length === 0 ? (
+                  <p style={{ color: 'var(--main-text-color)', textAlign: 'center', marginTop: 20 }}>
+                    {currentChat.team ? (
+                      <>
+                        {' '}
+                        Это будет первое сообщение в чате &nbsp;
+                        <span style={{ fontWeight: 700, color: '#f6f6f6', fontSize: 16 }}>{currentChat.team.name}</span>
+                        <br /> Насладитесь моментом перед отправкой :3
+                      </>
+                    ) : (
+                      <>
+                        {' '}
+                        Это будет ваше первое сообщение для{' '}
+                        <span style={{ fontWeight: 700, color: '#f6f6f6', fontSize: 16 }}>
+                          {currentChat.members.find((member) => member.id !== user?.id)?.nickname}
+                        </span>
+                        <br /> Насладитесь моментом перед отправкой :3
+                      </>
+                    )}
+                  </p>
+                ) : (
+                  currentChat.messages.map((message, index, messages) => (
+                    <MessageComponent $isuser={message.userId === user.id ? '1' : ''} key={message.id}>
+                      {((index !== 0 && new Date(message.time).getDate() !== new Date(messages[index - 1].time).getDate()) ||
+                        index === 0) && <b style={{ textAlign: 'center', margin: '10px 0' }}>{formatDate(message.time)}</b>}
+                      {message.userId === user.id ? <UserMessage message={message} /> : <PlayerMessage message={message} />}
+                    </MessageComponent>
+                  ))
+                )}
+              </MessagesContainer>
+              <SendMessageContainer
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSendMessage();
+                }}
+              >
+                <CommonInput
+                  style={{ borderRadius: '5px 0 0 5px' }}
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder='Сообщение'
+                />
+                <SendMessageButton type='submit'>
+                  <img src={sendMessageIcon} alt='' />
+                </SendMessageButton>
+              </SendMessageContainer>
+            </>
           ) : (
             <div
               style={{
@@ -381,6 +473,27 @@ const CloseButton = styled.button`
   }
 `;
 
+const ChatTypes = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  column-gap: 15px;
+  width: 100%;
+`;
+
+const ChatType = styled.span<{ $selected: boolean }>`
+  font-weight: 700;
+  color: var(--main-text-color);
+  padding: 3px 5px;
+  border-radius: 5px 5px 0 0;
+  font-size: 14px;
+  background-color: ${(p) => (p.$selected ? '#898989' : ' #3f3f3f')};
+  &:hover {
+    background-color: #898989;
+    cursor: pointer;
+  }
+`;
+
 const ChatList = styled.div`
   width: 28%;
   height: 100%;
@@ -439,9 +552,10 @@ const CurrentChat = styled.div`
 `;
 
 const CurrentChatHeader = styled.div`
+  width: 40%;
   display: flex;
   align-items: center;
-  width: 100%;
+
   column-gap: 10px;
   font-weight: 700;
   color: #d1d1d1;
