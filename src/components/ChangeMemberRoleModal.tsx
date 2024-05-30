@@ -65,7 +65,7 @@ const ChangeMemberRoleModal: FC<ChangeMemberRoleModalProps> = ({ member, members
           <SwitchMembersRolesContainer>
             <MembersContainer>
               <MemberCard>
-                <img src={selectedMember?.user_avatar} alt='' />
+                <img src={isDefaultAvatar(selectedMember?.user_avatar)} alt='' />
                 <span>{selectedMember?.nickname}</span>
                 <RoleLabel>
                   <img src={rolesIcons.get(member?.role.id as number)} alt='' />
@@ -74,7 +74,7 @@ const ChangeMemberRoleModal: FC<ChangeMemberRoleModalProps> = ({ member, members
               </MemberCard>
               <SwitchRoleImg src={switchIcon} />
               <MemberCard>
-                <img src={switchCandidate?.user_avatar} alt='' />
+                <img src={isDefaultAvatar(switchCandidate?.user_avatar)} alt='' />
                 <span>{switchCandidate?.nickname}</span>
                 <RoleLabel>
                   <img src={rolesIcons.get(sameRoleMember?.role.id as number)} alt='' />
@@ -115,7 +115,7 @@ const ChangeMemberRoleModal: FC<ChangeMemberRoleModalProps> = ({ member, members
           <SwitchMembersRolesContainer>
             <MembersContainer>
               <MemberCard>
-                <img src={selectedMember?.user_avatar} alt='' />
+                <img src={isDefaultAvatar(selectedMember?.user_avatar)} alt='' />
                 <span>{selectedMember?.nickname}</span>
                 <RoleLabel>
                   <img src={rolesIcons.get(member?.role.id as number)} alt='' />
@@ -124,7 +124,7 @@ const ChangeMemberRoleModal: FC<ChangeMemberRoleModalProps> = ({ member, members
               </MemberCard>
               <SwitchRoleImg src={changeIcon} />
               <MemberCard>
-                <img src={selectedMember?.user_avatar} alt='' />
+                <img src={isDefaultAvatar(selectedMember?.user_avatar)} alt='' />
                 <span>{selectedMember?.nickname}</span>
                 <RoleLabel>
                   <img src={rolesIcons.get(selectedRole?.id as number)} alt='' />

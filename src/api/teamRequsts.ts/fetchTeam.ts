@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import Team from '../../types/Team';
 const baseUrl = import.meta.env.VITE_BASE_URL;
 
@@ -13,8 +13,8 @@ export const fetchTeam = async (name: string) => {
         return res.data as Team;
       }
     })
-    .catch((error: string) => {
-      return error;
+    .catch((error: AxiosError) => {
+      return error.response?.data as string;
     });
   return team;
 };

@@ -92,9 +92,6 @@ export const privateRoutes = [
 
 export const publicRoutes = [
   { path: '/', element: <StartPage /> },
-  {
-    path: '/404',
-    element: <NotFoundPage />,
-  },
-  { path: '*', element: <Navigate to='/404' replace={true} /> },
+
+  { path: '*', element: <Navigate to='/' replace={true} /> },
 ];

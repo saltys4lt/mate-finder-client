@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 import { useEffect, useState } from 'react';
 import Loader from '../components/Loader';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState, useAppDispatch } from '../redux';
 import Team from '../types/Team';
@@ -44,11 +44,14 @@ import axios from 'axios';
 import ChangeMemberRoleModal from '../components/ChangeMemberRoleModal';
 import { Membership } from '../types/Membership';
 import deleteTeamIcon from '../assets/images/delete.png';
+import deleteTeam from '../redux/teamThunks/deleteTeam';
+import { resetStatus } from '../redux/userSlice';
 
 const TeamPage = () => {
   const name = useParams().name;
   const user = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
   const teams = useSelector((state: RootState) => state.userReducer.user?.teams) as Team[];
+  const deleteTeamStatus = useSelector((state: RootState) => state.userReducer.deleteTeamStatus);
 
   const [section, setSection] = useState<number>(-1);
   const [urlTextCopied, setUrlTextCopied] = useState<boolean>(false);
@@ -65,10 +68,13 @@ const TeamPage = () => {
     (async () => {
       const team = await fetchTeam(name as string);
       if (typeof team !== 'string') {
+        console.log(team);
         setCurrentTeam(team as Team);
         if (team.userId !== user.id) {
           fetchUpdatedTeam(team.id as number, setCurrentTeam, source.token);
         }
+      } else if (deleteTeamStatus !== 'fulfilled') {
+        navigate('/404');
       }
     })();
 
@@ -106,6 +112,21 @@ const TeamPage = () => {
     }
     return () => {};
   }, [currentTeam]);
+
+  useEffect(() => {
+    if (deleteTeamStatus === 'fulfilled') {
+      dispatch(resetStatus('deleteTeamStatus'));
+      Swal.fire({
+        icon: 'success',
+        title: 'Команда успешно удалена!',
+        confirmButtonText: 'Понятно',
+        timer: 3000,
+        timerProgressBar: true,
+      }).then(() => {
+        navigate('/');
+      });
+    }
+  }, [deleteTeamStatus]);
 
   const ownerRole: Cs2Role = Cs2PlayerRoles.find((role) => role.name === currentTeam?.ownerRole) as Cs2Role;
 
@@ -260,6 +281,21 @@ const TeamPage = () => {
     }
   };
 
+  const handleDeleteTeam = () => {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Уверены ?',
+      text: 'Команду нельзя будет восстановить, также вы потеряете историю чата',
+      showCancelButton: true,
+      cancelButtonText: 'Отмена',
+      confirmButtonText: 'Удалить',
+    }).then((res) => {
+      if (res.isConfirmed) {
+        dispatch(deleteTeam({ teamId: currentTeam?.id as number, name: currentTeam?.name as string }));
+      }
+    });
+  };
+
   return currentTeam === null ? (
     <Loader />
   ) : (
@@ -281,7 +317,7 @@ const TeamPage = () => {
       <RequestToTeamModal team={currentTeam} />
       <TeamHeader>
         {currentTeam.userId === user.id && (
-          <CommonButton style={{ position: 'absolute', top: '20px', right: '25px', zIndex: 1 }}>
+          <CommonButton onClick={handleDeleteTeam} style={{ position: 'absolute', top: '20px', right: '25px', zIndex: 1 }}>
             <img src={deleteTeamIcon} alt='' />
           </CommonButton>
         )}

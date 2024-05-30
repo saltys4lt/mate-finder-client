@@ -322,6 +322,7 @@ const userSlice = createSlice({
     builder.addCase(deleteTeam.fulfilled, (state, action: PayloadAction<number>) => {
       if (state.user && action.payload) {
         state.user.teams = [];
+        state.deleteTeamStatus = 'fulfilled';
       }
     });
 

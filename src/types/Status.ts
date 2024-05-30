@@ -7,4 +7,5 @@ export type Status =
   | 'updateUserStatus'
   | 'deleteCs2Status'
   | 'createTeamStatus'
-  | 'updateTeamStatus';
+  | 'updateTeamStatus'
+  | 'deleteTeamStatus';

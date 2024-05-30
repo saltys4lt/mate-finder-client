@@ -330,6 +330,7 @@ const TeamCreationPage = () => {
       if (updateTeamStatus === 'fulfilled') {
         dispatch(resetStatus('updateTeamStatus'));
         const teamName = (user.teams as Team[])[0].name;
+        Cookies.remove('tem');
         Swal.fire({
           icon: 'success',
           text: `Ваша команда ${teamName} отредактирована! Перейти в профиль команды?`,
@@ -475,7 +476,7 @@ const TeamCreationPage = () => {
     }));
     newTeam.neededRoles = finishedRoles;
     newTeam.ownerRole = ownerRole;
-
+    console.log(newTeam.teamRequests);
     if (isEditMode) {
       dispatch(updateTeam(newTeam));
     } else dispatch(createTeam(newTeam));

@@ -11,6 +11,7 @@ import RoleLable from '../RoleLable';
 import kickPlayer from '../../../redux/teamThunks/kickPlayer';
 import { useAppDispatch } from '../../../redux';
 import { changeMemberRoleModal } from '../../../redux/modalSlice';
+import isDefaultAvatar from '../../../util/isDefaultAvatar';
 
 const Container = styled.div`
   position: absolute;
@@ -146,7 +147,7 @@ const MemberActionsList: FC<MemberActionsListProps> = ({ member, setMember }) =>
         <KickPlayerContainer>
           <p>Выгнать игрока:</p>
           <MemberItem>
-            <img src={memberUser.user_avatar} alt='' />
+            <img src={isDefaultAvatar(memberUser.user_avatar)} alt='' />
             <span>{memberUser.nickname}</span>
             <RoleLable role={member.role} />
           </MemberItem>

@@ -1,7 +1,6 @@
 import styled from 'styled-components';
 
 const NotFoundPage = () => {
-  console.log('dsdsdsdsdsd');
   return (
     <Main>
       <h1 style={{ fontSize: '80px' }}>404</h1>
