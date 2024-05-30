@@ -1,12 +1,13 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import Team from '../../types/Team';
+import { Membership } from '../../types/Membership';
 
 const baseUrl = import.meta.env.VITE_BASE_URL;
 
-export default createAsyncThunk('usersReducer/createTeam', async (data: Team, { rejectWithValue }) => {
+export default createAsyncThunk('usersReducer/kickPlayer', async (memberId: number, { rejectWithValue }) => {
   const response = axios
-    .post<Team>(`${baseUrl}/create/${data.userId}`, data, { withCredentials: true })
+    .delete<Membership>(`${baseUrl}/kickPlayer`, { withCredentials: true, params: { memberId } })
     .then((res) => {
       return res.data;
     })

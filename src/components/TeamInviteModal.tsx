@@ -1,4 +1,4 @@
-import React, { useState, FC, useEffect, ChangeEvent } from 'react';
+import { useState, FC, useEffect, ChangeEvent } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState, useAppDispatch } from '../redux';
 import Team from '../types/Team';
@@ -13,6 +13,7 @@ import { TeamRequest } from '../types/TeamRequest';
 import { sendTeamRequest } from '../api/teamRequsts.ts/sendTeamRequest';
 import defaultUserAvatar from '../assets/images/default-avatar.png';
 import Swal from 'sweetalert2';
+import rolesIcons from '../consts/rolesIcons';
 interface ModalStatus {
   $active: string;
 }
@@ -63,6 +64,7 @@ const TeamInviteModal: FC<TeamInviteModalProps> = ({ candidate }) => {
         roleId: selectedRole.id as number,
         teamId: selectedTeam.id as number,
         toUserId: candidate.id,
+        isFromTeam: true,
       };
       sendTeamRequest(request);
       setSelectedRole(null);
@@ -110,6 +112,7 @@ const TeamInviteModal: FC<TeamInviteModalProps> = ({ candidate }) => {
                         type='checkbox'
                       />
                       <RoleLabel className={selectedRoleState(role.name)} htmlFor={(index + 30).toString()}>
+                        <img src={rolesIcons.get(role.id)} alt='' />
                         {role.name}
                       </RoleLabel>
                     </RoleCard>
@@ -350,14 +353,20 @@ const RoleLabel = styled.label`
   background-color: #181818;
   padding: 5px 10px;
   border-radius: 7px;
-  display: block;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   width: 130px;
   text-align: center;
   font-size: 16px;
   color: #d1cfcf;
-  &:hover {
-    border-color: #fff;
-    cursor: pointer;
+  column-gap: 10px;
+  img {
+    display: block;
+    width: 20px;
+    height: 20px;
+    object-fit: cover;
+    filter: invert(0.5);
   }
 
   &.active {

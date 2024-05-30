@@ -11,11 +11,15 @@ import SearchBar from './SearchBar';
 import CommonButton from './UI/CommonButton';
 import groupInviteIcon from '../assets/images/group-invite.png';
 import cancelInviteIcon from '../assets/images/cancel-invite.png';
-
+import Cookies from 'js-cookie';
 import Cs2PlayerRoles from '../consts/Cs2PlayerRoles';
 import ConfirmButton from './UI/ConfirmButton';
 import { FriendWithRole } from '../types/FriendWithRole';
 import Swal from 'sweetalert2';
+import isDefaultAvatar from '../util/isDefaultAvatar';
+import { sendTeamRequest } from '../api/teamRequsts.ts/sendTeamRequest';
+import { TeamRequest } from '../types/TeamRequest';
+import rolesIcons from '../consts/rolesIcons';
 
 interface ModalStatus {
   $active: string;
@@ -27,9 +31,21 @@ interface FriendsInviteModalProps {
   setInvitedFriends: (friends: FriendWithRole[]) => void;
   roles: string[];
   setRoles: (role: string[]) => void;
+  teamId?: number;
+  membersIds?: number[];
 }
 
-const FriendsInviteModal: FC<FriendsInviteModalProps> = ({ roles, ownerRole, invitedFriends, setInvitedFriends, setRoles }) => {
+const FriendsInviteModal: FC<FriendsInviteModalProps> = ({
+  roles,
+  ownerRole,
+  invitedFriends,
+  setInvitedFriends,
+  setRoles,
+  teamId,
+  membersIds,
+}) => {
+  const isEditMode: string | undefined = Cookies.get('tem');
+
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [isActive, setIsActive] = useState<boolean>(false);
@@ -46,8 +62,15 @@ const FriendsInviteModal: FC<FriendsInviteModalProps> = ({ roles, ownerRole, inv
   };
 
   useEffect(() => {
-    setCurrentFriends(friends);
-  }, [friends]);
+    if (friends) {
+      let friendsList = friends.filter((friend) => !invitedFriends.find((iFriend) => iFriend.id === friend.id));
+
+      if (membersIds) {
+        friendsList = friendsList.filter((friend) => !membersIds.find((memberId) => memberId === friend.id));
+      }
+      setCurrentFriends(friendsList);
+    }
+  }, [friends, membersIds]);
 
   useLayoutEffect(() => {
     if (friendsState || invitedFriendsState) {
@@ -57,7 +80,7 @@ const FriendsInviteModal: FC<FriendsInviteModalProps> = ({ roles, ownerRole, inv
 
   useEffect(() => {
     setOtherRoles(
-      Cs2PlayerRoles.filter((role) => !roles.find((neededRole) => neededRole === role.name))
+      Cs2PlayerRoles.filter((role) => roles.find((neededRole) => neededRole === role.name))
         .filter((role) => role.name !== ownerRole)
         .map((role) => role.name),
     );
@@ -72,11 +95,12 @@ const FriendsInviteModal: FC<FriendsInviteModalProps> = ({ roles, ownerRole, inv
   };
 
   const changeSelectedFriendRole = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSelectedFriend({ ...(selectedFriend as FriendWithRole), role: e.target.value });
+    const role = Cs2PlayerRoles.find((role) => role.name === e.target.value);
+    setSelectedFriend({ ...(selectedFriend as FriendWithRole), role });
   };
 
   const selectedFriendRoleState = (role: string) => {
-    return selectedFriend?.role === role ? 'active' : '';
+    return selectedFriend?.role?.name === role ? 'active' : '';
   };
   const backFromSelectedFriend = () => {
     setSelectedFriend(null);
@@ -84,11 +108,20 @@ const FriendsInviteModal: FC<FriendsInviteModalProps> = ({ roles, ownerRole, inv
 
   const addInvitedFriend = () => {
     setInvitedFriends([...(invitedFriends as FriendWithRole[]), selectedFriend as FriendWithRole]);
-    setRoles([...roles, selectedFriend?.role as string]);
+    setRoles([...roles, selectedFriend?.role?.name as string]);
     setSelectedFriend(null);
     if (roles.length === 3 || invitedFriends.length + 1 === friends.length) {
       dispatch(changeFriendsInviteModalState(false));
       setIsActive(false);
+    }
+    if (teamId) {
+      if (selectedFriend) {
+        const roleId: number = selectedFriend?.role?.id as number;
+        if (roleId) {
+          const newReq: TeamRequest = { roleId, teamId, toUserId: selectedFriend?.id as number, isFromTeam: true };
+          sendTeamRequest(newReq);
+        }
+      }
     }
   };
 
@@ -118,33 +151,68 @@ const FriendsInviteModal: FC<FriendsInviteModalProps> = ({ roles, ownerRole, inv
           />
           {invitedFriendsState && (
             <>
+              {isEditMode && <h3 style={{ color: 'var(--main-text-color)' }}>Приглашенные игроки</h3>}
               <FriendsList>
                 {invitedFriends.map((friend, _, arr) => (
                   <FriendsListItem key={friend.nickname}>
-                    <img src={friend.user_avatar} alt='' />
-                    <span>{friend.nickname}</span>
-                    <span>{friend.role as string}</span>
+                    <FriendItemData>
+                      <ProfileData>
+                        <InvitedPlayerAvatar src={isDefaultAvatar(friend.user_avatar)} alt='' />
+                        <span>{friend.nickname}</span>
+                        <InvitedPlayerLvl src={friend.lvlImg} alt='' />
+                      </ProfileData>
+                      <RoleLabelContainer>
+                        <span>Роль: </span>
+                        <InvitedPlayerRoleLabel key={friend.role?.id}>
+                          <img src={rolesIcons.get(friend.role?.id as number)} alt='' />
+                          {friend.role?.name as string}
+                        </InvitedPlayerRoleLabel>
+                      </RoleLabelContainer>
+                    </FriendItemData>
 
-                    <CommonButton
-                      onClick={() => {
-                        setInvitedFriends(arr.filter((arrItem) => arrItem.nickname !== friend.nickname));
-                        setRoles(roles.filter((role) => role !== (friend.role as string)));
-                        if (invitedFriends.length - 1 === 0) {
-                          Swal.fire({
-                            titleText: 'Все приглашения отменены',
+                    {!isEditMode ? (
+                      <CommonButton
+                        onClick={() => {
+                          setInvitedFriends(arr.filter((arrItem) => arrItem.nickname !== friend.nickname));
+                          setRoles(roles.filter((role) => role !== (friend.role?.name as string)));
+                          if (invitedFriends.length - 1 === 0) {
+                            Swal.fire({
+                              titleText: 'Все приглашения отменены',
 
-                            confirmButtonText: 'Понятно',
-                            timer: 4000,
-                            timerProgressBar: true,
-                          });
-                          dispatch(changeInvitedFriendsModalState(false));
-                          setIsActive(false);
-                        }
-                      }}
-                    >
-                      Отменить
-                      <img src={cancelInviteIcon} alt='' />
-                    </CommonButton>
+                              confirmButtonText: 'Понятно',
+                              timer: 4000,
+                              timerProgressBar: true,
+                            });
+                            dispatch(changeInvitedFriendsModalState(false));
+                            setIsActive(false);
+                          }
+                        }}
+                      >
+                        Отменить
+                        <img src={cancelInviteIcon} alt='' />
+                      </CommonButton>
+                    ) : (
+                      <CommonButton
+                        onClick={() => {
+                          setInvitedFriends(arr.filter((arrItem) => arrItem.id !== friend.id));
+                          setRoles(roles.filter((role) => role !== (friend.role?.name as string)));
+                          if (invitedFriends.length - 1 === 0) {
+                            Swal.fire({
+                              titleText: 'Все приглашения отменены',
+
+                              confirmButtonText: 'Понятно',
+                              timer: 4000,
+                              timerProgressBar: true,
+                            });
+                            dispatch(changeInvitedFriendsModalState(false));
+                            setIsActive(false);
+                          }
+                        }}
+                      >
+                        Отменить
+                        <img src={cancelInviteIcon} alt='' />
+                      </CommonButton>
+                    )}
                   </FriendsListItem>
                 ))}
               </FriendsList>
@@ -174,7 +242,7 @@ const FriendsInviteModal: FC<FriendsInviteModalProps> = ({ roles, ownerRole, inv
                   <SelectedFriendTitle>
                     <span>Выберите роль для</span>
                     <div>
-                      <img src={selectedFriend.user_avatar} alt='' />
+                      <img src={isDefaultAvatar(selectedFriend.user_avatar)} alt='' />
                       <span>{selectedFriend.nickname}</span>
                     </div>
                   </SelectedFriendTitle>
@@ -188,6 +256,7 @@ const FriendsInviteModal: FC<FriendsInviteModalProps> = ({ roles, ownerRole, inv
                           type='checkbox'
                         />
                         <RoleLabel className={selectedFriendRoleState(role)} htmlFor={(index + 20).toString()}>
+                          <img src={rolesIcons.get(Cs2PlayerRoles.find((cs2role) => cs2role.name === role)?.id as number)} alt='' />
                           {role}
                         </RoleLabel>
                       </RoleCard>
@@ -221,7 +290,7 @@ const FriendsInviteModal: FC<FriendsInviteModalProps> = ({ roles, ownerRole, inv
                           !invitedFriends.find((invFriend) => invFriend.nickname === friend.nickname) && (
                             <FriendsListItem key={friend.nickname}>
                               <img src={friend.cs2_data?.lvlImg} alt='' />
-                              <img src={friend.user_avatar} alt='' />
+                              <img src={isDefaultAvatar(friend.user_avatar as string)} alt='' />
                               <span>{friend.nickname}</span>
 
                               <CommonButton
@@ -270,7 +339,7 @@ const ModalContainer = styled.div<ModalStatus>`
   align-items: center;
   pointer-events: ${(p) => (p.$active == 'false' ? 'none' : 'all')};
   transition: opacity 0.2s ease-in-out;
-  z-index: 1;
+  z-index: 2;
 `;
 
 const Content = styled.div`
@@ -280,7 +349,7 @@ const Content = styled.div`
   padding: 20px;
   border-radius: 12px;
   background-color: #393939;
-  width: 430px;
+  width: 500px;
   min-height: 200px;
 
   max-height: 600px;
@@ -326,6 +395,7 @@ const FriendsList = styled.div`
   border-radius: 10px;
   padding: 5px;
   overflow-y: auto;
+  margin-top: 30px;
 `;
 
 const FriendsListItem = styled.div`
@@ -334,9 +404,10 @@ const FriendsListItem = styled.div`
   align-items: center;
   justify-content: center;
   justify-content: space-between;
-  padding: 5px 25px;
+  padding: 10px 25px;
   position: relative;
-  background-color: #323232;
+  background-color: #1c1c1c;
+
   border-radius: 5px;
   > img {
     width: 40px;
@@ -348,6 +419,42 @@ const FriendsListItem = styled.div`
     font-size: 16px;
     color: var(--main-text-color);
   }
+`;
+
+const FriendItemData = styled.div`
+  display: flex;
+  flex-direction: column;
+  row-gap: 10px;
+`;
+
+const ProfileData = styled.div`
+  display: flex;
+  column-gap: 5px;
+  align-items: center;
+  background-color: #1c1c1c;
+  border-radius: 5px;
+  padding: 5px;
+  > span {
+    font-size: 18px;
+  }
+`;
+
+const InvitedPlayerAvatar = styled.img`
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+`;
+
+const InvitedPlayerLvl = styled(InvitedPlayerAvatar)`
+  height: 30px;
+  width: 30px;
+`;
+
+const RoleLabelContainer = styled.div`
+  display: flex;
+  align-items: center;
+  column-gap: 5px;
 `;
 
 const SearchFriendsText = styled.p`
@@ -414,16 +521,49 @@ const RoleCheckbox = styled.input`
   display: none;
 `;
 
+const InvitedPlayerRoleLabel = styled.label`
+  border: 2px solid #565656;
+  background-color: #181818;
+  padding: 5px 10px;
+  border-radius: 7px;
+  display: flex;
+  column-gap: 10px;
+  align-items: center;
+  justify-content: center;
+  width: 130px;
+  text-align: center;
+  font-size: 16px;
+  color: #d1cfcf;
+  user-select: none;
+  > img {
+    object-fit: cover;
+    filter: invert(0.5);
+    display: block;
+    width: 20px;
+    height: 20px;
+  }
+`;
+
 const RoleLabel = styled.label`
   border: 2px solid #565656;
   background-color: #181818;
   padding: 5px 10px;
   border-radius: 7px;
-  display: block;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   width: 130px;
   text-align: center;
   font-size: 16px;
   color: #d1cfcf;
+  column-gap: 10px;
+  img {
+    display: block;
+    width: 20px;
+    height: 20px;
+    object-fit: cover;
+    filter: invert(0.5);
+  }
   &:hover {
     border-color: #fff;
     cursor: pointer;

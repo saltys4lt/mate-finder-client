@@ -1,12 +1,22 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
-import Team from '../../types/Team';
 
 const baseUrl = import.meta.env.VITE_BASE_URL;
 
-export default createAsyncThunk('usersReducer/createTeam', async (data: Team, { rejectWithValue }) => {
+interface QueryParams {
+  teamId: number;
+  name: string;
+}
+
+export default createAsyncThunk('usersReducer/deleteTeam', async ({ teamId, name }: QueryParams, { rejectWithValue }) => {
   const response = axios
-    .post<Team>(`${baseUrl}/create/${data.userId}`, data, { withCredentials: true })
+    .delete<number>(`${baseUrl}/deleteTeam`, {
+      withCredentials: true,
+      params: {
+        teamId,
+        name,
+      },
+    })
     .then((res) => {
       return res.data;
     })

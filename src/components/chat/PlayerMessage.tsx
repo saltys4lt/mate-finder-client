@@ -12,11 +12,11 @@ const PlayerMessage: FC<PlayerMessageProps> = ({ message }) => {
   return (
     <MessageContainer>
       <MessageHeader>
-        <b>{message.nickname}</b> <span>{toMessageTime(message.time)}</span>
+        <b>{message.user?.nickname}</b> <span>{toMessageTime(message.time)}</span>
       </MessageHeader>
       <MessageText>
         {messageToLink(message.text)}{' '}
-        {message.checked ? (
+        {message.checked.find((checkedBy) => checkedBy.isChecked) ? (
           <DoneAll style={{ position: 'absolute', fontSize: 18, right: '6px', bottom: '2px' }} />
         ) : (
           <Done style={{ position: 'absolute', fontSize: 18, right: '4px', bottom: '2px' }} />
