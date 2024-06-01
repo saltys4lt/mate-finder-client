@@ -1,9 +1,10 @@
-import React, { FC } from 'react';
+import { FC } from 'react';
 import Team from '../types/Team';
 import { PagePurposes } from '../consts/enums/PagePurposes';
 import Player from '../types/Player';
 import styled from 'styled-components';
 import Cs2PlayerListItem from './UI/ListItems/Cs2PlayerListItem';
+import Cs2TeamListItem from './UI/ListItems/Cs2TeamListItem';
 interface ListContainerProps {
   data: Player[] | Team[];
   purpose: PagePurposes;
@@ -24,20 +25,21 @@ const List: FC<ListContainerProps> = ({ purpose, data }) => {
       </ListContainerBackground>
     );
   }
-  if (purpose === PagePurposes.PlayersValorant) {
-    const currentList: Player[] = data as Player[];
 
-    return <div></div>;
-  }
   if (purpose === PagePurposes.TeamsCs2) {
     const currentList: Team[] = data as Team[];
 
-    return <div></div>;
-  }
-  if (purpose === PagePurposes.TeamsValorant) {
-    const currentList: Team[] = data as Team[];
-
-    return <div></div>;
+    return (
+      <ListContainerBackground>
+        <ListContainer>
+          {currentList.length > 0 ? (
+            currentList.map((team) => <Cs2TeamListItem key={team.id} team={team} />)
+          ) : (
+            <h3 style={{ marginTop: '30px', textAlign: 'center', color: '#fff' }}>По вашему запрос ничего не найдено =\</h3>
+          )}
+        </ListContainer>
+      </ListContainerBackground>
+    );
   }
 };
 

@@ -2,12 +2,12 @@ import { ChangeEvent, FC, useEffect, useState } from 'react';
 import { Filters } from '../types/Filters';
 import { PagePurposes } from '../consts/enums/PagePurposes';
 import { PlayersCs2Filters } from '../types/queryTypes/PlayersC2Filters';
-import { PlayersValorantFilters } from '../types/queryTypes/PlayersValorantFilters';
+
 import { TeamsCs2Filters } from '../types/queryTypes/TeamsCs2Filters';
-import { TeamsValorantFilters } from '../types/queryTypes/TeamsValorantFilters';
+
 import CommonInput from './UI/CommonInput';
 import { CircularProgress, FormControlLabel } from '@mui/material';
-import FilterBarSelect from './UI/FilterBarSelect';
+
 import styled from 'styled-components';
 import { takeQueryFromUrl } from '../util/takeQueryFromUrl';
 import { useQuery } from '../hooks/useQuery';
@@ -19,6 +19,7 @@ import Option from '../types/Option';
 import Cs2Maps from '../consts/Cs2Maps';
 import { MultiValue } from 'react-select';
 import { useSearchParams } from 'react-router-dom';
+import RoleLable from './UI/RoleLable';
 
 interface FilterBarProps {
   filters: Filters;
@@ -67,10 +68,6 @@ const FilterBar: FC<FilterBarProps> = ({ filters, setFilters, purpose }) => {
       <FilterBarContainer>
         {currentFilters ? (
           <>
-            <FilterRow>
-              <span>Игра:</span>
-              <FilterBarSelect />
-            </FilterRow>
             <FilterCell>
               <span>Возраст :</span>
               <FilterRow>
@@ -246,7 +243,7 @@ const FilterBar: FC<FilterBarProps> = ({ filters, setFilters, purpose }) => {
                     value={currentFilters.maxMatchesValue as string}
                     onChange={(e) => setFilters({ ...currentFilters, maxMatchesValue: e.target.value })}
                     placeholder='до'
-                    style={{ maxWidth: inputWidth }} //Добавить еще фильтров
+                    style={{ maxWidth: inputWidth }}
                   />
                 </DoubleInput>
               </FilterRow>
@@ -309,20 +306,135 @@ const FilterBar: FC<FilterBarProps> = ({ filters, setFilters, purpose }) => {
       </FilterBarContainer>
     );
   }
-  if (purpose === PagePurposes.PlayersValorant) {
-    const currentFilters: PlayersValorantFilters = filters;
 
-    return <div></div>;
-  }
   if (purpose === PagePurposes.TeamsCs2) {
     const currentFilters: TeamsCs2Filters = filters;
+    const queryParams: TeamsCs2Filters = takeQueryFromUrl(query);
 
-    return <div></div>;
-  }
-  if (purpose === PagePurposes.TeamsValorant) {
-    const currentFilters: TeamsValorantFilters = filters;
+    const roleState = (role: string) => {
+      if (currentFilters.roles?.includes(role)) return 'active';
+      else return '';
+    };
+    const changeRole = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (!currentFilters.roles?.includes(e.target.value))
+        setFilters({ ...currentFilters, roles: [...(currentFilters.roles as string[]), e.target.value] });
+      else setFilters({ ...currentFilters, roles: [...currentFilters.roles.filter((role) => role !== e.target.value)] });
+    };
+    return (
+      <FilterBarContainer>
+        {currentFilters ? (
+          <>
+            <FilterCell>
+              <span>Количество участников :</span>
+              <FilterRow>
+                <DoubleInput>
+                  <CommonInput
+                    value={currentFilters.minMembersAmount as string}
+                    onChange={(e) => setFilters({ ...currentFilters, minMembersAmount: e.target.value })}
+                    placeholder='от'
+                    style={{ maxWidth: inputWidth }}
+                  />
 
-    return <div></div>;
+                  <CommonInput
+                    value={currentFilters.maxMembersAmount as string}
+                    onChange={(e) => setFilters({ ...currentFilters, maxMembersAmount: e.target.value } as TeamsCs2Filters)}
+                    placeholder='до'
+                    style={{ maxWidth: inputWidth }}
+                  />
+                </DoubleInput>
+              </FilterRow>
+            </FilterCell>
+            <FilterCell>
+              <span>Возраст участников :</span>
+              <FilterRow>
+                <DoubleInput>
+                  <CommonInput
+                    value={currentFilters.minAge as string}
+                    onChange={(e) => setFilters({ ...currentFilters, minAge: e.target.value })}
+                    placeholder='от'
+                    style={{ maxWidth: inputWidth }}
+                  />
+
+                  <CommonInput
+                    value={currentFilters.maxAge as string}
+                    onChange={(e) => setFilters({ ...currentFilters, maxAge: e.target.value } as TeamsCs2Filters)}
+                    placeholder='до'
+                    style={{ maxWidth: inputWidth }}
+                  />
+                </DoubleInput>
+              </FilterRow>
+            </FilterCell>
+
+            <FilterCell>
+              <span>Рейтинг (elo) участников :</span>
+              <FilterRow>
+                <DoubleInput>
+                  <CommonInput
+                    value={currentFilters.minElo as string}
+                    onChange={(e) => setFilters({ ...currentFilters, minElo: e.target.value } as TeamsCs2Filters)}
+                    placeholder='от'
+                    style={{ maxWidth: inputWidth }}
+                    disabled={queryParams.category === 'recs'}
+                  />
+
+                  <CommonInput
+                    value={currentFilters.maxElo as string}
+                    onChange={(e) => setFilters({ ...currentFilters, maxElo: e.target.value } as TeamsCs2Filters)}
+                    placeholder='до'
+                    style={{ maxWidth: inputWidth }}
+                    disabled={queryParams.category === 'recs'}
+                  />
+                </DoubleInput>
+              </FilterRow>
+            </FilterCell>
+
+            <FilterCell>
+              <span>Винрейт участников:</span>
+
+              <FilterRow>
+                <DoubleInput>
+                  <CommonInput
+                    value={currentFilters.minWinrate as string}
+                    onChange={(e) => setFilters({ ...currentFilters, minWinrate: e.target.value } as TeamsCs2Filters)}
+                    placeholder='от'
+                    style={{ maxWidth: inputWidth }}
+                  />
+                  <CommonInput
+                    value={currentFilters.maxWinrate as string}
+                    onChange={(e) => setFilters({ ...currentFilters, maxWinrate: e.target.value } as TeamsCs2Filters)}
+                    placeholder='до'
+                    style={{ maxWidth: inputWidth }}
+                  />
+                </DoubleInput>
+              </FilterRow>
+            </FilterCell>
+
+            <FilterCell>
+              <span>Свободные роли :</span>
+              <RolesContainer>
+                {Cs2PlayerRoles.map((role, index) => (
+                  <RoleCard key={role.id}>
+                    <RoleCheckbox id={(index + 1).toString()} type='checkbox' value={role.name} onChange={(e) => changeRole(e)} />
+                    <RoleLable role={role} className={roleState(role.name)} htmlFor={(index + 1).toString()} />
+                  </RoleCard>
+                ))}
+              </RolesContainer>
+            </FilterCell>
+          </>
+        ) : (
+          <CircularProgress
+            color='error'
+            size={'50px'}
+            sx={{
+              zIndex: 3,
+              position: 'absolute',
+              inset: '0',
+              margin: 'auto',
+            }}
+          />
+        )}
+      </FilterBarContainer>
+    );
   }
 };
 
@@ -369,7 +481,7 @@ const FilterCell = styled.div`
   display: flex;
   flex-direction: column;
   row-gap: 10px;
-  span {
+  > span {
     font-weight: 700;
   }
 `;
@@ -398,9 +510,11 @@ const RoleLabel = styled.label`
   background-color: #181818;
   padding: 5px 10px;
   border-radius: 7px;
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 130px;
-  text-align: center;
+
   font-size: 16px;
   color: #d1cfcf;
   &:hover {

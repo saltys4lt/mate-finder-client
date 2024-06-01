@@ -5,15 +5,20 @@ const baseUrl = import.meta.env.VITE_BASE_URL;
 
 interface FetchedData {
   teams: Team[];
-  pagesCount: number;
+  pages: number;
 }
 
-export const fetchTeams = async (data: TeamsCs2Filters, setPagesCount: (count: number) => void, setTeams: (teams: Team[]) => void) => {
+export const fetchTeams = async (
+  data: TeamsCs2Filters,
+  setPagesCount: (count: number) => void,
+  setTeams: (teams: Team[]) => void,
+  userId: number,
+) => {
   const teamsWithCount = await axios
-    .get<FetchedData>(`${baseUrl}/teams`, { withCredentials: true, params: { ...data } })
+    .get<FetchedData>(`${baseUrl}/teams`, { withCredentials: true, params: { ...data, userId } })
     .then((res) => {
       if (res) {
-        setPagesCount(res.data.pagesCount);
+        setPagesCount(res.data.pages);
         setTeams(res.data.teams);
       }
     })

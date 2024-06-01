@@ -461,7 +461,7 @@ const TeamPage = () => {
           </div>
           {section === -1 && (
             <span>
-              ELO в среднем: &nbsp;
+              Рейтинг elo в среднем: &nbsp;
               <span>
                 {Math.floor(
                   ((currentTeam.user.cs2_data?.elo as number) +

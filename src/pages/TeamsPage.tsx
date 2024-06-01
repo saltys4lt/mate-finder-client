@@ -17,19 +17,20 @@ import List from '../components/List';
 import Cs2Data from '../types/Cs2Data';
 import Team from '../types/Team';
 import { fetchTeams } from '../api/teamRequsts.ts/fetchTeams';
+import Loader from '../components/Loader';
 
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#ffffff', // белый цвет
+      main: '#ffffff',
     },
   },
   components: {
     MuiPaginationItem: {
       styleOverrides: {
         root: {
-          color: '#ffffff', // Цвет номеров страниц
-          borderColor: '#ffffff', // Цвет обводки
+          color: '#ffffff',
+          borderColor: '#ffffff',
         },
       },
     },
@@ -40,11 +41,11 @@ const TeamsPage = () => {
   const query = useQuery();
   const queryParams: TeamsCs2Filters = takeQueryFromUrl(query);
   const [searchParams, setSearchParams] = useSearchParams();
-  const [teams, setTeams] = useState<Team[]>([]);
-  const [page, setPage] = useState<number>(1);
+  const [teams, setTeams] = useState<Team[] | null>(null);
   const [pagesCount, setPagesCount] = useState<number>(1);
 
   const cs2Data: Cs2Data = useSelector((state: RootState) => state.userReducer.user?.cs2_data) as Cs2Data;
+  const id: number = useSelector((state: RootState) => state.userReducer.user?.id) as number;
 
   const [teamsFilters, setTeamsFilters] = useState<TeamsCs2Filters | null>(null);
   const [FilterValues, setFilterValues] = useState<TeamsCs2Filters | null>({
@@ -61,7 +62,8 @@ const TeamsPage = () => {
         if (queryParams.category === 'recs') {
           setTeamsFilters({
             ...queryParams,
-
+            maxElo: (cs2Data.elo + 450).toString(),
+            minElo: (cs2Data.elo - 450).toString(),
             roles: searchParams.getAll('roles'),
           });
         } else {
@@ -80,7 +82,8 @@ const TeamsPage = () => {
     if (queryParams.category === 'recs')
       setFilterValues({
         ...FilterValues,
-
+        maxElo: (cs2Data.elo + 450).toString(),
+        minElo: (cs2Data.elo - 450).toString(),
         roles: searchParams.getAll('roles'),
       });
     else setFilterValues({ ...(queryParams as TeamsCs2Filters), roles: searchParams.getAll('roles') });
@@ -89,11 +92,8 @@ const TeamsPage = () => {
 
   useEffect(() => {
     if (teamsFilters) {
-      async () => {
-        await fetchTeams(teamsFilters, setPagesCount, setTeams);
-      };
+      fetchTeams(teamsFilters, setPagesCount, setTeams, id);
     }
-    return () => {};
   }, [teamsFilters]);
 
   const handleChangeSearchBar = (e: ChangeEvent<HTMLInputElement>) => {
@@ -142,7 +142,11 @@ const TeamsPage = () => {
       <Container>
         <MainContainer>
           <LeftContainer>
-            <FilterBar filters={FilterValues as TeamsCs2Filters} setFilters={setFilterValues} purpose={PagePurposes.TeamsCs2} />
+            <FilterBar
+              filters={FilterValues as TeamsCs2Filters}
+              setFilters={setFilterValues as (someFilters: TeamsCs2Filters) => void}
+              purpose={PagePurposes.TeamsCs2}
+            />
           </LeftContainer>
           <RightContainer>
             <SearchBar
@@ -172,7 +176,8 @@ const TeamsPage = () => {
                 Рекомендуемые
               </CategoryButton>
             </PlayersCategories>
-            <List purpose={PagePurposes.TeamsCs2} data={teams} />
+            {teams ? <List purpose={PagePurposes.TeamsCs2} data={teams as Team[]} /> : <Loader />}
+
             {!teamsFilters ? (
               <></>
             ) : (

@@ -7,7 +7,7 @@ import { RootState, useAppDispatch } from '../redux';
 import { changeLoginState, changeRegState } from '../redux/modalSlice';
 import { changeIsAuth } from '../redux/userSlice';
 import { useEffect, useState } from 'react';
-import logoImg from '../assets/images/header1-logo.jpeg';
+import logoImg from '../assets/images/logo.png';
 import logout from '../assets/images/logout.png';
 import { resetChats } from '../redux/chatSlice';
 import { ioSocket } from '../api/webSockets/socket';
@@ -162,7 +162,7 @@ const RegistrationButton = styled.button`
   color: var(--main-text-color);
   padding: 5px 16px;
   border-radius: 4px;
-  background: radial-gradient(circle at 10% 20%, rgb(172, 50, 42) 0%, rgb(106, 55, 55) 100.7%);
+  background: radial-gradient(circle at 10% 20%, rgb(199, 96, 11) 0%, rgb(106, 55, 55) 100.7%);
   background-size: 100%;
   height: 32px;
 
@@ -184,13 +184,15 @@ const LogoWrapper = styled.div`
 `;
 
 const LogoImage = styled.img`
-  height: 60px;
+  width: 100%;
+  max-height: 70px;
+  object-fit: cover;
   border-radius: 5px;
 `;
 const LogoText = styled.h1`
   margin-left: 20px;
   font-size: 28px;
-  background: linear-gradient(45deg, #f33e3e, #949494);
+  background: linear-gradient(100deg, #e28615, #d9950d);
   -webkit-background-clip: text;
   color: transparent;
 `;

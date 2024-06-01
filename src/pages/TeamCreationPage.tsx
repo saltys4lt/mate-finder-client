@@ -545,10 +545,13 @@ const TeamCreationPage = () => {
         confirmButtonText: 'Отменить и выйти',
       }).then((res) => {
         if (res.isConfirmed) {
+          Cookies.remove('tem');
           navigate(`/team/${team.name}`);
         }
       });
     } else {
+      Cookies.remove('tem');
+
       navigate(`/team/${team.name}`);
     }
   };
@@ -609,45 +612,7 @@ const TeamCreationPage = () => {
             {creationStep === 1 && (
               <GameAndStatus style={firstStep}>
                 <TeamData>
-                  <TeamDataText>Игра</TeamDataText>
-                  <div style={{ display: 'flex', alignItems: 'center', columnGap: '5px', color: 'var(--main-text-color)' }}>
-                    <Select
-                      maxMenuHeight={130}
-                      isSearchable={false}
-                      styles={{
-                        ...customStyles,
-                        control: (base: any) => ({
-                          ...base,
-                          width: '300px',
-                          background: '#181818',
-                          boxShadow: '0',
-                          borderColor: '#484848',
-                          cursor: 'pointer',
-                          '&:hover': {
-                            borderColor: '#808080',
-                          },
-                        }),
-                      }}
-                      options={availableGames}
-                      value={game}
-                      onChange={handleGameChange}
-                      components={{
-                        Option: CustomOption,
-                        SingleValue: CustomSingleValue,
-                      }}
-                      placeholder='Выбор игры'
-                    ></Select>
-                    <ErrorOutlineContainer>
-                      <ErrorOutline />
-                      <GameExplenation>
-                        Список доступных игр зависит от ваших игровых профелей. Если вы не регистрировали профиль с какой-то игрой, то и
-                        создать команду с этой игрой нельзя.
-                      </GameExplenation>
-                    </ErrorOutlineContainer>
-                  </div>
-                </TeamData>
-
-                <TeamData>
+                  <TeamDataText style={{ textAlign: 'center', fontSize: 23, marginBottom: '15px' }}>Тип команды</TeamDataText>
                   <TeamDataText style={{ display: 'flex', columnGap: '5px', position: 'relative' }}>
                     <span>Публичная / Приватная:</span>
                     <ErrorOutlineContainer>
