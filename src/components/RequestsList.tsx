@@ -16,6 +16,7 @@ import { useTeamRequests } from '../hooks/useTeamRequests';
 import { useRequestEvents } from '../hooks/useRequestEvents';
 import cancelIcon from '../assets/images/cancel-invite.png';
 import { cancelFriendRequest } from '../api/friendsRequests/cancelFriendRequest';
+import { cancelRequest } from '../api/teamRequsts.ts/cancelRequest';
 const RequestsList = () => {
   const { receivedRequests, sentRequests, requestsToTeam, id } = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
   const isActive = useSelector((state: RootState) => state.modalReducer.requestsIsActive);
@@ -218,26 +219,18 @@ const RequestsList = () => {
                         <span>{req.team?.name}</span>
                       </div>
                       <span>
-                        Приглашение на роль: <span>{req.role?.name}</span>
+                        Заявка на роль: <span>{req.role?.name}</span>
                       </span>
                     </TeamReqItemData>
                     <TeamActionButtons>
                       <CommonButton
                         onClick={(e) => {
                           e.stopPropagation();
-                          answerTeamRequest({ accept: true, req: req });
+                          cancelRequest(req);
                         }}
                       >
-                        Принять
-                      </CommonButton>
-                      <CommonButton
-                        onClick={(e) => {
-                          e.stopPropagation();
-
-                          answerTeamRequest({ accept: false, req: req });
-                        }}
-                      >
-                        Отклонить
+                        <img src={cancelIcon} alt='' />
+                        Отменить
                       </CommonButton>
                     </TeamActionButtons>
                   </TeamReqItem>

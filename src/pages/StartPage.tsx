@@ -48,7 +48,7 @@ const StartPage = () => {
 const Main = styled.main`
   height: 80vh;
   background-image: url('${startPageBg}');
-  background-size: 100%;
+  background-size: 110%;
   background-repeat: no-repeat;
 `;
 
@@ -56,9 +56,8 @@ const ContentContainer = styled.div`
   width: 100%;
   display: flex;
 
-  align-items: flex-end;
   flex-direction: column;
-  color: #fff;
+  color: var(--main-text-color);
   padding: 30px;
 `;
 const Content = styled.div`
@@ -81,14 +80,15 @@ const SubContent = styled.p`
   column-gap: 10px;
 `;
 const SubContentRed = styled.span`
-  color: #f33e3e;
+  color: #de8202;
   font-size: 30px;
   text-transform: uppercase;
+  font-weight: 700;
 `;
 const ContentIcon = styled.img`
-  filter: invert(1);
   width: 50px;
   margin-left: 20px;
+  filter: invert(1);
 `;
 
 const StartButton = styled.button`
@@ -100,7 +100,7 @@ const StartButton = styled.button`
   color: #fff;
   padding: 5px 16px;
   border-radius: 4px;
-  background: radial-gradient(circle at 10% 200%, rgb(197, 84, 76) 30%, rgb(0, 0, 0) 200%);
+  background: radial-gradient(circle at 10% 200%, rgb(217, 127, 8) 30%, rgb(0, 0, 0) 200%);
 
   background-size: 100%;
   height: 80px;
