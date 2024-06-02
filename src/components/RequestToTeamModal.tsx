@@ -30,11 +30,10 @@ const RequestToTeamModal: FC<SendRequestToTeamProps> = ({ team }) => {
   const dispatch = useAppDispatch();
   useEffect(() => {
     if (team) {
-      setOtherRoles(
-        Cs2PlayerRoles.filter((role) => role.name !== team.ownerRole && !team.members.find((member) => member.roleId === role.id)),
-      );
+      setOtherRoles(team.neededRoles);
     }
   }, [team]);
+  console.log(team);
 
   const handleSelectRole = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.value === selectedRole?.name) {

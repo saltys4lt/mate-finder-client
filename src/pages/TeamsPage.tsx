@@ -18,6 +18,7 @@ import Cs2Data from '../types/Cs2Data';
 import Team from '../types/Team';
 import { fetchTeams } from '../api/teamRequsts.ts/fetchTeams';
 import Loader from '../components/Loader';
+import RequestToTeamModal from '../components/RequestToTeamModal';
 
 const theme = createTheme({
   palette: {
@@ -137,6 +138,7 @@ const TeamsPage = () => {
   const handleChangePage = (page: number) => {
     if (page.toString() !== queryParams.page) setSearchParams({ ...queryParams, page: page.toString() });
   };
+
   return (
     <Main>
       <Container>
@@ -235,10 +237,10 @@ const PlayersCategories = styled.div`
 `;
 
 const CategoryButton = styled(CommonButton)`
-  border-color: #d82f2f;
+  border-color: var(--orange-color);
   &:disabled {
     &:hover {
-      border-color: #d82f2f;
+      border-color: var(--orange-color);
       cursor: auto;
     }
   }

@@ -24,7 +24,7 @@ const ConfirmButtonStyled = styled.button`
   transition: all 0.3s ease-in-out;
   &:hover {
     transform: scale(1.03);
-    background-color: #b92727;
+    background-color: var(--orange-color);
     color: #fff;
   }
 `;

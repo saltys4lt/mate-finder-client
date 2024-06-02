@@ -60,11 +60,11 @@ const SearchButton = styled.button<{ $width?: string }>`
   border: 0;
   font-family: montserrat;
 
-  background-color: #d82f2f;
+  background-color: #de7003;
   color: #fff;
   &:hover {
     cursor: pointer;
-    background-color: #af2828;
+    background-color: #cc6803;
   }
 `;
 export default SearchBar;

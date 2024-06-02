@@ -43,7 +43,7 @@ import sendMessageIcon from '../assets/images/send-message.png';
 import cs2ProfilePicture from '../assets/images/cs2-profile-pic.jpeg';
 import valorantProfilePicture from '../assets/images/valorant-profile-pic.jpg';
 import dropDownArrow from '../assets/images/drop-down-arrow.png';
-import headerBg from '../assets/images/profile-bg.png';
+import headerBg from '../assets/images/start-page-bg.jpg';
 import { setCurrentChat } from '../redux/chatSlice';
 import { Chat } from '../types/Chat';
 import { sendFriendRequest } from '../api/friendsRequests/sendFriendRequest';
@@ -581,20 +581,6 @@ const ProfilePage = () => {
                   <p style={{ color: '#fff', textAlign: 'center' }}>У этого пользователя нет игрового профиля</p>
                 )}
               </Cs2Stats>
-            </GameContainer>
-            <GameContainer>
-              <GameIcon src={valorantProfilePicture} />
-              <ValorantStats>
-                {profileUser.valorant_data ? (
-                  <></>
-                ) : !player ? (
-                  <CreateGameProfileButton onClick={() => dispatch(changeGameProfileState(true))}>
-                    Создать игровой профиль
-                  </CreateGameProfileButton>
-                ) : (
-                  <p style={{ color: '#fff', textAlign: 'center' }}>У этого пользователя нет игрового профиля</p>
-                )}
-              </ValorantStats>
             </GameContainer>
           </LeftContainer>
           <RightContainer>

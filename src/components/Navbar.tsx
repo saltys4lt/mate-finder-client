@@ -271,7 +271,9 @@ const Exit = styled.img`
   height: 40px;
   margin-left: 20px;
   cursor: pointer;
+
   transition: transform 0.2s ease-in-out;
+
   &:hover {
     transform: scale(1.1);
   }
@@ -284,7 +286,7 @@ const DropDownContent = styled.div`
   position: absolute;
 
   transform: translateY(-400%);
-  background-color: #cb3030;
+  background-color: #fe8205;
   left: -50%;
   top: 20px;
   box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);

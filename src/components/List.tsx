@@ -5,6 +5,7 @@ import Player from '../types/Player';
 import styled from 'styled-components';
 import Cs2PlayerListItem from './UI/ListItems/Cs2PlayerListItem';
 import Cs2TeamListItem from './UI/ListItems/Cs2TeamListItem';
+
 interface ListContainerProps {
   data: Player[] | Team[];
   purpose: PagePurposes;

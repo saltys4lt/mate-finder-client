@@ -238,10 +238,10 @@ const PlayersCategories = styled.div`
 `;
 
 const CategoryButton = styled(CommonButton)`
-  border-color: #d82f2f;
+  border-color: var(--orange-color);
   &:disabled {
     &:hover {
-      border-color: #d82f2f;
+      border-color: var(--orange-color);
       cursor: auto;
     }
   }

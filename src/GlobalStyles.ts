@@ -4,6 +4,8 @@ const GlobalStyle = createGlobalStyle`
   :root {
     --main-text-color: #dedede;
     --main-red-color: #8f2121;
+    --orange-color: #fe8205;
+
   }
 *{
   padding: 0;

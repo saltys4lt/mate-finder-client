@@ -2,17 +2,31 @@ import { FC } from 'react';
 import styled from 'styled-components';
 import CommonButton from '../CommonButton';
 import { useNavigate } from 'react-router-dom';
-
 import Team from '../../../types/Team';
 import { getAgeString } from '../../../util/getAgeString';
 import RoleLable from '../RoleLable';
 
+import openTeamImg from '../../../assets/images/open-team-icon.png';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../redux';
+
+import ClientUser from '../../../types/ClientUser';
+import isDefaultAvatar from '../../../util/isDefaultAvatar';
 interface ListItemProps {
   team: Team;
 }
 
 const Cs2TeamListItem: FC<ListItemProps> = ({ team }) => {
   const navigate = useNavigate();
+
+  const friends = useSelector((state: RootState) => state.userReducer.user?.friends);
+
+  console.log(team.members);
+  const friendsInTeam: ClientUser[] | undefined = friends?.filter((friend) => team.members.some((member) => member.user.id === friend.id));
+  const friendOwner: ClientUser | undefined = friends?.find((friend) => friend.id === team.userId);
+  if (friendOwner) {
+    friendsInTeam?.push(friendOwner);
+  }
 
   const avgElo = Math.floor(
     ((team.user.cs2_data?.elo as number) + team.members.reduce((start, member) => (member.user.cs2_data?.elo as number) + start, 0)) /
@@ -27,66 +41,102 @@ const Cs2TeamListItem: FC<ListItemProps> = ({ team }) => {
     ((team.user.age as number) + team.members.reduce((start, member) => (member.user.age as number) + start, 0)) /
       (team.members.length + 1),
   );
+
   return (
     <ListItemContainer>
-      <NameAndAvatar>
-        <TeamName>{team.name}</TeamName>
-        <TeamAvatar
-          src={team.avatar}
-          onClick={() => {
-            navigate(`/team/${team.name}`);
-          }}
-        />
-      </NameAndAvatar>
-
-      <TeamInfo>
+      <FriendsRow>
         {' '}
-        <MembersText>
-          <span>
-            <span>{team.members.length + 1}</span>/5
-          </span>{' '}
-          участников
-        </MembersText>
-        <p>Средние показатели: </p>
-        <TeamInfoInner>
-          {' '}
-          <TeamDataText>
-            <span> Рейтинг : </span>
-            {avgElo} elo
-          </TeamDataText>
-          <TeamDataText>
-            <span>Винрейт:</span> {avgWinrate} %
-          </TeamDataText>
-          <TeamDataText>
-            <span>Возраст:</span> {getAgeString(avgYears)}
-          </TeamDataText>
-        </TeamInfoInner>
-        <RolesInfoRow>
-          <span>Нужные игроки</span>
-          <RolesContainer>
-            {team.neededRoles.length !== 0 ? (
-              <RolesContainer>
-                {team.neededRoles.map((role) => (
-                  <CustomRoleLabel key={role.id} role={role} />
-                ))}
-              </RolesContainer>
-            ) : (
-              <></>
+        {friendsInTeam && (
+          <>
+            {friendsInTeam.slice(0, 2).map((friend) => (
+              <FriendItem key={friend.id}>
+                <img src={isDefaultAvatar(friend.user_avatar)} alt='' />
+                <span>{friend.nickname}</span>
+              </FriendItem>
+            ))}
+            {friendsInTeam.length > 2 && (
+              <span>
+                и еще {friendsInTeam.length - 2} {friendsInTeam.length - 2 === 1 ? 'друг' : 'друга'}
+              </span>
             )}
-          </RolesContainer>
-        </RolesInfoRow>
-      </TeamInfo>
+          </>
+        )}
+      </FriendsRow>
+      <ListItemInnerContainer>
+        <NameAndAvatar>
+          <TeamName
+            onClick={() => {
+              navigate(`/team/${team.name}`);
+            }}
+          >
+            {team.name}
+          </TeamName>
+          <TeamAvatar
+            src={team.avatar}
+            onClick={() => {
+              navigate(`/team/${team.name}`);
+            }}
+          />
+        </NameAndAvatar>
+
+        <TeamInfo>
+          {' '}
+          <MembersText>
+            <span>
+              <span>{team.members.length + 1}</span>/5
+            </span>{' '}
+            участников
+          </MembersText>
+          <p>Средние показатели: </p>
+          <TeamInfoInner>
+            {' '}
+            <TeamDataText>
+              <span> Рейтинг : </span>
+              {avgElo} elo
+            </TeamDataText>
+            <TeamDataText>
+              <span>Винрейт:</span> {avgWinrate} %
+            </TeamDataText>
+            <TeamDataText>
+              <span>Возраст:</span> {getAgeString(avgYears)}
+            </TeamDataText>
+          </TeamInfoInner>
+          <RolesInfoRow>
+            <span>Нужные игроки</span>
+            <RolesContainer>
+              {team.neededRoles.length !== 0 ? (
+                <RolesContainer>
+                  {team.neededRoles.map((role) => (
+                    <CustomRoleLabel key={role.id} role={role} />
+                  ))}
+                </RolesContainer>
+              ) : (
+                <></>
+              )}
+            </RolesContainer>
+          </RolesInfoRow>
+        </TeamInfo>
+      </ListItemInnerContainer>
+      <ListItemsButtons>
+        <CommonButton onClick={() => navigate(`/team/${team.name}`)}>
+          <img src={openTeamImg} alt='' />
+          Просмотреть
+        </CommonButton>
+      </ListItemsButtons>
     </ListItemContainer>
   );
 };
-
-const ListItemContainer = styled.div`
+const ListItemInnerContainer = styled.div`
   display: flex;
-
   align-items: center;
   column-gap: 20px;
-
-  padding: 15px 10px;
+`;
+const ListItemContainer = styled.div`
+  display: flex;
+  position: relative;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 20px;
   background-color: #1f1f1f;
   border-radius: 5px;
   color: var(--main-text-color);
@@ -129,7 +179,8 @@ const MembersText = styled.span`
   > span {
     font-weight: 700;
     > span {
-      color: #df3131;
+      font-size: 16px;
+      color: var(--orange-color);
     }
   }
 `;
@@ -195,24 +246,52 @@ const RolesContainer = styled.div`
 `;
 
 const CustomRoleLabel = styled(RoleLable)`
-  width: 100px;
-  height: 30px;
-  font-size: 14px;
+  width: 90px;
+  height: 27px;
+  font-size: 12px;
   column-gap: 5px;
   img {
-    width: 17px;
-    height: 17px;
+    width: 15px;
+    height: 15px;
   }
   &:hover {
     cursor: auto;
   }
 `;
 
-const ListItemsButtons = styled.div`
-  width: 35%;
+const FriendsRow = styled.div`
+  top: 10px;
+  right: 10px;
+  position: absolute;
   display: flex;
-  flex-direction: column;
   align-items: center;
+  column-gap: 5px;
+  > span {
+    font-size: 12px;
+    color: #afafaf;
+  }
+`;
+
+const FriendItem = styled.div`
+  display: flex;
+  column-gap: 5px;
+  align-items: center;
+  > img {
+    width: 25px;
+    height: 25px;
+    object-fit: cover;
+    border-radius: 50%;
+  }
+  > span {
+    font-size: 12px;
+  }
+`;
+
+const ListItemsButtons = styled.div`
+  display: flex;
+
+  justify-self: flex-end;
+
   row-gap: 10px;
 `;
 
