@@ -10,6 +10,7 @@ import NewsPage from '../pages/NewsPage';
 import { Navigate } from 'react-router-dom';
 import TeamPage from '../pages/TeamPage';
 import NotFoundPage from '../pages/NotFoundPage';
+import ArticlePage from '../pages/ArticlePage';
 const HomePage = lazy(() => import('../pages/HomePage'));
 const ProfilePage = lazy(() => import('../pages/ProfilePage'));
 
@@ -47,7 +48,9 @@ export const authorizedGameProfileRoutes = [
       </Suspense>
     ),
   },
-  { path: '*', element: <Navigate to='/404' replace={true} /> },
+  { path: '/news/:link', element: <ArticlePage /> },
+
+  // { path: '*', element: <Navigate to='/404' replace={true} /> },
 ];
 
 export const privateRoutes = [
@@ -75,6 +78,7 @@ export const privateRoutes = [
       </Suspense>
     ),
   },
+  { path: '/news/:link', element: <ArticlePage /> },
   {
     path: '/profile/:nickname',
     element: (
@@ -87,11 +91,13 @@ export const privateRoutes = [
     path: '/404',
     element: <NotFoundPage />,
   },
-  { path: '*', element: <Navigate to='/404' replace={true} /> },
+  // { path: '*', element: <Navigate to='/404' replace={true} /> },
 ];
 
 export const publicRoutes = [
   { path: '/', element: <StartPage /> },
+  { path: '/news', element: <NewsPage /> },
+  { path: '/news/:link', element: <ArticlePage /> },
 
   { path: '*', element: <Navigate to='/' replace={true} /> },
 ];

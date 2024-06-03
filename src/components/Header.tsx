@@ -44,7 +44,7 @@ const Header = () => {
                 >
                   создайте игровой профиль
                 </span>
-                &nbsp; для <b>CS2</b> или <b>VALORANT</b>
+                &nbsp; для <b>Counter-strike</b>
               </>
             </Alert>
           )}

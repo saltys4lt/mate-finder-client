@@ -20,6 +20,7 @@ import { customStyles, CustomOption, CustomSingleValue } from '../components/UI/
 
 import checkUserIsAuth from '../redux/userThunks/checkUserIsAuth';
 import cs2CreationBg from '../assets/images/cs-creation-bg.webp';
+import RoleLable from '../components/UI/RoleLable';
 interface CreationDataValidation {
   isRolesValid: boolean;
   isMapsValid: boolean;
@@ -161,9 +162,7 @@ const CreationPage = () => {
                       value={role.name}
                       disabled={roleState(role.name) === 'focus'}
                     />
-                    <RoleLabel className={roleState(role.name)} htmlFor={(index + 1).toString()}>
-                      {role.name}
-                    </RoleLabel>
+                    <RoleLable className={roleState(role.name)} htmlFor={(index + 1).toString()} role={role} />
                   </RoleCard>
                 ))}
               </RolesContainer>

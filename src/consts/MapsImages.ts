@@ -5,6 +5,7 @@ import overpass from '../assets/images/maps/overpass.webp';
 import anubis from '../assets/images/maps/anubis.webp';
 import nuke from '../assets/images/maps/nuke.webp';
 import vertigo from '../assets/images/maps/vertigo.webp';
+import ancient from '../assets/images/maps/ancient.webp';
 
 const MapsImages: Record<string, string> = {
   Mirage: mirage,
@@ -14,6 +15,7 @@ const MapsImages: Record<string, string> = {
   Anubis: anubis,
   Nuke: nuke,
   Vertigo: vertigo,
+  Ancient: ancient,
 };
 
 export default MapsImages;

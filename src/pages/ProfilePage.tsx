@@ -15,7 +15,7 @@ import { setPlayer, setPlayerError } from '../redux/playerSlice';
 import Loader from '../components/Loader';
 import { useNavigate } from 'react-router-dom';
 import updateCs2Data from '../redux/cs2Thunks/updateCs2Data';
-import { CircularProgress } from '@mui/material';
+import { CircularProgress, capitalize } from '@mui/material';
 import LoaderBackground from '../components/UI/LoaderBackground';
 import copyCurrentUrl from '../util/copyCurrentUrl';
 import { getDownloadURL, ref, uploadBytes, deleteObject } from 'firebase/storage';
@@ -41,7 +41,6 @@ import FriendsIcon from '../assets/images/friends.png';
 import addFriendsIcon from '../assets/images/add-friend.png';
 import sendMessageIcon from '../assets/images/send-message.png';
 import cs2ProfilePicture from '../assets/images/cs2-profile-pic.jpeg';
-import valorantProfilePicture from '../assets/images/valorant-profile-pic.jpg';
 import dropDownArrow from '../assets/images/drop-down-arrow.png';
 import headerBg from '../assets/images/start-page-bg.jpg';
 import { setCurrentChat } from '../redux/chatSlice';
@@ -55,6 +54,8 @@ import TeamInviteModal from '../components/TeamInviteModal';
 import { cancelFriendRequest } from '../api/friendsRequests/cancelFriendRequest';
 import { friendRequestAnswer } from '../api/friendsRequests/friendRequestAnswer';
 import { deleteFromFriends } from '../api/friendsRequests/deleteFromFriends';
+import { capitalizeWord } from '../util/capitalizeWord';
+import { formatDateWithTime } from '../util/formatDate';
 const ProfilePage = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -86,10 +87,12 @@ const ProfilePage = () => {
   useEffect(() => {
     if (user?.nickname === nickname) {
       setProfileUser(user);
-    } else {
+    } else if (user.cs2_data) {
       if (player) {
         setProfileUser(player);
       } else dispatch(fetchPlayerByName(nickname as string));
+    } else {
+      navigate('/404');
     }
 
     return () => {
@@ -109,7 +112,7 @@ const ProfilePage = () => {
   if (playerError) {
     dispatch(setPlayer(null));
     dispatch(setPlayerError(null));
-    navigate('/');
+    navigate('/404');
   }
 
   useEffect(() => {
@@ -248,7 +251,7 @@ const ProfilePage = () => {
     : updatedUserData.user_avatar
       ? updatedUserData.user_avatar
       : profileUser?.user_avatar;
-
+  console.log(profileUser.cs2_data?.recentMatches);
   return (
     <>
       <Modal />
@@ -599,42 +602,89 @@ const ProfilePage = () => {
                 <DescriptionText>{profileUser.description ? profileUser.description : 'Информация отсутствует...'}</DescriptionText>
               )}
             </Description>
-            <Teams>
-              <RightContentTitle>Команды</RightContentTitle>
-              <TeamsContainer>
-                {profileUser.teams.length > 0
-                  ? profileUser.teams.map((team) => (
-                      <Team
-                        key={team.id}
-                        onClick={() => {
-                          navigate(`/team/${team.name}`);
-                        }}
-                      >
-                        <div>
-                          <img src={team.avatar} alt='' />
-                          <span>{team.name}</span>
-                        </div>
-                        <span>{team.members.length + 1}/5</span>
-                      </Team>
-                    ))
-                  : profileUser.memberOf.map(({ team }) => (
-                      <Team
-                        key={team.id}
-                        onClick={() => {
-                          navigate(`/team/${team.name}`);
-                        }}
-                      >
-                        <div>
-                          <img src={team.avatar} alt='' />
-                          <span>{team.name}</span>
-                        </div>
-                        <span>{team.members.length + 1}/5</span>
-                      </Team>
-                    ))}
-              </TeamsContainer>
-            </Teams>
+            {profileUser.cs2_data && (
+              <Teams>
+                <RightContentTitle>Команда</RightContentTitle>
+                <TeamsContainer>
+                  {profileUser.teams.length > 0 || profileUser.memberOf.length > 0 ? (
+                    <>
+                      {profileUser.teams.length > 0 &&
+                        profileUser.teams.map((team) => (
+                          <Team
+                            key={team.id}
+                            onClick={() => {
+                              navigate(`/team/${team.name}`);
+                            }}
+                          >
+                            <div>
+                              <img src={team.avatar} alt='' />
+                              <span>{team.name}</span>
+                            </div>
+                            <span>{team.members.length + 1}/5</span>
+                          </Team>
+                        ))}
+                      {profileUser.memberOf.length > 0 &&
+                        profileUser.memberOf.map(({ team }) => (
+                          <Team
+                            key={team.id}
+                            onClick={() => {
+                              navigate(`/team/${team.name}`);
+                            }}
+                          >
+                            <div>
+                              <img src={team.avatar} alt='' />
+                              <span>{team.name}</span>
+                            </div>
+                            <span>{team.members.length + 1}/5</span>
+                          </Team>
+                        ))}
+                    </>
+                  ) : profileUser.id === user.id ? (
+                    <NoTeamText>
+                      Вы не состоите в команде. <span onClick={() => navigate('/teams')}>найти</span>
+                    </NoTeamText>
+                  ) : (
+                    <NoTeamText>Не состоит в команде</NoTeamText>
+                  )}
+                </TeamsContainer>
+              </Teams>
+            )}
           </RightContainer>
         </ProfileMainContainer>
+        {profileUser.cs2_data && (
+          <MatchesSection>
+            <MatchesTitle>Последние матчи</MatchesTitle>
+            <MatchesContainer>
+              {profileUser.cs2_data.recentMatches.map((match) => (
+                <a style={{ textDecoration: 'none' }} href={match.link} key={match.id} target='_blank'>
+                  <MatchItem $isWin={match.result}>
+                    <MatchMap src={MapsImages[capitalizeWord(match.map)]} />
+                    <MatchDataColumn>
+                      <MatchResult $isWin={match.result}>{match.result ? 'Победа' : 'Поражение'}</MatchResult>
+                      <span>{match.stat}</span>
+                    </MatchDataColumn>
+                    <MatchDataColumn>
+                      <MatchDataTitle>У/П/С</MatchDataTitle>
+                      <MatchText>{match.kad}</MatchText>
+                    </MatchDataColumn>
+                    <MatchDataColumn>
+                      <MatchDataTitle>У.С</MatchDataTitle>
+                      <MatchText>{match.kd}</MatchText>
+                    </MatchDataColumn>
+                    <MatchDataColumn>
+                      <MatchDataTitle>Дата</MatchDataTitle>
+                      <MatchText>{formatDateWithTime(match.date.toString())}</MatchText>
+                    </MatchDataColumn>
+                    <MatchDataColumn>
+                      <MatchDataTitle>Рейтинг elo за матч</MatchDataTitle>
+                      <EloText>{match.eloChange}</EloText>
+                    </MatchDataColumn>
+                  </MatchItem>
+                </a>
+              ))}
+            </MatchesContainer>
+          </MatchesSection>
+        )}
       </Container>
     </>
   );
@@ -798,6 +848,76 @@ const ProfileMainContainer = styled.div`
     align-items: center;
   }
 `;
+
+const MatchesSection = styled.section`
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  row-gap: 20px;
+  margin-bottom: 20px;
+`;
+
+const MatchesContainer = styled.div`
+  width: 80%;
+  display: flex;
+  flex-direction: column;
+  row-gap: 15px;
+`;
+const MatchItem = styled.div<{ $isWin: boolean }>`
+  width: 100%;
+  border-radius: 10px;
+  padding: 3px 10px;
+  border-bottom: 2px solid ${(p) => (p.$isWin ? '#a1d586' : '#ca3e3f')};
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #2f2f2f;
+  transition: all 0.3s ease-in-out;
+  &:hover {
+    cursor: pointer;
+    opacity: 0.7;
+    transform: translateX(10px);
+  }
+`;
+
+const MatchText = styled.span`
+  font-weight: 700;
+`;
+
+const EloText = styled(MatchText)<{ $isWin: boolean }>`
+  color: ${(p) => (p.$isWin ? '#a1d586' : '#ca3e3f')};
+`;
+
+const MatchDataColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  row-gap: 15px;
+  color: var(--main-text-color);
+`;
+
+const MatchDataTitle = styled.span`
+  color: #7f7f7f;
+  font-size: 16px;
+`;
+
+const MatchResult = styled.span<{ $isWin: boolean }>`
+  width: 110px;
+  text-align: center;
+  font-weight: 700;
+  border-radius: 5px;
+  padding: 3px;
+  background-color: ${(p) => (p.$isWin ? '#a1d586' : '#ca3e3f')};
+  color: ${(p) => (p.$isWin ? '#333' : '')};
+  text-decoration: none;
+`;
+
+const MatchMap = styled.img`
+  width: 100px;
+  height: 50px;
+  border-radius: 5px;
+`;
+
 const LeftContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -974,15 +1094,6 @@ const DropDownButton = styled(CommonButton)`
 
 const MapsContainer = styled(RolesContainer)``;
 
-const ValorantStats = styled.div`
-  padding: 10px 15px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-`;
-
 const RightContentTitle = styled.h3`
   color: #fff;
 `;
@@ -1106,5 +1217,19 @@ const ActionsList = styled.ul`
   flex-direction: column;
   row-gap: 10px;
 `;
+
+const NoTeamText = styled.p`
+  font-weight: 300;
+  margin-top: -10px;
+  margin-left: 20px;
+  color: var(--main-text-color);
+  > span {
+    font-weight: 700;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+`;
+
+const MatchesTitle = styled(RightContentTitle)``;
 
 export default ProfilePage;
