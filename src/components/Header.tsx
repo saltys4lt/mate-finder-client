@@ -7,6 +7,7 @@ import { useSelector } from 'react-redux';
 import { RootState, useAppDispatch } from '../redux';
 
 import { changeGameProfileState } from '../redux/modalSlice';
+import { SteamAuth } from '../api/steamAuth';
 
 const Header = () => {
   const cs2_data = useSelector((state: RootState) => state.userReducer.user?.cs2_data);
@@ -39,7 +40,7 @@ const Header = () => {
                     cursor: 'pointer',
                   }}
                   onClick={() => {
-                    dispatch(changeGameProfileState(true));
+                    SteamAuth();
                   }}
                 >
                   создайте игровой профиль

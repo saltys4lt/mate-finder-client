@@ -142,7 +142,7 @@ const FilterBar: FC<FilterBarProps> = ({ filters, setFilters, purpose }) => {
               </RadioGroup>
             </FilterCell>
             <FilterCell>
-              <span>ELO :</span>
+              <span>Рейтинг (еlo) :</span>
               <FilterRow>
                 <DoubleInput>
                   <CommonInput
@@ -164,7 +164,7 @@ const FilterBar: FC<FilterBarProps> = ({ filters, setFilters, purpose }) => {
               </FilterRow>
             </FilterCell>
             <FilterCell>
-              <span>K/D :</span>
+              <span>Кд :</span>
 
               <FilterRow>
                 <DoubleInput>
@@ -187,7 +187,7 @@ const FilterBar: FC<FilterBarProps> = ({ filters, setFilters, purpose }) => {
               </FilterRow>
             </FilterCell>
             <FilterCell>
-              <span>HS :</span>
+              <span>% Убийств в голову:</span>
 
               <FilterRow>
                 <DoubleInput>

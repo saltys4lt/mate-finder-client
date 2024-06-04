@@ -1,8 +1,6 @@
 import styled from 'styled-components';
 import Container from '../components/Container';
-import Modal from '../components/Modal';
 import { RootState, useAppDispatch } from '../redux';
-import { changeGameProfileState } from '../redux/modalSlice';
 import { useEffect, useState } from 'react';
 import Cookies from 'js-cookie';
 import Swal from 'sweetalert2';
@@ -14,10 +12,13 @@ import { MainArticle } from '../types/MainArticle';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import Slider from 'react-slick';
+import steamIcon from '../assets/images/steam-logo.png';
+import faceitLogo from '../assets/images/faceitlogo.png';
+
+import { SteamAuth } from '../api/steamAuth';
+
 const HomePage = () => {
   const user = useSelector((state: RootState) => state.userReducer.user);
-
-  const dispatch = useAppDispatch();
 
   const [news, setNews] = useState<Article[] | null>(null);
   const [mainArticle, setMainArticle] = useState<MainArticle | null>(null);
@@ -88,7 +89,29 @@ const HomePage = () => {
         </MatchesBar>
         <Container>
           <MainContent>
-            {user?.cs2_data ? <PlayerLiderBoard></PlayerLiderBoard> : <></>}
+            {user?.cs2_data ? (
+              <PlayerLiderBoard></PlayerLiderBoard>
+            ) : (
+              <SteamAuthContainer>
+                <SteamButton onClick={SteamAuth}>
+                  <span>
+                    Подключить<span>Steam</span>
+                  </span>
+
+                  <img src={steamIcon} alt='' />
+                </SteamButton>
+                <SteamText>
+                  Подключение вашего аккаунта Steam позволит нам взять ваши настоящие данные Counter-Strike . Таким образом статистика
+                  игроков не может оказаться подлинной.{' '}
+                </SteamText>
+                <SteamText>
+                  Ваш steam аккаунт обязательно должен быть привязан к платформе &nbsp;
+                  <span>
+                    Faceit <img src={faceitLogo} alt='' />
+                  </span>{' '}
+                </SteamText>
+              </SteamAuthContainer>
+            )}
             <ContentNews>
               <NewsTitle>🔥 Самая свежая 🔥</NewsTitle>
               <MainArticleContainer>
@@ -112,6 +135,64 @@ const HomePage = () => {
     </>
   );
 };
+
+const SteamAuthContainer = styled.div`
+  width: 40%;
+  display: flex;
+
+  flex-direction: column;
+  row-gap: 20px;
+  background-color: #1f1f1f;
+  border-radius: 10px;
+`;
+
+const SteamText = styled.p`
+  font-size: 17px;
+  padding: 5px;
+  border-bottom: 1px solid #242424;
+  color: var(--main-text-color);
+  > span {
+    column-gap: 10px;
+    font-weight: 700;
+    color: var(--orange-color);
+    display: inline-flex;
+
+    > img {
+      border-radius: 5px;
+      max-width: 20px;
+    }
+  }
+`;
+
+const SteamButton = styled.button`
+  border: 0;
+  height: 80px;
+  border-radius: 5px;
+
+  background-color: #323232;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  column-gap: 10px;
+  padding: 5px;
+  font-size: 19px;
+  border: 3px solid #3e3e3e;
+  color: var(--main-text-color);
+  img {
+    width: 70px;
+  }
+  &:hover {
+    background-color: #1d1d1d;
+    cursor: pointer;
+  }
+  > span {
+    > span {
+      margin-left: 5px;
+      font-size: 19px;
+      font-weight: 700;
+    }
+  }
+`;
 const MainArticleContainer = styled.div`
   height: 100%;
   padding: 15px;
