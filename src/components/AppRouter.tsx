@@ -5,19 +5,20 @@ import { authorizedGameProfileRoutes, privateRoutes, publicRoutes } from '../rou
 import { Suspense } from 'react';
 import Loader from './Loader';
 import CreationPage from '../pages/CreationPage';
-
+import useScrollToTop from '../hooks/useScrollToTop';
+import Cookies from 'js-cookie';
 const AppRouter = () => {
   const isAuth = useSelector((state: RootState) => state.userReducer.isAuth);
   const csgoData = useSelector((state: RootState) => state.userReducer.user?.cs2_data);
-  const valorantData = useSelector((state: RootState) => state.userReducer.user?.valorant_data);
   const isGameCreationActive = useSelector((state: RootState) => state.userReducer.isGameCreationActive);
+  useScrollToTop();
 
   return (
     <Routes>
       {isAuth
         ? privateRoutes.map((r) => <Route key={r.path} path={r.path} element={r.element} />)
         : publicRoutes.map((r) => <Route key={r.path} path={r.path} element={r.element} />)}
-      {isGameCreationActive && (
+      {(isGameCreationActive || Cookies.get('rme') === 'true') && (
         <Route
           path='/creation/:game'
           element={
@@ -28,7 +29,7 @@ const AppRouter = () => {
         />
       )}
 
-      {(csgoData || valorantData) && authorizedGameProfileRoutes.map((r) => <Route key={r.path} path={r.path} element={r.element} />)}
+      {csgoData && authorizedGameProfileRoutes.map((r) => <Route key={r.path} path={r.path} element={r.element} />)}
     </Routes>
   );
 };

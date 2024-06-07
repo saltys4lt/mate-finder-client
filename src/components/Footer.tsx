@@ -7,8 +7,9 @@ import faceitLogo from '../assets/images/faceitlogo.png';
 import steamLogo from '../assets/images/steam-logo.png';
 import gmailIcon from '../assets/images/sended-friend-req.png';
 import footerLogo from '../assets/images/cs2-logo.png';
-
+import { useNavigate } from 'react-router-dom';
 const Footer = () => {
+  const navigate = useNavigate();
   return (
     <MainFooter>
       <Container>
@@ -40,13 +41,13 @@ const Footer = () => {
           </FooterColumn>
           <FooterColumn>
             <FooterTitle>Интеграции</FooterTitle>
-
             <LogosContainer>
               <Logo src={faceitLogo} />
               <Logo src={steamLogo} />
 
               <Logo src={footerLogo} />
             </LogosContainer>
+            <AboutLink onClick={() => navigate('/about')}>О нас</AboutLink>
           </FooterColumn>
         </FooterContainer>
       </Container>
@@ -105,6 +106,16 @@ const ContactsIcon = styled.img`
 const Logo = styled.img`
   height: 50px;
   border-radius: 5px;
+`;
+
+const AboutLink = styled.p`
+  margin-top: 20px;
+  color: #979797;
+  max-width: 70px;
+  &:hover {
+    cursor: pointer;
+    color: #696969;
+  }
 `;
 
 export default Footer;

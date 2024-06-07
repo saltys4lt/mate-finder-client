@@ -7,7 +7,7 @@ import CommonButton from '../components/UI/CommonButton';
 import MapsImages from '../consts/MapsImages';
 import { ChangeEvent, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import Modal from '../components/Modal';
+
 import fetchPlayerByName from '../redux/playerThunks/fetchPlayerByName';
 import ClientUser from '../types/ClientUser';
 import Player from '../types/Player';
@@ -15,7 +15,8 @@ import { setPlayer, setPlayerError } from '../redux/playerSlice';
 import Loader from '../components/Loader';
 import { useNavigate } from 'react-router-dom';
 import updateCs2Data from '../redux/cs2Thunks/updateCs2Data';
-import { CircularProgress, capitalize } from '@mui/material';
+import { CircularProgress } from '@mui/material';
+import Cookies from 'js-cookie';
 import LoaderBackground from '../components/UI/LoaderBackground';
 import copyCurrentUrl from '../util/copyCurrentUrl';
 import { getDownloadURL, ref, uploadBytes, deleteObject } from 'firebase/storage';
@@ -25,7 +26,7 @@ import UpdatedUserData from '../types/UpdatedUserData';
 import Swal from 'sweetalert2';
 import cancelReqIcon from '../assets/images/cancel-invite.png';
 import deleteCs2Data from '../redux/cs2Thunks/deleteCs2Data';
-import { changeChatState, changeGameProfileState, changeTeamInviteModalState } from '../redux/modalSlice';
+import { changeChatState, changeFriendsModalState, changeTeamInviteModalState } from '../redux/modalSlice';
 import defaultUserAvatar from '../assets/images/default-avatar.png';
 import editIcon from '../assets/images/edit.png';
 import linkIcon from '../assets/images/link.png';
@@ -56,6 +57,9 @@ import { friendRequestAnswer } from '../api/friendsRequests/friendRequestAnswer'
 import { deleteFromFriends } from '../api/friendsRequests/deleteFromFriends';
 import { capitalizeWord } from '../util/capitalizeWord';
 import { formatDateWithTime } from '../util/formatDate';
+import { SteamAuth } from '../api/steamAuth';
+import FriendslistModal from '../components/FriendslistModal';
+
 const ProfilePage = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -252,9 +256,16 @@ const ProfilePage = () => {
       ? updatedUserData.user_avatar
       : profileUser?.user_avatar;
   console.log(profileUser.cs2_data?.recentMatches);
+
+  const handleChangeRolesAndMaps = () => {
+    Cookies.set('rme', 'true');
+    navigate(`/creation/cs2`);
+  };
+
   return (
     <>
-      <Modal />
+      {user.id === profileUser.id && <FriendslistModal />}
+
       {player && user.teams.length > 0 && <TeamInviteModal candidate={player} />}
       <ProfileHeader>
         <Container>
@@ -362,11 +373,11 @@ const ProfilePage = () => {
                       Редактировать профиль
                     </EditProfileButton>
                   ))}
-                {!editMode && (
+                {!editMode && user.cs2_data && (
                   <SocialButtons>
                     {!player ? (
                       <>
-                        <CommonButton>
+                        <CommonButton onClick={() => dispatch(changeFriendsModalState(true))}>
                           <img src={FriendsIcon} alt='' />
                           Мои друзья
                         </CommonButton>
@@ -569,7 +580,7 @@ const ProfilePage = () => {
                             <DropDownButton onClick={() => handleUpdateFaceitData(user?.cs2_data?.steamId as string)}>
                               Обновить данные faceit
                             </DropDownButton>
-                            <DropDownButton>Изменить роли/карты</DropDownButton>
+                            <DropDownButton onClick={handleChangeRolesAndMaps}>Изменить роли/карты</DropDownButton>
                           </DropDownContent>
                         </DropDown>
                         <GameContainerButton onClick={handleDeleteCs2data}>Удалить игровой профиль</GameContainerButton>
@@ -577,9 +588,7 @@ const ProfilePage = () => {
                     )}
                   </>
                 ) : !player ? (
-                  <CreateGameProfileButton onClick={() => dispatch(changeGameProfileState(true))}>
-                    Создать игровой профиль
-                  </CreateGameProfileButton>
+                  <CreateGameProfileButton onClick={() => SteamAuth()}>Создать игровой профиль</CreateGameProfileButton>
                 ) : (
                   <p style={{ color: '#fff', textAlign: 'center' }}>У этого пользователя нет игрового профиля</p>
                 )}
@@ -641,7 +650,7 @@ const ProfilePage = () => {
                     </>
                   ) : profileUser.id === user.id ? (
                     <NoTeamText>
-                      Вы не состоите в команде. <span onClick={() => navigate('/teams')}>найти</span>
+                      Вы не состоите в команде. <span onClick={() => navigate('/teams?page=1&category=all')}>найти</span>
                     </NoTeamText>
                   ) : (
                     <NoTeamText>Не состоит в команде</NoTeamText>
@@ -677,7 +686,7 @@ const ProfilePage = () => {
                     </MatchDataColumn>
                     <MatchDataColumn>
                       <MatchDataTitle>Рейтинг elo за матч</MatchDataTitle>
-                      <EloText>{match.eloChange}</EloText>
+                      <EloText $isWin={match.result}>{match.eloChange}</EloText>
                     </MatchDataColumn>
                   </MatchItem>
                 </a>

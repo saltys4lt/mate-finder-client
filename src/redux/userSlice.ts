@@ -23,9 +23,12 @@ import updateTeam from './teamThunks/updateTeam';
 import fetchUpdatedUser from './userThunks/fetchUpdatedUser';
 import kickPlayer from './teamThunks/kickPlayer';
 import deleteTeam from './teamThunks/deleteTeam';
+import updateRolesAndMaps from './cs2Thunks/updateRolesAndMaps';
 interface UserState {
   user: ClientUser | null;
   isAuth: boolean;
+  isAdmin: boolean;
+
   isGameCreationActive: 'cs2' | 'valorant' | null;
   createUserStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
   fetchUserStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
@@ -37,6 +40,8 @@ interface UserState {
   createTeamStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
   updateTeamStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
   deleteTeamStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
+  updateRolesAndMapsStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
+
   createUserError: string | null;
   fetchUserError: string | null;
   refillCs2DataError: string | null;
@@ -44,6 +49,7 @@ interface UserState {
 
 const initialState: UserState = {
   user: null,
+  isAdmin: false,
   isAuth: false,
   isGameCreationActive: null,
 
@@ -59,6 +65,7 @@ const initialState: UserState = {
   refillCs2DataError: null,
 
   updateCs2DataStatus: 'idle',
+  updateRolesAndMapsStatus: 'idle',
   updateUserStatus: 'idle',
 
   deleteCs2Status: 'idle',
@@ -86,10 +93,19 @@ const userSlice = createSlice({
       }
     },
 
+    changeIsAdmin(state, action: PayloadAction<boolean>) {
+      state.isAdmin = action.payload;
+
+      state.fetchUserStatus = 'idle';
+      if (!action.payload) {
+        state.user = null;
+      }
+    },
+
     setPendingForCheck(state) {
       state.checkUserStatus = 'pending';
     },
-    setGameCreationActive(state, action: PayloadAction<'cs2' | 'valorant' | null>) {
+    setGameCreationActive(state, action: PayloadAction<'cs2' | null>) {
       state.isGameCreationActive = action.payload;
     },
     setUpdateFaceitStatus(state, action) {
@@ -377,6 +393,33 @@ const userSlice = createSlice({
       }
     });
 
+    builder.addCase(updateRolesAndMaps.pending, (state) => {
+      state.updateRolesAndMapsStatus = 'pending';
+    });
+    builder.addCase(updateRolesAndMaps.fulfilled, (state, action: PayloadAction<Cs2Data>) => {
+      state.updateRolesAndMapsStatus = 'fulfilled';
+
+      if (state.user?.cs2_data) {
+        state.user.cs2_data = action.payload;
+        state.fetchUserStatus = 'fulfilled';
+        const Toast = Swal.mixin({
+          toast: true,
+          position: 'bottom-end',
+          showConfirmButton: false,
+          timer: 6000,
+          timerProgressBar: true,
+          didOpen: (toast) => {
+            toast.onmouseenter = Swal.stopTimer;
+            toast.onmouseleave = Swal.resumeTimer;
+          },
+        });
+        Toast.fire({
+          icon: 'success',
+          text: `Ваш игровой профиль для Counter-Strike 2 обновлен!`,
+        });
+      }
+    });
+
     builder.addCase(updateCs2Data.rejected, (state) => {
       state.updateCs2DataStatus = 'rejected';
     });
@@ -441,6 +484,7 @@ const userSlice = createSlice({
 export const {
   resetUserStatus,
   changeIsAuth,
+  changeIsAdmin,
   setPendingForCheck,
   setGameCreationActive,
   setUpdateFaceitStatus,

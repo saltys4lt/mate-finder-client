@@ -10,6 +10,7 @@ import ancient from '../assets/images/maps/ancient.webp';
 const MapsImages: Record<string, string> = {
   Mirage: mirage,
   'Dust 2': dust2,
+  Dust2: dust2,
   Inferno: inferno,
   Overpass: overpass,
   Anubis: anubis,

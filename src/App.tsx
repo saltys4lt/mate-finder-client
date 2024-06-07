@@ -14,7 +14,7 @@ import styled from 'styled-components';
 import Chat from './components/chat/Chat';
 import RequestsList from './components/RequestsList';
 import fetchUpdatedUser from './redux/userThunks/fetchUpdatedUser';
-import axios, { CancelToken, CancelTokenSource } from 'axios';
+import axios, { CancelTokenSource } from 'axios';
 
 function App() {
   const token = Cookies.get('token');
@@ -33,7 +33,7 @@ function App() {
     }
 
     if (_gc) {
-      dispatch(setGameCreationActive(_gc as 'cs2' | 'valorant'));
+      dispatch(setGameCreationActive(_gc as 'cs2'));
     }
     const handleLoad = () => {
       const fontRegular = new FontFace('montserrat', 'url(/fonts/Montserrat-Regular.ttf)', { weight: '400' });

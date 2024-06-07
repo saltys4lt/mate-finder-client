@@ -254,9 +254,7 @@ const FilterBar: FC<FilterBarProps> = ({ filters, setFilters, purpose }) => {
                 {Cs2PlayerRoles.map((role, index) => (
                   <RoleCard key={role.id}>
                     <RoleCheckbox id={(index + 1).toString()} type='checkbox' value={role.name} onChange={(e) => changeRole(e)} />
-                    <RoleLabel className={roleState(role.name)} htmlFor={(index + 1).toString()}>
-                      {role.name}
-                    </RoleLabel>
+                    <RoleLable role={role} htmlFor={(index + 1).toString()} className={roleState(role.name)}></RoleLable>
                   </RoleCard>
                 ))}
               </RolesContainer>

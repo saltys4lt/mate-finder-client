@@ -11,11 +11,14 @@ import logoImg from '../assets/images/logo.png';
 import logout from '../assets/images/logout.png';
 import { resetChats } from '../redux/chatSlice';
 import { ioSocket } from '../api/webSockets/socket';
-
+import { changeFriendsModalState } from '../redux/modalSlice';
+import ClientUser from '../types/ClientUser';
+import ReactDOMServer from 'react-dom/server';
+import FriendslistModal from './FriendslistModal';
 const Navbar = () => {
   const dispatch = useAppDispatch();
 
-  const user = useSelector((state: RootState) => state.userReducer.user);
+  const user = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
   console.log(user);
   const isAuth = useSelector((state: RootState) => state.userReducer.isAuth);
   const [isGameProfileExist, setIsGameProfileExist] = useState<boolean>(false);
@@ -32,6 +35,41 @@ const Navbar = () => {
     document.documentElement.style.overflowY = 'hidden';
     dispatch(changeLoginState(true));
   };
+
+  const navigateToTeamPage = () => {
+    if (user.teams.length > 0) {
+      navigate(`/team/${user?.teams[0].name}`);
+    } else if (user.memberOf.length > 0) {
+      navigate(`/team/${user?.memberOf[0].team.name}`);
+    } else {
+      if (user.cs2_data) {
+        const NoTeamAlert = () => {
+          return (
+            <div style={{ textAlign: 'center' }}>
+              <h3>У вас нет своей команды :&#40;</h3>
+              <p>Но вы можете создать ее или вступить в существующую:D</p>
+            </div>
+          );
+        };
+        Swal.fire({
+          html: ReactDOMServer.renderToString(<NoTeamAlert />),
+          confirmButtonText: 'Создать',
+          showCancelButton: true,
+          cancelButtonText: 'Отмена',
+          showDenyButton: true,
+          denyButtonColor: '#0062b8',
+          denyButtonText: 'Найти',
+        }).then((res) => {
+          if (res.isConfirmed) {
+            navigate('/team-creator');
+          }
+          if (res.isDenied) {
+            navigate('/teams/?page=1&category=all');
+          }
+        });
+      }
+    }
+  };
   const handleExit = () => {
     Swal.fire({
       title: 'Уверены?',
@@ -45,6 +83,8 @@ const Navbar = () => {
       if (result.isConfirmed) {
         Cookies.remove('token');
         dispatch(resetChats());
+        dispatch(changeLoginState(false));
+
         dispatch(changeIsAuth(false));
         ioSocket.emit('leaveAllRooms');
         ioSocket.removeListener('friendRequest');
@@ -55,12 +95,14 @@ const Navbar = () => {
         ioSocket.removeListener('leaveTeam');
         ioSocket.removeListener('answerTeamRequest');
         ioSocket.removeListener('cancelTeamRequest');
+        navigate('/');
       }
     });
   };
   const navigate = useNavigate();
   return (
     <NavbarContainer>
+      {isGameProfileExist && <FriendslistModal />}
       <LogoWrapper
         onClick={() => {
           navigate('/');
@@ -75,32 +117,22 @@ const Navbar = () => {
       {isAuth ? (
         <AuthedNavbar>
           <NavLinks>
-            <NavLink
-              onClick={() => {
-                navigate('/');
-              }}
-            >
-              Главная
-            </NavLink>
-            <DropDown>
-              <NavLink>Игроки</NavLink>
-              <DropDownContent>
-                <DropDownLink to={isGameProfileExist ? '/players' : '/'}>Поиск</DropDownLink>
-                <DropDownLink to={isGameProfileExist ? '/friends' : '/'}>Друзья</DropDownLink>
-              </DropDownContent>
-            </DropDown>
-            <DropDown>
-              <NavLink>Команды</NavLink>
-              <DropDownContent>
-                <DropDownLink to={isGameProfileExist ? '/team-creator' : '/'}>Создать команду</DropDownLink>
-                <DropDownLink to={isGameProfileExist ? '/teams' : '/'}>Поиск</DropDownLink>
-              </DropDownContent>
-            </DropDown>
+            <StraightLink to={'/'}>Главная</StraightLink>
+
+            <StraightLink to={isGameProfileExist ? '/players?page=1&category=all' : '/'}>Игроки</StraightLink>
+            <StraightLink to={isGameProfileExist ? '/teams?page=1&category=all' : '/'}>Команды</StraightLink>
+
             <DropDown>
               <NavLink>Другое</NavLink>
               <DropDownContent>
-                <DropDownLink to={`/profile/${user?.nickname}`}>Профиль</DropDownLink>
-                <DropDownLink to={'/matches'}>Матчи</DropDownLink>
+                <DropDownText
+                  onClick={() => {
+                    dispatch(changeFriendsModalState(true));
+                  }}
+                >
+                  Друзья
+                </DropDownText>
+                <DropDownText onClick={navigateToTeamPage}>Команда</DropDownText>
                 <DropDownLink to={'/news'}>Новости</DropDownLink>
               </DropDownContent>
             </DropDown>
@@ -216,6 +248,30 @@ const NavLinks = styled.div`
   gap: 15%;
 `;
 
+const StraightLink = styled(Link)`
+  color: #fff;
+  font-size: 16px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  &:after {
+    content: ' ';
+    display: block;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(45deg, #f33e3e, #d84e17);
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+  }
+  &:hover {
+    transform: scale(1.1);
+    color: #ffdede;
+  }
+  &:hover::after {
+    opacity: 1;
+  }
+`;
+
 const NavLink = styled.div`
   color: #fff;
   font-size: 16px;
@@ -298,6 +354,18 @@ const DropDownContent = styled.div`
 const DropDownLink = styled(Link)`
   display: block;
   text-decoration: none;
+  color: #fff;
+  padding: 12px 16px;
+  cursor: pointer;
+  &:hover {
+    color: #333;
+    transform: translate(1.5);
+  }
+`;
+
+const DropDownText = styled.span`
+  display: block;
+
   color: #fff;
   padding: 12px 16px;
   cursor: pointer;

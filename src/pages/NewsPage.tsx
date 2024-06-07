@@ -39,7 +39,13 @@ const NewsPage = () => {
                 <SubTitle>Статьи </SubTitle>
 
                 {otherArticles?.map((art) => (
-                  <MainArticleContainer key={art.link} onClick={() => navigate(`/news/${art?.link}`)}>
+                  <MainArticleContainer
+                    key={art.title}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/news/${art?.link}`);
+                    }}
+                  >
                     <ImageContainer>
                       {' '}
                       <MainArticleImg src={art?.imgSrc} />
@@ -157,10 +163,10 @@ const GradientOverlay = styled.div`
   content: ' ';
   position: absolute;
   bottom: -15px;
-  left: 0;
-  width: 100%;
+  left: -30px;
+  width: 120%;
   height: 50%;
-  background: linear-gradient(to top, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0.9));
+  background: linear-gradient(to top, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0.8));
   border-radius: 5px;
   z-index: 1;
   filter: blur(15px);

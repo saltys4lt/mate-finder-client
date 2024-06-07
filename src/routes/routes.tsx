@@ -5,12 +5,13 @@ import PlayersPage from '../pages/PlayersPage';
 import FriendsPage from '../pages/FriendsPage';
 import TeamCreationPage from '../pages/TeamCreationPage';
 import TeamsPage from '../pages/TeamsPage';
-import MatchesPage from '../pages/MatchesPage';
+
 import NewsPage from '../pages/NewsPage';
 import { Navigate } from 'react-router-dom';
 import TeamPage from '../pages/TeamPage';
 import NotFoundPage from '../pages/NotFoundPage';
 import ArticlePage from '../pages/ArticlePage';
+import SquadLinkDescription from '../pages/AboutPage';
 const HomePage = lazy(() => import('../pages/HomePage'));
 const ProfilePage = lazy(() => import('../pages/ProfilePage'));
 
@@ -50,7 +51,7 @@ export const authorizedGameProfileRoutes = [
   },
   { path: '/news/:link', element: <ArticlePage /> },
 
-  // { path: '*', element: <Navigate to='/404' replace={true} /> },
+  { path: '*', element: <Navigate to='/404' replace={true} /> },
 ];
 
 export const privateRoutes = [
@@ -63,12 +64,8 @@ export const privateRoutes = [
     ),
   },
   {
-    path: '/matches',
-    element: (
-      <Suspense fallback={<Loader />}>
-        <MatchesPage />
-      </Suspense>
-    ),
+    path: '/about',
+    element: <SquadLinkDescription />,
   },
   {
     path: '/news',
@@ -91,13 +88,24 @@ export const privateRoutes = [
     path: '/404',
     element: <NotFoundPage />,
   },
-  // { path: '*', element: <Navigate to='/404' replace={true} /> },
+  {
+    path: '/about',
+    element: <SquadLinkDescription />,
+  },
+  { path: '*', element: <Navigate to='/404' replace={true} /> },
 ];
 
 export const publicRoutes = [
   { path: '/', element: <StartPage /> },
   { path: '/news', element: <NewsPage /> },
   { path: '/news/:link', element: <ArticlePage /> },
-
-  { path: '*', element: <Navigate to='/' replace={true} /> },
+  {
+    path: '/404',
+    element: <NotFoundPage />,
+  },
+  {
+    path: '/about',
+    element: <SquadLinkDescription />,
+  },
+  { path: '*', element: <Navigate to='/404' /> },
 ];

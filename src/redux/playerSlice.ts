@@ -7,7 +7,7 @@ import fetchTopPlayers from './playerThunks/fetchTopPlayers';
 interface PlayerState {
   player: Player | null;
   players: Player[];
-  topPlayers: Player[];
+  topPlayers: Player[] | null;
 
   pages: number;
   fetchPlayerByNameStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
@@ -22,7 +22,7 @@ interface PlayerState {
 const initialState: PlayerState = {
   player: null,
   players: [],
-  topPlayers: [],
+  topPlayers: null,
   pages: 1,
   fetchPlayerByNameStatus: 'idle',
   fetchPlayerByNameError: null,

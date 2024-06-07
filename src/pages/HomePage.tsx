@@ -1,6 +1,6 @@
 import styled from 'styled-components';
 import Container from '../components/Container';
-import { RootState, useAppDispatch } from '../redux';
+import { RootState } from '../redux';
 import { useEffect, useState } from 'react';
 import Cookies from 'js-cookie';
 import Swal from 'sweetalert2';
@@ -14,8 +14,9 @@ import 'slick-carousel/slick/slick-theme.css';
 import Slider from 'react-slick';
 import steamIcon from '../assets/images/steam-logo.png';
 import faceitLogo from '../assets/images/faceitlogo.png';
-
 import { SteamAuth } from '../api/steamAuth';
+import TopPlayersList from '../components/TopPlayersList';
+import Skeleton from '../components/Skeleton/ResponsiveSkeleton';
 
 const HomePage = () => {
   const user = useSelector((state: RootState) => state.userReducer.user);
@@ -56,13 +57,12 @@ const HomePage = () => {
     Cookies.remove('_csData');
   }, []);
   const settings = {
-    // Показать точки навигации
-    infinite: true, // Зацикливание карусели
-    speed: 10000, // Скорость анимации в миллисекундах
-    slidesToShow: 1, // Показывать по одному слайду за раз
-    slidesToScroll: 1, // Перемещаться на один слайд за раз
-    autoplay: true, // Включить автопрокрутку
-    autoplaySpeed: 4000, // Интервал автопрокрутки в миллисекундах (5 секунд)
+    infinite: true,
+    speed: 10000,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    autoplay: true,
+    autoplaySpeed: 10000,
     arrows: false,
     variableWidth: true,
   };
@@ -90,7 +90,9 @@ const HomePage = () => {
         <Container>
           <MainContent>
             {user?.cs2_data ? (
-              <PlayerLiderBoard></PlayerLiderBoard>
+              <PlayerLiderBoard>
+                <TopPlayersList id={user.id} />
+              </PlayerLiderBoard>
             ) : (
               <SteamAuthContainer>
                 <SteamButton onClick={SteamAuth}>
@@ -113,21 +115,27 @@ const HomePage = () => {
               </SteamAuthContainer>
             )}
             <ContentNews>
-              <NewsTitle>🔥 Самая свежая 🔥</NewsTitle>
-              <MainArticleContainer>
-                <ImageContainer
-                  onClick={() => {
-                    navigate(`/news/${mainArticle?.link}`);
-                  }}
-                >
-                  <MainArticleImg src={mainArticle?.imgSrc} />
-                  <GradientOverlay></GradientOverlay>
-                  <TextOverlay>
-                    <MainArticletTitle>{mainArticle?.title}</MainArticletTitle>
-                    <MainArticletText>{mainArticle?.text}</MainArticletText>
-                  </TextOverlay>
-                </ImageContainer>
-              </MainArticleContainer>
+              {mainArticle ? (
+                <>
+                  <NewsTitle>🔥 Самая свежая 🔥</NewsTitle>
+                  <MainArticleContainer>
+                    <ImageContainer
+                      onClick={() => {
+                        navigate(`/news/${mainArticle?.link}`);
+                      }}
+                    >
+                      <MainArticleImg src={mainArticle?.imgSrc} />
+                      <GradientOverlay></GradientOverlay>
+                      <TextOverlay>
+                        <MainArticletTitle>{mainArticle?.title}</MainArticletTitle>
+                        <MainArticletText>{mainArticle?.text}</MainArticletText>
+                      </TextOverlay>
+                    </ImageContainer>
+                  </MainArticleContainer>
+                </>
+              ) : (
+                <Skeleton style={{ borderRadius: '5px' }} />
+              )}
             </ContentNews>
           </MainContent>
         </Container>
@@ -237,8 +245,9 @@ const GradientOverlay = styled.div`
   content: ' ';
   position: absolute;
   bottom: -15px;
-  left: 0;
-  width: 100%;
+  left: -30px;
+
+  width: 120%;
   height: 50%;
   background: linear-gradient(to top, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0.9));
   border-radius: 5px;
@@ -290,10 +299,6 @@ const MainContent = styled.section`
 
 const PlayerLiderBoard = styled.div`
   width: 48%;
-
-  display: flex;
-  flex-direction: column;
-  justify-content: space-around;
 `;
 const ContentNews = styled.div`
   padding: 15px;

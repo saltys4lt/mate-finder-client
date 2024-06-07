@@ -14,7 +14,7 @@ const ArticlePage = () => {
       fetchArticleById({ setMainArticle, link: params.link as string });
     })();
   }, []);
-  console.log(params);
+
   return (
     <Main>
       {mainArticle ? (
