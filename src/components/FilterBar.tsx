@@ -16,10 +16,10 @@ import Cs2PlayerRoles from '../consts/Cs2PlayerRoles';
 import Select from 'react-select';
 import { CustomOption, CustomSingleValue, customStyles } from './UI/MapsSelect';
 import Option from '../types/Option';
-import Cs2Maps from '../consts/Cs2Maps';
 import { MultiValue } from 'react-select';
 import { useSearchParams } from 'react-router-dom';
 import RoleLable from './UI/RoleLable';
+import { fetchMaps } from '../api/fetchMaps';
 
 interface FilterBarProps {
   filters: Filters;
@@ -32,14 +32,15 @@ const inputWidth = 130;
 const FilterBar: FC<FilterBarProps> = ({ filters, setFilters, purpose }) => {
   const query = useQuery();
   const [searchParams] = useSearchParams();
-
+  const [fetchedMaps, setFetchedMaps] = useState<Option[]>([]);
   const [selectedMaps, setSelectedMaps] = useState<MultiValue<Option>>([]);
 
   useEffect(() => {
     if (purpose === PagePurposes.PlayersCs2) {
+      fetchMaps(setFetchedMaps);
       const maps: string[] = searchParams.getAll('maps');
       if (maps?.length !== 0) {
-        setSelectedMaps(Cs2Maps.filter((map) => maps?.includes(map.value)));
+        setSelectedMaps(fetchedMaps.filter((map) => maps?.includes(map.value)));
       }
     }
   }, []);
@@ -142,7 +143,7 @@ const FilterBar: FC<FilterBarProps> = ({ filters, setFilters, purpose }) => {
               </RadioGroup>
             </FilterCell>
             <FilterCell>
-              <span>ELO :</span>
+              <span>Рейтинг (еlo) :</span>
               <FilterRow>
                 <DoubleInput>
                   <CommonInput
@@ -164,7 +165,7 @@ const FilterBar: FC<FilterBarProps> = ({ filters, setFilters, purpose }) => {
               </FilterRow>
             </FilterCell>
             <FilterCell>
-              <span>K/D :</span>
+              <span>Кд :</span>
 
               <FilterRow>
                 <DoubleInput>
@@ -187,7 +188,7 @@ const FilterBar: FC<FilterBarProps> = ({ filters, setFilters, purpose }) => {
               </FilterRow>
             </FilterCell>
             <FilterCell>
-              <span>HS :</span>
+              <span>% Убийств в голову:</span>
 
               <FilterRow>
                 <DoubleInput>
@@ -254,9 +255,7 @@ const FilterBar: FC<FilterBarProps> = ({ filters, setFilters, purpose }) => {
                 {Cs2PlayerRoles.map((role, index) => (
                   <RoleCard key={role.id}>
                     <RoleCheckbox id={(index + 1).toString()} type='checkbox' value={role.name} onChange={(e) => changeRole(e)} />
-                    <RoleLabel className={roleState(role.name)} htmlFor={(index + 1).toString()}>
-                      {role.name}
-                    </RoleLabel>
+                    <RoleLable role={role} htmlFor={(index + 1).toString()} className={roleState(role.name)}></RoleLable>
                   </RoleCard>
                 ))}
               </RolesContainer>
@@ -279,7 +278,7 @@ const FilterBar: FC<FilterBarProps> = ({ filters, setFilters, purpose }) => {
                     },
                   }),
                 }}
-                options={Cs2Maps}
+                options={fetchedMaps}
                 isMulti
                 value={selectedMaps}
                 onChange={handleSelectChange}
@@ -439,14 +438,19 @@ const FilterBar: FC<FilterBarProps> = ({ filters, setFilters, purpose }) => {
 };
 
 const DoubleInput = styled.div`
+  width: 100%;
+  padding-right: 10px;
   display: flex;
   :nth-child(1) {
+    width: 50%;
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
     border-right: 2px solid #565656;
   }
   column-gap: 1px;
   :nth-child(2) {
+    width: 50%;
+
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
     border-left: 2px solid #565656;
@@ -503,42 +507,6 @@ const RoleCard = styled.div`
 
 const RoleCheckbox = styled.input`
   display: none;
-`;
-
-const RoleLabel = styled.label`
-  border: 2px solid #565656;
-  background-color: #181818;
-  padding: 5px 10px;
-  border-radius: 7px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 130px;
-
-  font-size: 16px;
-  color: #d1cfcf;
-  &:hover {
-    border-color: #fff;
-    cursor: pointer;
-  }
-
-  &.active {
-    border-color: #fff;
-    transform: scale(1.03);
-  }
-
-  &.focus {
-    opacity: 0.3;
-    border: 2px solid #565656;
-    &:hover {
-      cursor: auto;
-    }
-  }
-
-  user-select: none;
-  &:hover {
-    cursor: pointer;
-  }
 `;
 
 export default FilterBar;

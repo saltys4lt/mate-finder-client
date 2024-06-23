@@ -9,7 +9,7 @@ import Option from '../types/Option';
 import Cs2PlayerRoles from '../consts/Cs2PlayerRoles';
 import Cs2Maps from '../consts/Cs2Maps';
 
-import { setGameCreationActive } from '../redux/userSlice';
+import { resetStatus, setGameCreationActive } from '../redux/userSlice';
 import refillCs2Data from '../redux/cs2Thunks/refillCs2Data';
 import { CircularProgress } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
@@ -20,6 +20,9 @@ import { customStyles, CustomOption, CustomSingleValue } from '../components/UI/
 
 import checkUserIsAuth from '../redux/userThunks/checkUserIsAuth';
 import cs2CreationBg from '../assets/images/cs-creation-bg.webp';
+import RoleLable from '../components/UI/RoleLable';
+import updateRolesAndMaps from '../redux/cs2Thunks/updateRolesAndMaps';
+import { fetchMaps } from '../api/fetchMaps';
 interface CreationDataValidation {
   isRolesValid: boolean;
   isMapsValid: boolean;
@@ -27,6 +30,8 @@ interface CreationDataValidation {
 
 const CreationPage = () => {
   const [roles, setRoles] = useState<string[]>([]);
+  const [maps, setMaps] = useState<Option[]>([]);
+
   const [selectedOptions, setSelectedOptions] = useState<MultiValue<Option>>([]);
   const [dataValidation, setDataValidation] = useState<CreationDataValidation>({
     isRolesValid: true,
@@ -37,7 +42,32 @@ const CreationPage = () => {
   const user = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
 
   const refillCs2DataStatus = useSelector((state: RootState) => state.userReducer.refillCs2DataStatus);
+  const updateRolesAndMapsStatus = useSelector((state: RootState) => state.userReducer.updateRolesAndMapsStatus);
+
   const creationContent = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    fetchMaps(setMaps);
+    return () => {
+      Cookies.remove('rme');
+      dispatch(setGameCreationActive(null));
+    };
+  }, []);
+
+  useEffect(() => {
+    if (Cookies.get('rme') === 'true') {
+      if (user.cs2_data) {
+        setRoles(user.cs2_data?.roles.map((role) => role.cs2Role.name as string));
+        setSelectedOptions(Cs2Maps.filter((map) => user.cs2_data?.maps.some((userMap) => userMap.cs2Map.name === map.value)));
+      }
+    }
+    if (updateRolesAndMapsStatus === 'fulfilled') {
+      Cookies.remove('rme');
+      dispatch(checkUserIsAuth());
+      dispatch(resetStatus('updateRolesAndMapsStatus'));
+      dispatch(setGameCreationActive(null));
+      navigate(`/profile/${user?.nickname}`);
+    }
+  }, [updateRolesAndMapsStatus]);
 
   useEffect(() => {
     if (creationContent.current && refillCs2DataStatus === 'idle') {
@@ -48,6 +78,7 @@ const CreationPage = () => {
     if (refillCs2DataStatus === 'fulfilled') {
       Cookies.remove('_gc');
       dispatch(setGameCreationActive(null));
+      dispatch(resetStatus('refillCs2DataStatus'));
       dispatch(checkUserIsAuth());
       navigate(`/profile/${user?.nickname}`);
     }
@@ -99,15 +130,23 @@ const CreationPage = () => {
     if (tempValidation.isMapsValid && tempValidation.isRolesValid) {
       const reqMaps = selectedOptions.map((selected) => selected.id);
       const reqRoles = Cs2PlayerRoles.filter((role) => roles.includes(role.name)).map((role) => role.id);
-
-      dispatch(refillCs2Data({ reqMaps, reqRoles }));
+      if (Cookies.get('rme') === 'true') {
+        dispatch(updateRolesAndMaps({ reqMaps, reqRoles }));
+      } else dispatch(refillCs2Data({ reqMaps, reqRoles }));
     }
+  };
+
+  const cancelEdit = () => {
+    dispatch(setGameCreationActive(null));
+
+    Cookies.remove('rme');
+    navigate(`/profile/${user.nickname}`);
   };
 
   return (
     <CreationPageContainer ref={creationContent}>
       <ContentBackground>
-        {refillCs2DataStatus === 'pending' && (
+        {(refillCs2DataStatus === 'pending' || updateRolesAndMapsStatus === 'pending') && (
           <>
             <CircularProgress
               color='error'
@@ -161,9 +200,7 @@ const CreationPage = () => {
                       value={role.name}
                       disabled={roleState(role.name) === 'focus'}
                     />
-                    <RoleLabel className={roleState(role.name)} htmlFor={(index + 1).toString()}>
-                      {role.name}
-                    </RoleLabel>
+                    <RoleLable className={roleState(role.name)} htmlFor={(index + 1).toString()} role={role} />
                   </RoleCard>
                 ))}
               </RolesContainer>
@@ -175,7 +212,7 @@ const CreationPage = () => {
               <Select
                 maxMenuHeight={150}
                 styles={customStyles}
-                options={Cs2Maps}
+                options={maps}
                 isMulti
                 value={selectedOptions}
                 onChange={handleSelectChange}
@@ -188,14 +225,22 @@ const CreationPage = () => {
               ></Select>
               {!dataValidation.isMapsValid && <NotValidText>Проверьте корректность выбранных данных</NotValidText>}
             </div>
-
-            <ConfirmButton onClick={confirm}>Подтвердить</ConfirmButton>
+            <ButtonsContainer>
+              {Cookies.get('rme') === 'true' && <ConfirmButton onClick={cancelEdit}>Отмена</ConfirmButton>}
+              <ConfirmButton onClick={confirm}>Подтвердить</ConfirmButton>
+            </ButtonsContainer>
           </RightContent>
         </CreationPageContent>
       </ContentBackground>
     </CreationPageContainer>
   );
 };
+
+const ButtonsContainer = styled.div`
+  display: flex;
+  align-items: center;
+  column-gap: 5px;
+`;
 
 const CreationPageContainer = styled.div`
   padding-block: 70px;
@@ -321,40 +366,6 @@ const RoleCard = styled.div`
 
 const RoleCheckbox = styled.input`
   display: none;
-`;
-
-const RoleLabel = styled.label`
-  border: 2px solid #565656;
-  background-color: #181818;
-  padding: 5px 10px;
-  border-radius: 7px;
-  display: block;
-  width: 130px;
-  text-align: center;
-  font-size: 16px;
-  color: #d1cfcf;
-  &:hover {
-    border-color: #fff;
-    cursor: pointer;
-  }
-
-  &.active {
-    border-color: #fff;
-    transform: scale(1.03);
-  }
-
-  &.focus {
-    opacity: 0.3;
-    border: 2px solid #565656;
-    &:hover {
-      cursor: auto;
-    }
-  }
-
-  user-select: none;
-  &:hover {
-    cursor: pointer;
-  }
 `;
 
 const NotValidText = styled.span`

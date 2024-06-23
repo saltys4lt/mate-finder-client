@@ -55,10 +55,14 @@ const PlayersPage = () => {
   useEffect(() => {
     if (Object.keys(queryParams).length) {
       if (!queryParams.page || Number(queryParams.page) > pages || (Number(queryParams.page) < 1 && players)) {
+        console.log(1);
         setSearchParams({ ...queryParams, page: '1' });
       } else if (queryParams.category !== 'all' && queryParams.category !== 'recs') {
+        console.log(2);
+
         setSearchParams({ ...queryParams, category: 'all' });
       } else {
+        console.log('da');
         if (queryParams.category === 'recs') {
           setPlayersFilter({
             ...queryParams,
@@ -70,6 +74,7 @@ const PlayersPage = () => {
             maps: searchParams.getAll('maps'),
           });
         } else {
+          console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@');
           setPlayersFilter({
             ...(queryParams as PlayersCs2Filters),
             roles: searchParams.getAll('roles'),

@@ -62,15 +62,17 @@ const Cs2PlayerListItem: FC<ListItemProps> = ({ player }) => {
   };
 
   return (
-    <ListItemContainer
-      onClick={() => {
-        navigate(`/profile/${player.nickname}`);
-      }}
-    >
+    <ListItemContainer>
       <PlayerInfo>
         <PlayerInfoHeader>
           <PlayerLvl src={player.cs2_data?.lvlImg} />
-          <PlayerNickname>{player.nickname}</PlayerNickname>
+          <PlayerNickname
+            onClick={() => {
+              navigate(`/profile/${player.nickname}`);
+            }}
+          >
+            {player.nickname}
+          </PlayerNickname>
 
           <PlayerAge>
             {getAgeString(player.age)}, пол: {player.gender === 'male' ? 'Мужской' : 'Женский'}
@@ -83,7 +85,12 @@ const Cs2PlayerListItem: FC<ListItemProps> = ({ player }) => {
           )}
         </PlayerInfoHeader>
         <PlayerInfoInner>
-          <PlayerAvatar src={player.user_avatar ? player.user_avatar : userDefaultAvatar} />
+          <PlayerAvatar
+            onClick={() => {
+              navigate(`/profile/${player.nickname}`);
+            }}
+            src={player.user_avatar ? player.user_avatar : userDefaultAvatar}
+          />
           <PlayerStats>
             <PlayerStatsText>
               ELO: <PlayerStatsTextSpan>{player.cs2_data?.elo}</PlayerStatsTextSpan>
@@ -172,10 +179,7 @@ const ListItemContainer = styled.div`
   padding: 15px 10px;
   background-color: #1f1f1f;
   border-radius: 5px;
-  &:hover {
-    cursor: pointer;
-    opacity: 0.9;
-  }
+
   animation: fadeInOut 0.3s ease-in-out;
   @keyframes fadeInOut {
     0% {
@@ -202,11 +206,15 @@ const Cs2ItemButton = styled(CommonButton)`
   }
 `;
 const PlayerAvatar = styled.img`
-  width: 100%;
-  max-width: 100px;
+  width: 100px;
+
   height: 100px;
   object-fit: cover;
   border-radius: 50%;
+  &:hover {
+    cursor: pointer;
+    opacity: 0.8;
+  }
 `;
 const PlayerInfoInner = styled.div`
   display: flex;
@@ -229,6 +237,10 @@ const PlayerNickname = styled.p`
   margin-left: 7px;
   color: #fff;
   font-size: 18px;
+  &:hover {
+    cursor: pointer;
+    text-decoration: underline;
+  }
 `;
 const PlayerLvl = styled.img`
   width: 40px;

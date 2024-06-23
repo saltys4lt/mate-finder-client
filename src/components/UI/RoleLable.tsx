@@ -1,6 +1,5 @@
 import { FC } from 'react';
 import styled from 'styled-components';
-import CommonButton from './CommonButton';
 import Cs2Role from '../../types/Cs2Role';
 import rolesIcons from '../../consts/rolesIcons';
 interface RoleLableProps {
@@ -41,6 +40,7 @@ const RoleLableContainer = styled.label`
     object-fit: cover;
     filter: invert(0.5);
   }
+
   &:disabled {
     opacity: 0.7;
     &:hover {
@@ -56,6 +56,9 @@ const RoleLableContainer = styled.label`
   span {
     color: #d1cfcf;
     font-weight: 400;
+  }
+  &.focus {
+    opacity: 0.7;
   }
   &.active {
     border-color: #fff;

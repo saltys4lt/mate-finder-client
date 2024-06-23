@@ -20,12 +20,13 @@ interface ModalStatus {
 
 interface TeamInviteModalProps {
   candidate: Player;
+  selectedTeam: Team;
 }
 
-const TeamInviteModal: FC<TeamInviteModalProps> = ({ candidate }) => {
-  const teams = useSelector((state: RootState) => state.userReducer.user?.teams as Team[]);
+const TeamInviteModal: FC<TeamInviteModalProps> = ({ candidate, selectedTeam }) => {
+  // const teams = useSelector((state: RootState) => state.userReducer.user?.teams as Team[]);
   const TeamInviteModalState = useSelector((state: RootState) => state.modalReducer.teamInviteModalIsActive);
-  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
+
   const [selectedRole, setSelectedRole] = useState<Cs2Role | null>(null);
   const [otherRoles, setOtherRoles] = useState<Cs2Role[]>([]);
   const dispatch = useAppDispatch();
@@ -42,9 +43,6 @@ const TeamInviteModal: FC<TeamInviteModalProps> = ({ candidate }) => {
     }
   }, [selectedTeam]);
 
-  const handleSelectTeam = (team: Team) => {
-    setSelectedTeam(team);
-  };
   const handleSelectRole = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.value === selectedRole?.name) {
       setSelectedRole(null);
@@ -68,7 +66,6 @@ const TeamInviteModal: FC<TeamInviteModalProps> = ({ candidate }) => {
       };
       sendTeamRequest(request);
       setSelectedRole(null);
-      setSelectedTeam(null);
       dispatch(changeTeamInviteModalState(false));
       Swal.fire({ icon: 'success', titleText: 'Приглашение отправлено!', timer: 2000, confirmButtonText: 'Понятно' });
     }
@@ -83,8 +80,8 @@ const TeamInviteModal: FC<TeamInviteModalProps> = ({ candidate }) => {
               dispatch(changeTeamInviteModalState(false));
             }}
           />
-          {selectedTeam ? (
-            otherRoles.length === 0 ? (
+          {selectedTeam &&
+            (otherRoles.length === 0 ? (
               <SelectedFriendContainer>
                 <SelectedTeamTitle>
                   <span>Все роли заняты 😥</span>
@@ -121,7 +118,6 @@ const TeamInviteModal: FC<TeamInviteModalProps> = ({ candidate }) => {
                 <StepButtons>
                   <StepButton
                     onClick={() => {
-                      setSelectedTeam(null);
                       setSelectedRole(null);
                     }}
                   >
@@ -138,29 +134,7 @@ const TeamInviteModal: FC<TeamInviteModalProps> = ({ candidate }) => {
                   </StepButton>
                 </StepButtons>
               </SelectedFriendContainer>
-            )
-          ) : (
-            <>
-              <TeamInviteTitle>Выберите команду</TeamInviteTitle>
-              <TeamList>
-                {teams.map((team) => (
-                  <TeamListItem
-                    key={team.id}
-                    onClick={() => {
-                      handleSelectTeam(team);
-                    }}
-                  >
-                    <div>
-                      <img src={team.avatar} alt='' />
-                      <span>{team.name}</span>
-                    </div>
-
-                    <p>Участники {team.members.length + 1}/5</p>
-                  </TeamListItem>
-                ))}
-              </TeamList>
-            </>
-          )}
+            ))}
         </InnerContent>
       </Content>
     </ModalContainer>
@@ -223,59 +197,6 @@ const CloseCross = styled.img`
   filter: invert(0.8);
   &:hover {
     transform: scale(1.1);
-  }
-`;
-const TeamInviteTitle = styled.h3`
-  color: var(--main-text-color);
-  font-size: 18px;
-`;
-
-const TeamList = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-  height: 200px;
-  row-gap: 15px;
-  border-radius: 10px;
-  padding: 5px;
-  overflow-y: auto;
-`;
-
-const TeamListItem = styled.div`
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 5px 25px;
-  position: relative;
-  background-color: #323232;
-  border-radius: 5px;
-
-  > div {
-    display: flex;
-    align-items: center;
-    column-gap: 10px;
-    > img {
-      width: 50px;
-      height: 50px;
-      border-radius: 5px;
-      object-fit: cover;
-    }
-    span {
-      font-size: 16px;
-      color: var(--main-text-color);
-    }
-  }
-
-  p {
-    color: var(--main-text-color);
-
-    text-align: right;
-  }
-  &:hover {
-    cursor: pointer;
-    background-color: #535353;
   }
 `;
 

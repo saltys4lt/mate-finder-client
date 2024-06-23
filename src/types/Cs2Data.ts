@@ -1,3 +1,5 @@
+import { RecentMatch } from './RecentMatch';
+
 export default interface Cs2Data {
   userId: number;
   steamId: string;
@@ -10,6 +12,7 @@ export default interface Cs2Data {
   lvlImg: string;
   roles: Role[];
   maps: Map[];
+  recentMatches: RecentMatch[];
 }
 
 export type Role = Record<

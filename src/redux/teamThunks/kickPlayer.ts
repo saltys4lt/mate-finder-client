@@ -1,6 +1,5 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
-import Team from '../../types/Team';
 import { Membership } from '../../types/Membership';
 
 const baseUrl = import.meta.env.VITE_BASE_URL;
