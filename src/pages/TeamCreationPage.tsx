@@ -56,9 +56,10 @@ const TeamCreationPage = () => {
   const isEditMode = Cookies.get('tem');
   const user = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
   const createTeamStatus = useSelector((state: RootState) => state.userReducer.createTeamStatus);
+  const createTeamError = useSelector((state: RootState) => state.userReducer.createTeamError);
+
   const updateTeamStatus = useSelector((state: RootState) => state.userReducer.updateTeamStatus);
 
-  const [availableGames, setAvailableGames] = useState<Option[]>(Games);
   const [avatarIsLoading, setAvatarIsLoading] = useState<boolean>(false);
   const [ownerRole, setOwnerRole] = useState<string>('');
   const [creationStep, setCreationStep] = useState<number>(1);
@@ -91,7 +92,6 @@ const TeamCreationPage = () => {
     teamRequests: [],
   });
 
-  const [game, setGame] = useState<SingleValue<Option>>();
   const uploadAvatar = async (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length) return;
     setAvatarIsLoading(true);
@@ -138,15 +138,11 @@ const TeamCreationPage = () => {
     }
     setTeam({ ...team, description: e.target.value });
   };
-  console.log(team.description);
+
   const handleTeamTypeChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.value === 'true') {
       setTeam({ ...team, public: true });
     } else setTeam({ ...team, public: false });
-  };
-
-  const handleGameChange = (game: SingleValue<Option>) => {
-    setGame(game);
   };
 
   const rolePlayersState = (role: string) => {
@@ -290,17 +286,6 @@ const TeamCreationPage = () => {
         navigate(`/team/${teamName}`);
       }
     }
-    if (checkUserGameProfile(user as ClientUser) === 2) {
-      setGame({ image: '', label: 'Выберите игру', value: 'both' } as Option);
-    }
-    if (checkUserGameProfile(user as ClientUser) === 1) {
-      setGame(Games[0]);
-      setAvailableGames([Games[0]]);
-    }
-    if (checkUserGameProfile(user as ClientUser) === 0) {
-      setGame(Games[1]);
-      setAvailableGames([Games[1]]);
-    }
 
     return () => {
       // Cookies.remove('tem');
@@ -346,6 +331,15 @@ const TeamCreationPage = () => {
         });
       }
     }
+    if (createTeamStatus === 'rejected') {
+      Swal.fire({
+        icon: 'error',
+        text: createTeamError as string,
+        confirmButtonText: 'Понятно',
+        timer: 3000,
+        timerProgressBar: true,
+      });
+    }
   }, [createTeamStatus, updateTeamStatus]);
 
   const openFileExplorer = () => {
@@ -385,7 +379,7 @@ const TeamCreationPage = () => {
             <InvitedFriendsContainer>
               {invitedFriends.map((friend) => (
                 <InvitedFriendItem key={friend.id}>
-                  <img src={friend.user_avatar} alt='' />
+                  <img src={isDefaultAvatar(friend.user_avatar)} alt='' />
                   <span>{friend.nickname}</span>
                 </InvitedFriendItem>
               ))}
@@ -545,10 +539,13 @@ const TeamCreationPage = () => {
         confirmButtonText: 'Отменить и выйти',
       }).then((res) => {
         if (res.isConfirmed) {
+          Cookies.remove('tem');
           navigate(`/team/${team.name}`);
         }
       });
     } else {
+      Cookies.remove('tem');
+
       navigate(`/team/${team.name}`);
     }
   };
@@ -609,45 +606,7 @@ const TeamCreationPage = () => {
             {creationStep === 1 && (
               <GameAndStatus style={firstStep}>
                 <TeamData>
-                  <TeamDataText>Игра</TeamDataText>
-                  <div style={{ display: 'flex', alignItems: 'center', columnGap: '5px', color: 'var(--main-text-color)' }}>
-                    <Select
-                      maxMenuHeight={130}
-                      isSearchable={false}
-                      styles={{
-                        ...customStyles,
-                        control: (base: any) => ({
-                          ...base,
-                          width: '300px',
-                          background: '#181818',
-                          boxShadow: '0',
-                          borderColor: '#484848',
-                          cursor: 'pointer',
-                          '&:hover': {
-                            borderColor: '#808080',
-                          },
-                        }),
-                      }}
-                      options={availableGames}
-                      value={game}
-                      onChange={handleGameChange}
-                      components={{
-                        Option: CustomOption,
-                        SingleValue: CustomSingleValue,
-                      }}
-                      placeholder='Выбор игры'
-                    ></Select>
-                    <ErrorOutlineContainer>
-                      <ErrorOutline />
-                      <GameExplenation>
-                        Список доступных игр зависит от ваших игровых профелей. Если вы не регистрировали профиль с какой-то игрой, то и
-                        создать команду с этой игрой нельзя.
-                      </GameExplenation>
-                    </ErrorOutlineContainer>
-                  </div>
-                </TeamData>
-
-                <TeamData>
+                  <TeamDataText style={{ textAlign: 'center', fontSize: 23, marginBottom: '15px' }}>Тип команды</TeamDataText>
                   <TeamDataText style={{ display: 'flex', columnGap: '5px', position: 'relative' }}>
                     <span>Публичная / Приватная:</span>
                     <ErrorOutlineContainer>

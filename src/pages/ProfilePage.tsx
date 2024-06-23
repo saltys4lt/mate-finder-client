@@ -7,7 +7,7 @@ import CommonButton from '../components/UI/CommonButton';
 import MapsImages from '../consts/MapsImages';
 import { ChangeEvent, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import Modal from '../components/Modal';
+import mapIcon from '../assets/images/error-map.png';
 import fetchPlayerByName from '../redux/playerThunks/fetchPlayerByName';
 import ClientUser from '../types/ClientUser';
 import Player from '../types/Player';
@@ -16,6 +16,7 @@ import Loader from '../components/Loader';
 import { useNavigate } from 'react-router-dom';
 import updateCs2Data from '../redux/cs2Thunks/updateCs2Data';
 import { CircularProgress } from '@mui/material';
+import Cookies from 'js-cookie';
 import LoaderBackground from '../components/UI/LoaderBackground';
 import copyCurrentUrl from '../util/copyCurrentUrl';
 import { getDownloadURL, ref, uploadBytes, deleteObject } from 'firebase/storage';
@@ -25,7 +26,7 @@ import UpdatedUserData from '../types/UpdatedUserData';
 import Swal from 'sweetalert2';
 import cancelReqIcon from '../assets/images/cancel-invite.png';
 import deleteCs2Data from '../redux/cs2Thunks/deleteCs2Data';
-import { changeChatState, changeGameProfileState, changeTeamInviteModalState } from '../redux/modalSlice';
+import { changeChatState, changeFriendsModalState, changeTeamInviteModalState } from '../redux/modalSlice';
 import defaultUserAvatar from '../assets/images/default-avatar.png';
 import editIcon from '../assets/images/edit.png';
 import linkIcon from '../assets/images/link.png';
@@ -41,9 +42,8 @@ import FriendsIcon from '../assets/images/friends.png';
 import addFriendsIcon from '../assets/images/add-friend.png';
 import sendMessageIcon from '../assets/images/send-message.png';
 import cs2ProfilePicture from '../assets/images/cs2-profile-pic.jpeg';
-import valorantProfilePicture from '../assets/images/valorant-profile-pic.jpg';
 import dropDownArrow from '../assets/images/drop-down-arrow.png';
-import headerBg from '../assets/images/profile-bg.png';
+import headerBg from '../assets/images/start-page-bg.jpg';
 import { setCurrentChat } from '../redux/chatSlice';
 import { Chat } from '../types/Chat';
 import { sendFriendRequest } from '../api/friendsRequests/sendFriendRequest';
@@ -55,6 +55,13 @@ import TeamInviteModal from '../components/TeamInviteModal';
 import { cancelFriendRequest } from '../api/friendsRequests/cancelFriendRequest';
 import { friendRequestAnswer } from '../api/friendsRequests/friendRequestAnswer';
 import { deleteFromFriends } from '../api/friendsRequests/deleteFromFriends';
+import { capitalizeWord } from '../util/capitalizeWord';
+import { formatDateWithTime } from '../util/formatDate';
+import { SteamAuth } from '../api/steamAuth';
+import FriendslistModal from '../components/FriendslistModal';
+import { setGameCreationActive, setGameCreationActiveAsync } from '../redux/userSlice';
+import isDefaultAvatar from '../util/isDefaultAvatar';
+import Team from '../types/Team';
 const ProfilePage = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -86,10 +93,12 @@ const ProfilePage = () => {
   useEffect(() => {
     if (user?.nickname === nickname) {
       setProfileUser(user);
-    } else {
+    } else if (user.cs2_data) {
       if (player) {
         setProfileUser(player);
       } else dispatch(fetchPlayerByName(nickname as string));
+    } else {
+      navigate('/404');
     }
 
     return () => {
@@ -109,7 +118,7 @@ const ProfilePage = () => {
   if (playerError) {
     dispatch(setPlayer(null));
     dispatch(setPlayerError(null));
-    navigate('/');
+    navigate('/404');
   }
 
   useEffect(() => {
@@ -128,6 +137,39 @@ const ProfilePage = () => {
   }
 
   const handleTeamInvite = () => {
+    if (user.memberOf.length !== 0) {
+      const userTeam: Team = user.memberOf[0].team;
+      const TeamMemberClause = () => {
+        return (
+          <div style={{ width: '100%', display: 'flex', alignItems: 'center', flexDirection: 'column', rowGap: '15px' }}>
+            <h3 style={{ fontSize: 19 }}> Вы уже состоите в команде</h3>
+            <div
+              style={{
+                width: '70%',
+                padding: '15px',
+                borderRadius: '10px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                rowGap: '15px',
+                backgroundColor: '#333',
+              }}
+            >
+              <img style={{ width: 70, height: 70, objectFit: 'cover' }} src={userTeam.avatar} alt='' />
+              <h2 style={{ color: 'var(--main-text-color)' }}>{userTeam.name}</h2>
+            </div>
+          </div>
+        );
+      };
+
+      Swal.fire({
+        html: ReactDOMServer.renderToString(<TeamMemberClause />),
+        confirmButtonText: 'Понятно',
+        timer: 3000,
+        timerProgressBar: true,
+      });
+      return;
+    }
     if (user.teams?.length === 0) {
       const NoTeamAlert = () => {
         return (
@@ -194,6 +236,14 @@ const ProfilePage = () => {
   };
 
   const handleDeleteCs2data = () => {
+    if (user.teams.length !== 0 || user.memberOf.length !== 0) {
+      Swal.fire({
+        icon: 'error',
+        text: 'Пока вы состоите в команде, вы не можете удалить игровой профиль!',
+        confirmButtonText: 'Понятно',
+      });
+      return;
+    }
     Swal.fire({
       title: 'Уверены?',
       text: 'Вам предеться снова регистрировать игровой профиль, чтобы открыть основные функции для этой игры!',
@@ -248,11 +298,20 @@ const ProfilePage = () => {
     : updatedUserData.user_avatar
       ? updatedUserData.user_avatar
       : profileUser?.user_avatar;
+  console.log(profileUser.cs2_data?.recentMatches);
+
+  const handleChangeRolesAndMaps = () => {
+    Cookies.set('rme', 'true');
+    dispatch(setGameCreationActiveAsync('cs2')).then(() => {
+      navigate('/creation/cs2');
+    });
+  };
 
   return (
     <>
-      <Modal />
-      {player && user.teams.length > 0 && <TeamInviteModal candidate={player} />}
+      {user.id === profileUser.id && <FriendslistModal />}
+
+      {player && user.teams.length > 0 && <TeamInviteModal candidate={player} selectedTeam={user.teams[0]} />}
       <ProfileHeader>
         <Container>
           {!profileUser ? (
@@ -261,7 +320,7 @@ const ProfilePage = () => {
             <>
               <MainDataContainer>
                 <ProfileAvatarContainer>
-                  <ProfileAvatar $avatarIsLoading={avatarIsLoading} src={profileAvatar} alt='' />
+                  <ProfileAvatar $avatarIsLoading={avatarIsLoading} src={isDefaultAvatar(profileAvatar)} alt='' />
                   {editMode && (
                     <>
                       <ChangeAvatarButton onClick={openFileExplorer}>
@@ -359,11 +418,11 @@ const ProfilePage = () => {
                       Редактировать профиль
                     </EditProfileButton>
                   ))}
-                {!editMode && (
+                {!editMode && user.cs2_data && (
                   <SocialButtons>
                     {!player ? (
                       <>
-                        <CommonButton>
+                        <CommonButton onClick={() => dispatch(changeFriendsModalState(true))}>
                           <img src={FriendsIcon} alt='' />
                           Мои друзья
                         </CommonButton>
@@ -461,7 +520,7 @@ const ProfilePage = () => {
                                       onClick={() => {
                                         const id = profileUser.id;
                                         if (id) {
-                                          deleteFromFriends(user.id, id, user.nickname);
+                                          deleteFromFriends(user.id, id, profileUser.nickname);
                                         }
                                       }}
                                     >
@@ -566,7 +625,7 @@ const ProfilePage = () => {
                             <DropDownButton onClick={() => handleUpdateFaceitData(user?.cs2_data?.steamId as string)}>
                               Обновить данные faceit
                             </DropDownButton>
-                            <DropDownButton>Изменить роли/карты</DropDownButton>
+                            <DropDownButton onClick={handleChangeRolesAndMaps}>Изменить роли/карты</DropDownButton>
                           </DropDownContent>
                         </DropDown>
                         <GameContainerButton onClick={handleDeleteCs2data}>Удалить игровой профиль</GameContainerButton>
@@ -574,27 +633,11 @@ const ProfilePage = () => {
                     )}
                   </>
                 ) : !player ? (
-                  <CreateGameProfileButton onClick={() => dispatch(changeGameProfileState(true))}>
-                    Создать игровой профиль
-                  </CreateGameProfileButton>
+                  <CreateGameProfileButton onClick={() => SteamAuth()}>Создать игровой профиль</CreateGameProfileButton>
                 ) : (
                   <p style={{ color: '#fff', textAlign: 'center' }}>У этого пользователя нет игрового профиля</p>
                 )}
               </Cs2Stats>
-            </GameContainer>
-            <GameContainer>
-              <GameIcon src={valorantProfilePicture} />
-              <ValorantStats>
-                {profileUser.valorant_data ? (
-                  <></>
-                ) : !player ? (
-                  <CreateGameProfileButton onClick={() => dispatch(changeGameProfileState(true))}>
-                    Создать игровой профиль
-                  </CreateGameProfileButton>
-                ) : (
-                  <p style={{ color: '#fff', textAlign: 'center' }}>У этого пользователя нет игрового профиля</p>
-                )}
-              </ValorantStats>
             </GameContainer>
           </LeftContainer>
           <RightContainer>
@@ -613,42 +656,97 @@ const ProfilePage = () => {
                 <DescriptionText>{profileUser.description ? profileUser.description : 'Информация отсутствует...'}</DescriptionText>
               )}
             </Description>
-            <Teams>
-              <RightContentTitle>Команды</RightContentTitle>
-              <TeamsContainer>
-                {profileUser.teams.length > 0
-                  ? profileUser.teams.map((team) => (
-                      <Team
-                        key={team.id}
-                        onClick={() => {
-                          navigate(`/team/${team.name}`);
-                        }}
-                      >
-                        <div>
-                          <img src={team.avatar} alt='' />
-                          <span>{team.name}</span>
-                        </div>
-                        <span>{team.members.length + 1}/5</span>
-                      </Team>
-                    ))
-                  : profileUser.memberOf.map(({ team }) => (
-                      <Team
-                        key={team.id}
-                        onClick={() => {
-                          navigate(`/team/${team.name}`);
-                        }}
-                      >
-                        <div>
-                          <img src={team.avatar} alt='' />
-                          <span>{team.name}</span>
-                        </div>
-                        <span>{team.members.length + 1}/5</span>
-                      </Team>
-                    ))}
-              </TeamsContainer>
-            </Teams>
+            {profileUser.cs2_data && (
+              <Teams>
+                <RightContentTitle>Команда</RightContentTitle>
+                <TeamsContainer>
+                  {profileUser.teams.length > 0 || profileUser.memberOf.length > 0 ? (
+                    <>
+                      {profileUser.teams.length > 0 &&
+                        profileUser.teams.map((team) => (
+                          <TeamItem
+                            key={team.id}
+                            onClick={() => {
+                              navigate(`/team/${team.name}`);
+                            }}
+                          >
+                            <div>
+                              <img src={team.avatar} alt='' />
+                              <span>{team.name}</span>
+                            </div>
+                            <span>{team.members.length + 1}/5</span>
+                          </TeamItem>
+                        ))}
+                      {profileUser.memberOf.length > 0 &&
+                        profileUser.memberOf.map(({ team }) => (
+                          <TeamItem
+                            key={team.id}
+                            onClick={() => {
+                              navigate(`/team/${team.name}`);
+                            }}
+                          >
+                            <div>
+                              <img src={team.avatar} alt='' />
+                              <span>{team.name}</span>
+                            </div>
+                            <span>{team.members.length + 1}/5</span>
+                          </TeamItem>
+                        ))}
+                    </>
+                  ) : profileUser.id === user.id ? (
+                    <NoTeamText>
+                      Вы не состоите в команде. <br /> <span onClick={() => navigate('/teams?page=1&category=all')}>найти</span>/
+                      <span onClick={() => navigate('/team-creator')}>создать</span>
+                    </NoTeamText>
+                  ) : (
+                    <NoTeamText>Не состоит в команде</NoTeamText>
+                  )}
+                </TeamsContainer>
+              </Teams>
+            )}
           </RightContainer>
         </ProfileMainContainer>
+        {profileUser.cs2_data && (
+          <MatchesSection>
+            <MatchesTitle>Последние матчи</MatchesTitle>
+            <MatchesContainer>
+              {profileUser.cs2_data.recentMatches.map((match) => (
+                <a style={{ textDecoration: 'none' }} href={match.link} key={match.id} target='_blank'>
+                  <MatchItem $isWin={match.result}>
+                    {match.map ? (
+                      <MatchMap src={MapsImages[capitalizeWord(match.map)]} />
+                    ) : (
+                      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                        <img style={{ maxWidth: '55px', filter: 'invert(0.7)' }} src={mapIcon} />
+                      </div>
+                    )}
+
+                    <MatchDataColumn>
+                      <MatchResult $isWin={match.result}>{match.result ? 'Победа' : 'Поражение'}</MatchResult>
+                      <span>{match.stat}</span>
+                    </MatchDataColumn>
+                    <MatchDataColumn>
+                      <MatchDataTitle>У/П/С</MatchDataTitle>
+                      <MatchText>{match.kad}</MatchText>
+                    </MatchDataColumn>
+                    <MatchDataColumn>
+                      <MatchDataTitle>У.С</MatchDataTitle>
+                      <MatchText>{match.kd}</MatchText>
+                    </MatchDataColumn>
+                    <MatchDataColumn>
+                      <MatchDataTitle>Дата</MatchDataTitle>
+                      <MatchText>{formatDateWithTime(match.date.toString())}</MatchText>
+                    </MatchDataColumn>
+                    <MatchDataColumn>
+                      <MatchDataTitle>Рейтинг elo за матч</MatchDataTitle>
+                      <EloText $isWin={match.result}>{match.eloChange}</EloText>
+                    </MatchDataColumn>
+                  </MatchItem>
+                </a>
+              ))}
+            </MatchesContainer>
+          </MatchesSection>
+        )}
       </Container>
     </>
   );
@@ -812,6 +910,76 @@ const ProfileMainContainer = styled.div`
     align-items: center;
   }
 `;
+
+const MatchesSection = styled.section`
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  row-gap: 20px;
+  margin-bottom: 20px;
+`;
+
+const MatchesContainer = styled.div`
+  width: 80%;
+  display: flex;
+  flex-direction: column;
+  row-gap: 15px;
+`;
+const MatchItem = styled.div<{ $isWin: boolean }>`
+  width: 100%;
+  border-radius: 10px;
+  padding: 3px 10px;
+  border-bottom: 2px solid ${(p) => (p.$isWin ? '#a1d586' : '#ca3e3f')};
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #2f2f2f;
+  transition: all 0.3s ease-in-out;
+  &:hover {
+    cursor: pointer;
+    opacity: 0.7;
+    transform: translateX(10px);
+  }
+`;
+
+const MatchText = styled.span`
+  font-weight: 700;
+`;
+
+const EloText = styled(MatchText)<{ $isWin: boolean }>`
+  color: ${(p) => (p.$isWin ? '#a1d586' : '#ca3e3f')};
+`;
+
+const MatchDataColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  row-gap: 15px;
+  color: var(--main-text-color);
+`;
+
+const MatchDataTitle = styled.span`
+  color: #7f7f7f;
+  font-size: 16px;
+`;
+
+const MatchResult = styled.span<{ $isWin: boolean }>`
+  width: 110px;
+  text-align: center;
+  font-weight: 700;
+  border-radius: 5px;
+  padding: 3px;
+  background-color: ${(p) => (p.$isWin ? '#a1d586' : '#ca3e3f')};
+  color: ${(p) => (p.$isWin ? '#333' : '')};
+  text-decoration: none;
+`;
+
+const MatchMap = styled.img`
+  width: 100px;
+  height: 50px;
+  border-radius: 5px;
+`;
+
 const LeftContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -988,15 +1156,6 @@ const DropDownButton = styled(CommonButton)`
 
 const MapsContainer = styled(RolesContainer)``;
 
-const ValorantStats = styled.div`
-  padding: 10px 15px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-`;
-
 const RightContentTitle = styled.h3`
   color: #fff;
 `;
@@ -1046,7 +1205,7 @@ const TeamsContainer = styled.div`
   flex-direction: column;
   row-gap: 20px;
 `;
-const Team = styled.div`
+const TeamItem = styled.div`
   width: 100%;
   color: var(--main-text-color);
   background-color: #2f2f2f;
@@ -1120,5 +1279,19 @@ const ActionsList = styled.ul`
   flex-direction: column;
   row-gap: 10px;
 `;
+
+const NoTeamText = styled.p`
+  font-weight: 300;
+  margin-top: -10px;
+  margin-left: 20px;
+  color: var(--main-text-color);
+  > span {
+    font-weight: 700;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+`;
+
+const MatchesTitle = styled(RightContentTitle)``;
 
 export default ProfilePage;

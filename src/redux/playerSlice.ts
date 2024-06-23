@@ -3,25 +3,32 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import Player from '../types/Player';
 import fetchPlayerByName from './playerThunks/fetchPlayerByName';
 import fetchPlayers from './playerThunks/fetchPlayers';
+import fetchTopPlayers from './playerThunks/fetchTopPlayers';
 interface PlayerState {
   player: Player | null;
   players: Player[];
+  topPlayers: Player[] | null;
+
   pages: number;
   fetchPlayerByNameStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
   fetchPlayerByNameError: null | string;
 
   fetchPlayersStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
+  fetchTopPlayersStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
+
   fetchPlayersError: null | string;
 }
 
 const initialState: PlayerState = {
   player: null,
   players: [],
+  topPlayers: null,
   pages: 1,
   fetchPlayerByNameStatus: 'idle',
   fetchPlayerByNameError: null,
   fetchPlayersStatus: 'idle',
   fetchPlayersError: null,
+  fetchTopPlayersStatus: 'idle',
 };
 const playerSlice = createSlice({
   name: 'usersReducer',
@@ -64,6 +71,14 @@ const playerSlice = createSlice({
     builder.addCase(fetchPlayers.rejected, (state, action) => {
       state.fetchPlayersStatus = 'rejected';
       state.fetchPlayersError = action.payload as string;
+    });
+    builder.addCase(fetchTopPlayers.pending, (state) => {
+      state.fetchTopPlayersStatus = 'pending';
+    });
+
+    builder.addCase(fetchTopPlayers.fulfilled, (state, action: PayloadAction<Player[]>) => {
+      state.fetchTopPlayersStatus = 'fulfilled';
+      state.topPlayers = action.payload;
     });
   },
 });

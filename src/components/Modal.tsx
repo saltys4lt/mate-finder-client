@@ -40,10 +40,10 @@ const Modal = () => {
   const loginStatus = useSelector((state: RootState) => state.userReducer.fetchUserStatus);
 
   return (
-    <ModalContainer $active={isActive} onClick={closeModal}>
+    <ModalContainer $active={isActive} onMouseUp={closeModal}>
       <Content
         $active={isActive}
-        onClick={(e: React.MouseEvent) => {
+        onMouseUp={(e: React.MouseEvent) => {
           e.stopPropagation();
         }}
       >

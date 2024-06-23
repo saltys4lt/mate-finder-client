@@ -21,7 +21,7 @@ const StartPage = () => {
         <ContentContainer>
           <Content>
             <ContentTitle>новый геймплей начинается здесь</ContentTitle>
-            <div style={{ marginTop: '80px' }}>
+            <div>
               <SubContent>
                 <SubContentRed>Находи</SubContentRed> нужных людей
                 <ContentIcon src={matesIcon}></ContentIcon>
@@ -48,7 +48,7 @@ const StartPage = () => {
 const Main = styled.main`
   height: 80vh;
   background-image: url('${startPageBg}');
-  background-size: 100%;
+  background-size: 110%;
   background-repeat: no-repeat;
 `;
 
@@ -56,15 +56,25 @@ const ContentContainer = styled.div`
   width: 100%;
   display: flex;
 
-  align-items: flex-end;
   flex-direction: column;
-  color: #fff;
-  padding: 30px;
+  padding-block: 30px;
+  @media (max-width: 1100px) {
+    padding-block: 0px;
+  }
+  color: var(--main-text-color);
 `;
 const Content = styled.div`
-  margin-top: 50px;
+  height: 60vh;
   width: 50%;
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  row-gap: 50px;
+  align-items: center;
+
+  @media (max-width: 1100px) {
+    padding-block: 30px;
+    text-align: center;
+  }
 `;
 
 const ContentTitle = styled.h1`
@@ -72,7 +82,6 @@ const ContentTitle = styled.h1`
 `;
 
 const SubContent = styled.p`
-  margin-top: 20px;
   font-size: 24px;
 
   display: flex;
@@ -81,18 +90,18 @@ const SubContent = styled.p`
   column-gap: 10px;
 `;
 const SubContentRed = styled.span`
-  color: #f33e3e;
+  color: #de8202;
   font-size: 30px;
   text-transform: uppercase;
+  font-weight: 700;
 `;
 const ContentIcon = styled.img`
-  filter: invert(1);
   width: 50px;
   margin-left: 20px;
+  filter: invert(1);
 `;
 
 const StartButton = styled.button`
-  margin-top: 50px;
   font-weight: 700;
   font-size: 20px;
   font-family: montserrat;
@@ -100,11 +109,10 @@ const StartButton = styled.button`
   color: #fff;
   padding: 5px 16px;
   border-radius: 4px;
-  background: radial-gradient(circle at 10% 200%, rgb(197, 84, 76) 30%, rgb(0, 0, 0) 200%);
+  background: radial-gradient(circle at 10% 200%, rgb(217, 127, 8) 30%, rgb(0, 0, 0) 200%);
 
   background-size: 100%;
-  height: 80px;
-
+  min-height: 60px;
   width: 270px;
   border: 1px solid #000000;
   cursor: pointer;

@@ -9,7 +9,7 @@ import CommonInput from '../UI/CommonInput';
 import UserMessage from './UserMessage';
 import PlayerMessage from './PlayerMessage';
 import { Message } from '../../types/Message';
-
+import { useSpring, animated } from '@react-spring/web';
 import { getChat, getMessage, setCurrentChat, updateChatMessages, updateMessage } from '../../redux/chatSlice';
 import { Chat as IChat } from '../../types/Chat';
 import ClientUser from '../../types/ClientUser';
@@ -76,7 +76,7 @@ const Chat = () => {
 
       if (members) {
         const chatMembers = members.filter((member) => member.id !== user.id).map((member) => ({ isChecked: false, userId: member.id }));
-        console.log('@@@', chatMembers);
+
         const newMessage: Message = {
           roomId: currentChat?.roomId as string,
           text: message,
@@ -124,7 +124,6 @@ const Chat = () => {
     });
 
     ioSocket.on('readMessage', (value: Message) => {
-      console.log(value);
       dispatch(updateMessage(value));
     });
 
@@ -173,14 +172,16 @@ const Chat = () => {
     }
   }, [currentChat, isActive]);
 
-  const uncheckedMessages = chats.reduce((_, chat) => {
+  const uncheckedMessages = chats.reduce((count, chat) => {
     const unreadMessages = chat.messages.filter((message) =>
-      message?.checked.find((checkedBy) => checkedBy.userId === user.id && !checkedBy.isChecked),
+      message?.checked.some((checkedBy) => checkedBy.userId === user.id && !checkedBy.isChecked),
     );
 
-    return unreadMessages.length;
+    return count + unreadMessages.length;
   }, 0);
-  console.log(uncheckedMessages);
+
+  console.log('Типа не прочитанное ' + uncheckedMessages);
+
   const openTeamChat = () => {
     const teamChat = chats.find((chat) => chat.team !== null);
     if (teamChat) {
@@ -202,6 +203,12 @@ const Chat = () => {
     }
   };
 
+  const chatAnimation = useSpring({
+    width: isActive ? '900px' : '50px', // Замените на ваши значения
+    height: isActive ? '400px' : '50px', // Замените на ваши значения
+    config: { tension: 210, friction: 20 }, // Настройка анимации
+  });
+
   return fetchChatsStatus === 'pending' || fetchChatsStatus === 'idle' ? (
     <ChatButtonContainer>
       <ChatButton>
@@ -217,7 +224,7 @@ const Chat = () => {
       </ChatButtonInnerContainer>
     </ChatButtonContainer>
   ) : (
-    <OpenChatContainer>
+    <OpenChatContainer style={chatAnimation}>
       <OpenChat>
         <CloseButton onClick={() => handleChangeChatState(false)}>
           <img src={closeCross} alt='' />
@@ -435,7 +442,7 @@ const ChatButton = styled.button`
   }
 `;
 
-const OpenChatContainer = styled.div`
+const OpenChatContainer = styled(animated.div)`
   border-radius: 10px;
   padding: 10px;
   position: fixed;

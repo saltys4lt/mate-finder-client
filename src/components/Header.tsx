@@ -4,15 +4,15 @@ import Container from './Container';
 import { Alert, AlertTitle } from '@mui/material';
 import { SportsEsports } from '@mui/icons-material';
 import { useSelector } from 'react-redux';
-import { RootState, useAppDispatch } from '../redux';
+import { RootState } from '../redux';
 
-import { changeGameProfileState } from '../redux/modalSlice';
+import { SteamAuth } from '../api/steamAuth';
 
 const Header = () => {
   const cs2_data = useSelector((state: RootState) => state.userReducer.user?.cs2_data);
-  const valorant_data = useSelector((state: RootState) => state.userReducer.user?.valorant_data);
-  const dispatch = useAppDispatch();
+
   const isAuth = useSelector((state: RootState) => state.userReducer.isAuth);
+  const isAdmin = useSelector((state: RootState) => state.userReducer.isAdmin);
 
   return (
     <>
@@ -21,9 +21,9 @@ const Header = () => {
           <Navbar />
         </Container>
       </HeaderContainer>
-      {isAuth && (
+      {isAuth && !isAdmin && (
         <>
-          {cs2_data || valorant_data ? (
+          {cs2_data ? (
             <></>
           ) : (
             <Alert icon={<SportsEsports fontSize='inherit' />} severity='warning'>
@@ -39,12 +39,12 @@ const Header = () => {
                     cursor: 'pointer',
                   }}
                   onClick={() => {
-                    dispatch(changeGameProfileState(true));
+                    SteamAuth();
                   }}
                 >
                   создайте игровой профиль
                 </span>
-                &nbsp; для <b>CS2</b> или <b>VALORANT</b>
+                &nbsp; для <b>Counter-strike</b>
               </>
             </Alert>
           )}

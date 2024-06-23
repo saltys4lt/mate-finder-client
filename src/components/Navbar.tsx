@@ -7,22 +7,32 @@ import { RootState, useAppDispatch } from '../redux';
 import { changeLoginState, changeRegState } from '../redux/modalSlice';
 import { changeIsAuth } from '../redux/userSlice';
 import { useEffect, useState } from 'react';
-import logoImg from '../assets/images/header1-logo.jpeg';
+import logoImg from '../assets/images/logo.png';
 import logout from '../assets/images/logout.png';
 import { resetChats } from '../redux/chatSlice';
 import { ioSocket } from '../api/webSockets/socket';
+import { changeFriendsModalState } from '../redux/modalSlice';
+import ClientUser from '../types/ClientUser';
+import FriendslistModal from './FriendslistModal';
+import ReactDOMServer from 'react-dom/server';
+import { cancelRoutePopUp } from '../util/cancelRoutePopup';
+import isDefaultAvatar from '../util/isDefaultAvatar';
+import BurgerIcon from '../assets/images/burgerIcon.png';
+import closeBurgerIcon from '../assets/images/closeBurger.png';
 
 const Navbar = () => {
   const dispatch = useAppDispatch();
 
-  const user = useSelector((state: RootState) => state.userReducer.user);
-  console.log(user);
+  const user = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
+
   const isAuth = useSelector((state: RootState) => state.userReducer.isAuth);
+  const isAdmin = useSelector((state: RootState) => state.userReducer.isAdmin);
+
   const [isGameProfileExist, setIsGameProfileExist] = useState<boolean>(false);
   useEffect(() => {
-    if (user?.cs2_data || user?.valorant_data) setIsGameProfileExist(true);
+    if (user?.cs2_data) setIsGameProfileExist(true);
   }, [user]);
-
+  const [isListOpened, setIsListOpened] = useState<boolean>(false);
   const openRegModal = () => {
     document.documentElement.style.overflowY = 'hidden';
     dispatch(changeRegState(true));
@@ -31,6 +41,42 @@ const Navbar = () => {
   const openLoginModal = () => {
     document.documentElement.style.overflowY = 'hidden';
     dispatch(changeLoginState(true));
+  };
+
+  const navigateToTeamPage = () => {
+    if (!user.cs2_data) cancelRoutePopUp();
+    if (user.teams.length > 0) {
+      navigate(`/team/${user?.teams[0].name}`);
+    } else if (user.memberOf.length > 0) {
+      navigate(`/team/${user?.memberOf[0].team.name}`);
+    } else {
+      if (user.cs2_data) {
+        const NoTeamAlert = () => {
+          return (
+            <div style={{ textAlign: 'center' }}>
+              <h3>У вас нет своей команды :&#40;</h3>
+              <p>Но вы можете создать ее или вступить в существующую:D</p>
+            </div>
+          );
+        };
+        Swal.fire({
+          html: ReactDOMServer.renderToString(<NoTeamAlert />),
+          confirmButtonText: 'Создать',
+          showCancelButton: true,
+          cancelButtonText: 'Отмена',
+          showDenyButton: true,
+          denyButtonColor: '#0062b8',
+          denyButtonText: 'Найти',
+        }).then((res) => {
+          if (res.isConfirmed) {
+            navigate('/team-creator');
+          }
+          if (res.isDenied) {
+            navigate('/teams/?page=1&category=all');
+          }
+        });
+      }
+    }
   };
   const handleExit = () => {
     Swal.fire({
@@ -43,8 +89,9 @@ const Navbar = () => {
       cancelButtonText: 'Отмена',
     }).then((result) => {
       if (result.isConfirmed) {
-        Cookies.remove('token');
         dispatch(resetChats());
+        dispatch(changeLoginState(false));
+
         dispatch(changeIsAuth(false));
         ioSocket.emit('leaveAllRooms');
         ioSocket.removeListener('friendRequest');
@@ -55,12 +102,37 @@ const Navbar = () => {
         ioSocket.removeListener('leaveTeam');
         ioSocket.removeListener('answerTeamRequest');
         ioSocket.removeListener('cancelTeamRequest');
+        const allCookies = Cookies.get();
+        setIsGameProfileExist(false);
+        for (const cookie in allCookies) {
+          console.log(cookie);
+          Cookies.remove(cookie, { path: '.faceittracker.net' });
+        }
+        navigate('/');
       }
     });
   };
+
+  const navigateTo = (path: string) => {
+    if (user.cs2_data) {
+      navigate(path);
+    } else {
+      cancelRoutePopUp();
+    }
+  };
+
+  const openFriendsModal = () => {
+    if (user.cs2_data) {
+      dispatch(changeFriendsModalState(true));
+    } else {
+      cancelRoutePopUp();
+    }
+  };
+
   const navigate = useNavigate();
   return (
     <NavbarContainer>
+      {isGameProfileExist && <FriendslistModal />}
       <LogoWrapper
         onClick={() => {
           navigate('/');
@@ -69,53 +141,87 @@ const Navbar = () => {
         <LogoImage src={logoImg} />
         <LogoText>
           Squad
-          <LogoTextSpan>Link</LogoTextSpan>
+          <LogoTextSpan>{isAdmin ? 'Admin' : 'Link'}</LogoTextSpan>
         </LogoText>
       </LogoWrapper>
+
       {isAuth ? (
-        <AuthedNavbar>
-          <NavLinks>
-            <NavLink
-              onClick={() => {
-                navigate('/');
-              }}
-            >
-              Главная
-            </NavLink>
-            <DropDown>
-              <NavLink>Игроки</NavLink>
-              <DropDownContent>
-                <DropDownLink to={isGameProfileExist ? '/players' : '/'}>Поиск</DropDownLink>
-                <DropDownLink to={isGameProfileExist ? '/friends' : '/'}>Друзья</DropDownLink>
-              </DropDownContent>
-            </DropDown>
-            <DropDown>
-              <NavLink>Команды</NavLink>
-              <DropDownContent>
-                <DropDownLink to={isGameProfileExist ? '/team-creator' : '/'}>Создать команду</DropDownLink>
-                <DropDownLink to={isGameProfileExist ? '/teams' : '/'}>Поиск</DropDownLink>
-              </DropDownContent>
-            </DropDown>
-            <DropDown>
-              <NavLink>Другое</NavLink>
-              <DropDownContent>
-                <DropDownLink to={`/profile/${user?.nickname}`}>Профиль</DropDownLink>
-                <DropDownLink to={'/matches'}>Матчи</DropDownLink>
-                <DropDownLink to={'/news'}>Новости</DropDownLink>
-              </DropDownContent>
-            </DropDown>
-          </NavLinks>
-          <NavProfile to={`/profile/${user?.nickname}`}>
-            <NavNickname>{user?.nickname}</NavNickname>
-            <NavAvatar src={user?.user_avatar} />
-          </NavProfile>
-          <Exit src={logout} onClick={handleExit} />
+        <AuthedNavbar $isAdmin={isAdmin}>
+          {!isAdmin && (
+            <>
+              {window.innerWidth > 1000 && (
+                <>
+                  {' '}
+                  <NavLinks>
+                    <StraightLink to={'/'}>Главная</StraightLink>
+
+                    <NavLink onClick={() => navigateTo('/players')}>Игроки</NavLink>
+                    <NavLink onClick={() => navigateTo('/teams')}>Команды</NavLink>
+
+                    <DropDown>
+                      <NavLink>Другое</NavLink>
+                      <DropDownContent>
+                        <DropDownText onClick={openFriendsModal}>Друзья</DropDownText>
+                        <DropDownText onClick={navigateToTeamPage}>Команда</DropDownText>
+                        <DropDownLink to={'/news'}>Новости</DropDownLink>
+                      </DropDownContent>
+                    </DropDown>
+                  </NavLinks>
+                  <NavProfile to={`/profile/${user?.nickname}`}>
+                    <NavNickname>{user?.nickname}</NavNickname>
+                    <NavAvatar src={isDefaultAvatar(user?.user_avatar)} />
+                  </NavProfile>
+                </>
+              )}
+            </>
+          )}
+
+          {window.innerWidth > 1000 && <Exit src={logout} onClick={handleExit} />}
+          {window.innerWidth < 1000 && <Burger src={BurgerIcon} onClick={() => setIsListOpened(true)} />}
         </AuthedNavbar>
       ) : (
         <AuthButtons>
           <LoginButton onClick={openLoginModal}>Вход</LoginButton>
           <RegistrationButton onClick={openRegModal}>Регистрация</RegistrationButton>
         </AuthButtons>
+      )}
+      {isListOpened && (
+        <SidebarContainer>
+          <BurgerExit src={closeBurgerIcon} onClick={() => setIsListOpened(false)} />
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '40px' }}>
+            {' '}
+            <NavProfile to={`/profile/${user?.nickname}`}>
+              <NavNickname>{user?.nickname}</NavNickname>
+              <NavAvatar src={isDefaultAvatar(user?.user_avatar)} />
+            </NavProfile>
+            <Exit src={logout} onClick={handleExit} />
+          </div>
+          <Nav>
+            <ul>
+              <li>
+                <StraightLink to={'/'}>Главная</StraightLink>
+              </li>
+              <li>
+                <NavLink onClick={() => navigateTo('/players')}>Игроки</NavLink>
+              </li>
+              <li>
+                <NavLink onClick={() => navigateTo('/teams')}>Команды</NavLink>
+              </li>
+              <hr />
+              <li>
+                <NavLink onClick={openFriendsModal}>Друзья</NavLink>
+              </li>
+              <li>
+                <NavLink onClick={navigateToTeamPage}>Команда</NavLink>
+              </li>
+              <li>
+                <StraightLink to={'/news'}>Новости</StraightLink>
+              </li>
+              <li></li>
+            </ul>
+          </Nav>
+        </SidebarContainer>
       )}
     </NavbarContainer>
   );
@@ -162,7 +268,7 @@ const RegistrationButton = styled.button`
   color: var(--main-text-color);
   padding: 5px 16px;
   border-radius: 4px;
-  background: radial-gradient(circle at 10% 20%, rgb(172, 50, 42) 0%, rgb(106, 55, 55) 100.7%);
+  background: radial-gradient(circle at 10% 20%, rgb(199, 96, 11) 0%, rgb(106, 55, 55) 100.7%);
   background-size: 100%;
   height: 32px;
 
@@ -184,13 +290,15 @@ const LogoWrapper = styled.div`
 `;
 
 const LogoImage = styled.img`
-  height: 60px;
+  width: 100%;
+  max-height: 70px;
+  object-fit: cover;
   border-radius: 5px;
 `;
 const LogoText = styled.h1`
   margin-left: 20px;
   font-size: 28px;
-  background: linear-gradient(45deg, #f33e3e, #949494);
+  background: linear-gradient(100deg, #e28615, #d9950d);
   -webkit-background-clip: text;
   color: transparent;
 `;
@@ -199,12 +307,15 @@ const LogoTextSpan = styled.span`
   color: #fff;
 `;
 
-const AuthedNavbar = styled.div`
+const AuthedNavbar = styled.div<{ $isAdmin: boolean }>`
   width: 70%;
 
   display: flex;
-  justify-content: space-evenly;
+  justify-content: ${(p) => (p.$isAdmin ? 'flex-end' : 'space-evenly')};
   align-items: center;
+  @media (max-width: 1000px) {
+    justify-content: flex-end;
+  }
 `;
 
 const NavLinks = styled.div`
@@ -212,6 +323,30 @@ const NavLinks = styled.div`
   display: flex;
   align-items: center;
   gap: 15%;
+`;
+
+const StraightLink = styled(Link)`
+  color: #fff;
+  font-size: 16px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  &:after {
+    content: ' ';
+    display: block;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(45deg, #f33e3e, #d84e17);
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+  }
+  &:hover {
+    transform: scale(1.1);
+    color: #ffdede;
+  }
+  &:hover::after {
+    opacity: 1;
+  }
 `;
 
 const NavLink = styled.div`
@@ -229,7 +364,6 @@ const NavLink = styled.div`
     transition: opacity 0.2s ease-in-out;
   }
   &:hover {
-    transform: scale(1.1);
     color: #ffdede;
   }
   &:hover::after {
@@ -266,13 +400,26 @@ const NavProfile = styled(Link)`
 `;
 
 const Exit = styled.img`
+  align-self: flex-end;
   height: 40px;
   margin-left: 20px;
+
   cursor: pointer;
+
   transition: transform 0.2s ease-in-out;
+
   &:hover {
     transform: scale(1.1);
   }
+`;
+const Burger = styled(Exit)`
+  width: 50px;
+  height: 50px;
+`;
+
+const BurgerExit = styled(Exit)`
+  width: 30px;
+  height: 30px;
 `;
 
 const DropDownContent = styled.div`
@@ -282,7 +429,7 @@ const DropDownContent = styled.div`
   position: absolute;
 
   transform: translateY(-400%);
-  background-color: #cb3030;
+  background-color: #fe8205;
   left: -50%;
   top: 20px;
   box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
@@ -302,6 +449,18 @@ const DropDownLink = styled(Link)`
     transform: translate(1.5);
   }
 `;
+
+const DropDownText = styled.span`
+  display: block;
+
+  color: #fff;
+  padding: 12px 16px;
+  cursor: pointer;
+  &:hover {
+    color: #333;
+    transform: translate(1.5);
+  }
+`;
 const DropDown = styled.div`
   position: relative;
   &:hover ${DropDownContent} {
@@ -310,4 +469,45 @@ const DropDown = styled.div`
     opacity: 1;
   }
 `;
+
+const SidebarContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 250px;
+  height: 100%;
+  background-color: #333;
+  color: white;
+  transition: left 0.3s;
+  padding: 15px;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
+  z-index: 10;
+`;
+
+const CloseButton = styled.button`
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+`;
+
+const Nav = styled.nav`
+  ul {
+    list-style-type: none;
+    padding: 0;
+  }
+
+  li {
+    margin: 15px 0;
+  }
+
+  a {
+    color: white;
+    text-decoration: none;
+  }
+`;
+
 export default Navbar;
