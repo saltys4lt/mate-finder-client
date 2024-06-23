@@ -12,11 +12,11 @@ export default createAsyncThunk('usersReducer/createTeam', async (data: Team, { 
     })
     .catch((error) => {
       if (axios.isAxiosError(error)) {
-        return rejectWithValue(error.response?.data.message ?? 'Unknown error');
+        return rejectWithValue(error.response?.data ?? 'Unknown error1');
       } else if (error instanceof Error) {
-        return rejectWithValue(error.message ?? 'Unknown error');
+        return rejectWithValue(error.message ?? 'Unknown erro2');
       } else {
-        return rejectWithValue('Unknown error');
+        return rejectWithValue('Unknown error3');
       }
     });
   return response;

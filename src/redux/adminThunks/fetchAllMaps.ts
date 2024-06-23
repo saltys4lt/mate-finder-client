@@ -1,12 +1,16 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
-import Team from '../../types/Team';
 
 const baseUrl = import.meta.env.VITE_BASE_URL;
-
-export default createAsyncThunk('usersReducer/updateTeam', async (data: Team, { rejectWithValue }) => {
+type param = string | undefined;
+export default createAsyncThunk('adminReducer/fetchAllMaps', async (searchQuery: param, { rejectWithValue }) => {
   const response = axios
-    .put<Team>(`${baseUrl}/update/${data.id}`, data, { withCredentials: true })
+    .get(`${baseUrl}/fetchAllMaps`, {
+      withCredentials: true,
+      params: {
+        searchQuery,
+      },
+    })
     .then((res) => {
       return res.data;
     })
@@ -19,5 +23,6 @@ export default createAsyncThunk('usersReducer/updateTeam', async (data: Team, { 
         return rejectWithValue('Unknown error');
       }
     });
+
   return response;
 });

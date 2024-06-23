@@ -1,20 +1,11 @@
-import { PlayersCs2Filters } from './../../types/queryTypes/PlayersC2Filters';
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
-import Player from '../../types/Player';
-import { RootState } from '..';
+import { AdminPlayer } from '../../types/AdminPlayer';
 const baseUrl = import.meta.env.VITE_BASE_URL;
 
-export default createAsyncThunk('usersReducer/fetchPlayers', async (data: PlayersCs2Filters | null, { rejectWithValue, getState }) => {
-  const state: RootState = getState() as RootState;
-
-  const id = state.userReducer.user?.id;
+export default createAsyncThunk('adminReducer/createPlayer', async (player: AdminPlayer, { rejectWithValue }) => {
   const response = axios
-    .get<{ players: Player[]; pages: number }>(`${baseUrl}/players`, {
-      params: {
-        ...data,
-        id,
-      },
+    .post<AdminPlayer[]>(`${baseUrl}/createPlayer`, player, {
       withCredentials: true,
     })
     .then((res) => {

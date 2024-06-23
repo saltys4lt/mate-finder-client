@@ -12,6 +12,7 @@ import TeamPage from '../pages/TeamPage';
 import NotFoundPage from '../pages/NotFoundPage';
 import ArticlePage from '../pages/ArticlePage';
 import SquadLinkDescription from '../pages/AboutPage';
+import AdminControlPage from '../pages/AdminControlPage';
 const HomePage = lazy(() => import('../pages/HomePage'));
 const ProfilePage = lazy(() => import('../pages/ProfilePage'));
 
@@ -97,15 +98,22 @@ export const privateRoutes = [
 
 export const publicRoutes = [
   { path: '/', element: <StartPage /> },
-  { path: '/news', element: <NewsPage /> },
-  { path: '/news/:link', element: <ArticlePage /> },
-  {
-    path: '/404',
-    element: <NotFoundPage />,
-  },
+
   {
     path: '/about',
     element: <SquadLinkDescription />,
   },
-  { path: '*', element: <Navigate to='/404' /> },
+  { path: '*', element: <Navigate to='/' /> },
+];
+
+export const adminRoutes = [
+  {
+    path: '/players',
+    element: <AdminControlPage />,
+  },
+  {
+    path: '/maps',
+    element: <AdminControlPage />,
+  },
+  { path: '*', element: <Navigate to='/players' /> },
 ];

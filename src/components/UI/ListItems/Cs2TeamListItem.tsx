@@ -162,8 +162,7 @@ const NameAndAvatar = styled.div`
 `;
 
 const TeamAvatar = styled.img`
-  width: 100%;
-  max-width: 100px;
+  width: 100px;
   height: 100px;
   object-fit: cover;
   border-radius: 10px;

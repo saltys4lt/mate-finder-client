@@ -18,7 +18,6 @@ import Cs2Data from '../types/Cs2Data';
 import Team from '../types/Team';
 import { fetchTeams } from '../api/teamRequsts.ts/fetchTeams';
 import Loader from '../components/Loader';
-import RequestToTeamModal from '../components/RequestToTeamModal';
 
 const theme = createTheme({
   palette: {

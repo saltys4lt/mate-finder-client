@@ -21,11 +21,6 @@ const FriendslistModal = () => {
   const handleClose = () => {
     dispatch(changeFriendsModalState(false));
     setSearchQuery('');
-    setTimeout(() => {
-      if (friends) {
-        setCurrentFriends(friends);
-      }
-    }, 300);
   };
 
   const filterList = () => {

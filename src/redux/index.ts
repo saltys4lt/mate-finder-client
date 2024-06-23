@@ -4,6 +4,7 @@ import userSlice from './userSlice';
 import modalSlice from './modalSlice';
 import playerSlice from './playerSlice';
 import chatSlice from './chatSlice';
+import adminSlice from './adminSlice';
 
 export const store = configureStore({
   reducer: {
@@ -11,6 +12,7 @@ export const store = configureStore({
     modalReducer: modalSlice,
     playerReducer: playerSlice,
     chatReducer: chatSlice,
+    adminReducer: adminSlice,
   },
 });
 

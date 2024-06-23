@@ -24,6 +24,7 @@ import fetchUpdatedUser from './userThunks/fetchUpdatedUser';
 import kickPlayer from './teamThunks/kickPlayer';
 import deleteTeam from './teamThunks/deleteTeam';
 import updateRolesAndMaps from './cs2Thunks/updateRolesAndMaps';
+import { AppDispatch } from '.';
 interface UserState {
   user: ClientUser | null;
   isAuth: boolean;
@@ -41,7 +42,8 @@ interface UserState {
   updateTeamStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
   deleteTeamStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
   updateRolesAndMapsStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected';
-
+  createTeamError: string | null;
+  updateTeamError: string | null;
   createUserError: string | null;
   fetchUserError: string | null;
   refillCs2DataError: string | null;
@@ -71,7 +73,9 @@ const initialState: UserState = {
   deleteCs2Status: 'idle',
 
   createTeamStatus: 'idle',
+  createTeamError: null,
   updateTeamStatus: 'idle',
+  updateTeamError: null,
   deleteTeamStatus: 'idle',
 };
 
@@ -90,6 +94,7 @@ const userSlice = createSlice({
       state.fetchUserStatus = 'idle';
       if (!action.payload) {
         state.user = null;
+        state.isAdmin = false;
       }
     },
 
@@ -246,6 +251,9 @@ const userSlice = createSlice({
       state.fetchUserStatus = 'pending';
     });
     builder.addCase(fetchUser.fulfilled, (state, action: PayloadAction<ClientUser>) => {
+      if (action.payload.nickname === 'admin') {
+        state.isAdmin = true;
+      }
       state.fetchUserStatus = 'fulfilled';
       const Toast = Swal.mixin({
         toast: true,
@@ -276,7 +284,7 @@ const userSlice = createSlice({
       Swal.fire({
         icon: 'error',
         title: 'Ошибка входа',
-        text: state.fetchUserError,
+        text: 'Неверный логин или пароль',
         showConfirmButton: true,
         confirmButtonText: 'Понял',
       });
@@ -317,6 +325,9 @@ const userSlice = createSlice({
         state.checkUserStatus = 'fulfilled';
         const userAvatar = action.payload.user_avatar ? action.payload.user_avatar : defaultUserAvatar;
         state.user = { ...action.payload, user_avatar: userAvatar };
+        if (action.payload.nickname === 'admin') {
+          state.isAdmin = true;
+        }
         state.isAuth = true;
       }
     });
@@ -415,7 +426,7 @@ const userSlice = createSlice({
         });
         Toast.fire({
           icon: 'success',
-          text: `Ваш игровой профиль для Counter-Strike 2 обновлен!`,
+          text: `Ваш игровой профиль для Counter-Strike обновлен!`,
         });
       }
     });
@@ -471,11 +482,29 @@ const userSlice = createSlice({
       }
     });
 
+    builder.addCase(createTeam.rejected, (state, action: PayloadAction<any>) => {
+      if (state.user) {
+        state.createTeamStatus = 'rejected';
+        state.createTeamError = action.payload as string;
+      }
+    });
+
     builder.addCase(updateTeam.fulfilled, (state, action: PayloadAction<Team>) => {
       if (state.user) {
         state.user.teams = state.user.teams.map((team) => (team.id === action.payload.id ? action.payload : team));
 
         state.updateTeamStatus = 'fulfilled';
+      }
+    });
+
+    builder.addCase(updateTeam.rejected, (state, action: PayloadAction<any>) => {
+      if (state.user) {
+        state.updateTeamStatus = 'rejected';
+        state.updateTeamError = action.payload as string;
+        Swal.fire({
+          icon: 'error',
+          text: state.updateTeamError as string,
+        });
       }
     });
   },
@@ -500,5 +529,14 @@ export const {
   removeFriendRequest,
   deleteFriend,
 } = userSlice.actions;
+
+export const setGameCreationActiveAsync = (game: 'cs2' | null) => {
+  return (dispatch: AppDispatch) => {
+    return new Promise<void>((resolve) => {
+      dispatch(setGameCreationActive(game));
+      resolve();
+    });
+  };
+};
 
 export default userSlice.reducer;

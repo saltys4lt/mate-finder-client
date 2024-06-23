@@ -22,6 +22,7 @@ import checkUserIsAuth from '../redux/userThunks/checkUserIsAuth';
 import cs2CreationBg from '../assets/images/cs-creation-bg.webp';
 import RoleLable from '../components/UI/RoleLable';
 import updateRolesAndMaps from '../redux/cs2Thunks/updateRolesAndMaps';
+import { fetchMaps } from '../api/fetchMaps';
 interface CreationDataValidation {
   isRolesValid: boolean;
   isMapsValid: boolean;
@@ -29,6 +30,8 @@ interface CreationDataValidation {
 
 const CreationPage = () => {
   const [roles, setRoles] = useState<string[]>([]);
+  const [maps, setMaps] = useState<Option[]>([]);
+
   const [selectedOptions, setSelectedOptions] = useState<MultiValue<Option>>([]);
   const [dataValidation, setDataValidation] = useState<CreationDataValidation>({
     isRolesValid: true,
@@ -42,6 +45,13 @@ const CreationPage = () => {
   const updateRolesAndMapsStatus = useSelector((state: RootState) => state.userReducer.updateRolesAndMapsStatus);
 
   const creationContent = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    fetchMaps(setMaps);
+    return () => {
+      Cookies.remove('rme');
+      dispatch(setGameCreationActive(null));
+    };
+  }, []);
 
   useEffect(() => {
     if (Cookies.get('rme') === 'true') {
@@ -54,6 +64,7 @@ const CreationPage = () => {
       Cookies.remove('rme');
       dispatch(checkUserIsAuth());
       dispatch(resetStatus('updateRolesAndMapsStatus'));
+      dispatch(setGameCreationActive(null));
       navigate(`/profile/${user?.nickname}`);
     }
   }, [updateRolesAndMapsStatus]);
@@ -67,6 +78,7 @@ const CreationPage = () => {
     if (refillCs2DataStatus === 'fulfilled') {
       Cookies.remove('_gc');
       dispatch(setGameCreationActive(null));
+      dispatch(resetStatus('refillCs2DataStatus'));
       dispatch(checkUserIsAuth());
       navigate(`/profile/${user?.nickname}`);
     }
@@ -125,7 +137,9 @@ const CreationPage = () => {
   };
 
   const cancelEdit = () => {
-    Cookies.remove('rem');
+    dispatch(setGameCreationActive(null));
+
+    Cookies.remove('rme');
     navigate(`/profile/${user.nickname}`);
   };
 
@@ -198,7 +212,7 @@ const CreationPage = () => {
               <Select
                 maxMenuHeight={150}
                 styles={customStyles}
-                options={Cs2Maps}
+                options={maps}
                 isMulti
                 value={selectedOptions}
                 onChange={handleSelectChange}

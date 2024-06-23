@@ -46,7 +46,7 @@ const List: FC<ListContainerProps> = ({ purpose, data }) => {
 
 const ListContainerBackground = styled.div`
   background-color: #2f2f2f;
-  height: 900px;
+  min-height: 500px;
   width: 100%;
   border-radius: 5px;
   padding: 10px;

@@ -159,7 +159,6 @@ const FriendsInviteModal: FC<FriendsInviteModalProps> = ({
                       <ProfileData>
                         <InvitedPlayerAvatar src={isDefaultAvatar(friend.user_avatar)} alt='' />
                         <span>{friend.nickname}</span>
-                        <InvitedPlayerLvl src={friend.lvlImg} alt='' />
                       </ProfileData>
                       <RoleLabelContainer>
                         <span>Роль: </span>

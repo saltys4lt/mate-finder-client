@@ -17,6 +17,7 @@ import { useRequestEvents } from '../hooks/useRequestEvents';
 import cancelIcon from '../assets/images/cancel-invite.png';
 import { cancelFriendRequest } from '../api/friendsRequests/cancelFriendRequest';
 import { cancelRequest } from '../api/teamRequsts.ts/cancelRequest';
+import { animated, useSpring } from '@react-spring/web';
 const RequestsList = () => {
   const { receivedRequests, sentRequests, requestsToTeam, id } = useSelector((state: RootState) => state.userReducer.user) as ClientUser;
   const isActive = useSelector((state: RootState) => state.modalReducer.requestsIsActive);
@@ -43,10 +44,15 @@ const RequestsList = () => {
     }
   }, [receivedRequests, sentRequests, requestsToTeam]);
 
+  const listAnimation = useSpring({
+    width: isActive ? '450' : '50px', // Замените на ваши значения
+    height: isActive ? '400px' : '50px', // Замените на ваши значения
+    config: { tension: 210, friction: 20 }, // Настройка анимации
+  });
   return receivedRequests.length > 0 || sentRequests.length > 0 || requestsToTeam.length > 0 ? (
     <>
       {isActive ? (
-        <OpenRequestsContainer>
+        <OpenRequestsContainer style={listAnimation}>
           <OpenRequests>
             <CloseButton
               onClick={() => {
@@ -309,7 +315,7 @@ const RequestsButton = styled.button`
   }
 `;
 
-const OpenRequestsContainer = styled.div`
+const OpenRequestsContainer = styled(animated.div)`
   border-radius: 10px;
   padding: 10px;
   position: fixed;

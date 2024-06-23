@@ -12,6 +12,7 @@ interface ModalInitialState {
   requestToTeamModalIsActive: boolean;
   changeMemberRoleState: boolean;
   friendsModal: boolean;
+  checkCs2Data: boolean;
 }
 
 const initialState: ModalInitialState = {
@@ -26,6 +27,7 @@ const initialState: ModalInitialState = {
   requestToTeamModalIsActive: false,
   changeMemberRoleState: false,
   friendsModal: false,
+  checkCs2Data: false,
 };
 
 const modalSlice = createSlice({
@@ -93,6 +95,13 @@ const modalSlice = createSlice({
 
       state.friendsModal = action.payload;
     },
+    changeCheckCs2Data(state, action: PayloadAction<boolean>) {
+      if (action.payload) {
+        document.body.style.overflowY = 'hidden';
+      } else document.body.style.overflowY = 'visible';
+
+      state.checkCs2Data = action.payload;
+    },
   },
 });
 
@@ -108,6 +117,7 @@ export const {
   changeRequestToTeamModalState,
   changeMemberRoleModal,
   changeFriendsModalState,
+  changeCheckCs2Data,
 } = modalSlice.actions;
 
 export default modalSlice.reducer;

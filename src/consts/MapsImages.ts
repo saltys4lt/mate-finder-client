@@ -6,6 +6,8 @@ import anubis from '../assets/images/maps/anubis.webp';
 import nuke from '../assets/images/maps/nuke.webp';
 import vertigo from '../assets/images/maps/vertigo.webp';
 import ancient from '../assets/images/maps/ancient.webp';
+import train from '../assets/images/maps/train.webp';
+import dust from '../assets/images/maps/dust.webp';
 
 const MapsImages: Record<string, string> = {
   Mirage: mirage,
@@ -17,6 +19,8 @@ const MapsImages: Record<string, string> = {
   Nuke: nuke,
   Vertigo: vertigo,
   Ancient: ancient,
+  Train: train,
+  Dust: dust,
 };
 
 export default MapsImages;

@@ -124,7 +124,7 @@ const RegistrationForm = () => {
             setValue('birthday', date as Dayjs);
           }}
         />
-        {birthday && dayjs().year() - birthday.year() < 10 ? <ErrorAlert role='alert'>Минимальный возрост 12 лет</ErrorAlert> : ''}
+        {birthday && !checkYears(birthday) ? <ErrorAlert role='alert'>Минимальный возрост 12 лет</ErrorAlert> : ''}
 
         <RadioGroup row defaultValue={'male'}>
           <FormControlLabel

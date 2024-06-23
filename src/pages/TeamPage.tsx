@@ -133,7 +133,7 @@ const TeamPage = () => {
   const handleCancelTeamRequest = (req: TeamRequest) => {
     const InvitedFriendRender = () => {
       return (
-        <div>
+        <div style={{ display: 'flex', flexDirection: 'column', rowGap: '15px', justifyContent: 'center', alignItems: 'center' }}>
           <p>Отменить приглашение для</p>
           <InvitedFriendItem>
             <img src={isDefaultAvatar(req.user?.user_avatar as string)} alt='' />
@@ -395,7 +395,7 @@ const TeamPage = () => {
                 </CommonButton>
               ) : (
                 currentTeam.public && (
-                  <CommonButton onClick={handleOpenRequestToTeamModal}>
+                  <CommonButton disabled={currentTeam.members.length + 1 === 5} onClick={handleOpenRequestToTeamModal}>
                     {' '}
                     <img src={groupInviteIcon} alt='' />
                     Отправить запрос
@@ -1013,11 +1013,14 @@ const CopyUrlText = styled.span`
 `;
 
 const InvitedFriendItem = styled.div`
-  background-color: #f0f0f0;
+  color: var(--main-text-color);
+  background-color: #575757;
   display: flex;
   align-items: center;
+  justify-content: center;
   column-gap: 10px;
-  padding: 10px 10px;
+  border: 2px solid #6f6f6f;
+  padding: 10px 15px;
   border-radius: 5px;
   > img {
     width: 40px;

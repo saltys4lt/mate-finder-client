@@ -7,7 +7,7 @@ import CommonButton from '../components/UI/CommonButton';
 import MapsImages from '../consts/MapsImages';
 import { ChangeEvent, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-
+import mapIcon from '../assets/images/error-map.png';
 import fetchPlayerByName from '../redux/playerThunks/fetchPlayerByName';
 import ClientUser from '../types/ClientUser';
 import Player from '../types/Player';
@@ -59,7 +59,9 @@ import { capitalizeWord } from '../util/capitalizeWord';
 import { formatDateWithTime } from '../util/formatDate';
 import { SteamAuth } from '../api/steamAuth';
 import FriendslistModal from '../components/FriendslistModal';
-
+import { setGameCreationActive, setGameCreationActiveAsync } from '../redux/userSlice';
+import isDefaultAvatar from '../util/isDefaultAvatar';
+import Team from '../types/Team';
 const ProfilePage = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -135,6 +137,39 @@ const ProfilePage = () => {
   }
 
   const handleTeamInvite = () => {
+    if (user.memberOf.length !== 0) {
+      const userTeam: Team = user.memberOf[0].team;
+      const TeamMemberClause = () => {
+        return (
+          <div style={{ width: '100%', display: 'flex', alignItems: 'center', flexDirection: 'column', rowGap: '15px' }}>
+            <h3 style={{ fontSize: 19 }}> Вы уже состоите в команде</h3>
+            <div
+              style={{
+                width: '70%',
+                padding: '15px',
+                borderRadius: '10px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                rowGap: '15px',
+                backgroundColor: '#333',
+              }}
+            >
+              <img style={{ width: 70, height: 70, objectFit: 'cover' }} src={userTeam.avatar} alt='' />
+              <h2 style={{ color: 'var(--main-text-color)' }}>{userTeam.name}</h2>
+            </div>
+          </div>
+        );
+      };
+
+      Swal.fire({
+        html: ReactDOMServer.renderToString(<TeamMemberClause />),
+        confirmButtonText: 'Понятно',
+        timer: 3000,
+        timerProgressBar: true,
+      });
+      return;
+    }
     if (user.teams?.length === 0) {
       const NoTeamAlert = () => {
         return (
@@ -201,6 +236,14 @@ const ProfilePage = () => {
   };
 
   const handleDeleteCs2data = () => {
+    if (user.teams.length !== 0 || user.memberOf.length !== 0) {
+      Swal.fire({
+        icon: 'error',
+        text: 'Пока вы состоите в команде, вы не можете удалить игровой профиль!',
+        confirmButtonText: 'Понятно',
+      });
+      return;
+    }
     Swal.fire({
       title: 'Уверены?',
       text: 'Вам предеться снова регистрировать игровой профиль, чтобы открыть основные функции для этой игры!',
@@ -259,14 +302,16 @@ const ProfilePage = () => {
 
   const handleChangeRolesAndMaps = () => {
     Cookies.set('rme', 'true');
-    navigate(`/creation/cs2`);
+    dispatch(setGameCreationActiveAsync('cs2')).then(() => {
+      navigate('/creation/cs2');
+    });
   };
 
   return (
     <>
       {user.id === profileUser.id && <FriendslistModal />}
 
-      {player && user.teams.length > 0 && <TeamInviteModal candidate={player} />}
+      {player && user.teams.length > 0 && <TeamInviteModal candidate={player} selectedTeam={user.teams[0]} />}
       <ProfileHeader>
         <Container>
           {!profileUser ? (
@@ -275,7 +320,7 @@ const ProfilePage = () => {
             <>
               <MainDataContainer>
                 <ProfileAvatarContainer>
-                  <ProfileAvatar $avatarIsLoading={avatarIsLoading} src={profileAvatar} alt='' />
+                  <ProfileAvatar $avatarIsLoading={avatarIsLoading} src={isDefaultAvatar(profileAvatar)} alt='' />
                   {editMode && (
                     <>
                       <ChangeAvatarButton onClick={openFileExplorer}>
@@ -475,7 +520,7 @@ const ProfilePage = () => {
                                       onClick={() => {
                                         const id = profileUser.id;
                                         if (id) {
-                                          deleteFromFriends(user.id, id, user.nickname);
+                                          deleteFromFriends(user.id, id, profileUser.nickname);
                                         }
                                       }}
                                     >
@@ -619,7 +664,7 @@ const ProfilePage = () => {
                     <>
                       {profileUser.teams.length > 0 &&
                         profileUser.teams.map((team) => (
-                          <Team
+                          <TeamItem
                             key={team.id}
                             onClick={() => {
                               navigate(`/team/${team.name}`);
@@ -630,11 +675,11 @@ const ProfilePage = () => {
                               <span>{team.name}</span>
                             </div>
                             <span>{team.members.length + 1}/5</span>
-                          </Team>
+                          </TeamItem>
                         ))}
                       {profileUser.memberOf.length > 0 &&
                         profileUser.memberOf.map(({ team }) => (
-                          <Team
+                          <TeamItem
                             key={team.id}
                             onClick={() => {
                               navigate(`/team/${team.name}`);
@@ -645,12 +690,13 @@ const ProfilePage = () => {
                               <span>{team.name}</span>
                             </div>
                             <span>{team.members.length + 1}/5</span>
-                          </Team>
+                          </TeamItem>
                         ))}
                     </>
                   ) : profileUser.id === user.id ? (
                     <NoTeamText>
-                      Вы не состоите в команде. <span onClick={() => navigate('/teams?page=1&category=all')}>найти</span>
+                      Вы не состоите в команде. <br /> <span onClick={() => navigate('/teams?page=1&category=all')}>найти</span>/
+                      <span onClick={() => navigate('/team-creator')}>создать</span>
                     </NoTeamText>
                   ) : (
                     <NoTeamText>Не состоит в команде</NoTeamText>
@@ -667,7 +713,14 @@ const ProfilePage = () => {
               {profileUser.cs2_data.recentMatches.map((match) => (
                 <a style={{ textDecoration: 'none' }} href={match.link} key={match.id} target='_blank'>
                   <MatchItem $isWin={match.result}>
-                    <MatchMap src={MapsImages[capitalizeWord(match.map)]} />
+                    {match.map ? (
+                      <MatchMap src={MapsImages[capitalizeWord(match.map)]} />
+                    ) : (
+                      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                        <img style={{ maxWidth: '55px', filter: 'invert(0.7)' }} src={mapIcon} />
+                      </div>
+                    )}
+
                     <MatchDataColumn>
                       <MatchResult $isWin={match.result}>{match.result ? 'Победа' : 'Поражение'}</MatchResult>
                       <span>{match.stat}</span>
@@ -1152,7 +1205,7 @@ const TeamsContainer = styled.div`
   flex-direction: column;
   row-gap: 20px;
 `;
-const Team = styled.div`
+const TeamItem = styled.div`
   width: 100%;
   color: var(--main-text-color);
   background-color: #2f2f2f;
