@@ -300,6 +300,7 @@ const LogoText = styled.h1`
   font-size: 28px;
   background: linear-gradient(100deg, #e28615, #d9950d);
   -webkit-background-clip: text;
+  background-clip: text;
   color: transparent;
 `;
 
@@ -484,14 +485,6 @@ const SidebarContainer = styled.div`
   padding: 15px;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
   z-index: 10;
-`;
-
-const CloseButton = styled.button`
-  background: none;
-  border: none;
-  color: white;
-  font-size: 24px;
-  cursor: pointer;
 `;
 
 const Nav = styled.nav`

@@ -64,16 +64,18 @@ const ContentContainer = styled.div`
   color: var(--main-text-color);
 `;
 const Content = styled.div`
-  height: 60vh;
+  height: 70vh;
   width: 50%;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   row-gap: 50px;
   align-items: center;
 
   @media (max-width: 1100px) {
     padding-block: 30px;
     text-align: center;
+    height: 60vh;
   }
 `;
 
@@ -112,7 +114,7 @@ const StartButton = styled.button`
   background: radial-gradient(circle at 10% 200%, rgb(217, 127, 8) 30%, rgb(0, 0, 0) 200%);
 
   background-size: 100%;
-  min-height: 60px;
+  min-height: 80px;
   width: 270px;
   border: 1px solid #000000;
   cursor: pointer;
@@ -121,6 +123,9 @@ const StartButton = styled.button`
   &:hover {
     transform: scale(1.03);
     background-size: 150%;
+  }
+  @media (max-width: 1100px) {
+    min-height: 60px;
   }
 `;
 

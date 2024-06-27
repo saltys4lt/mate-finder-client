@@ -19,6 +19,7 @@ import { TeamRequest } from '../types/TeamRequest';
 import { FriendRequest } from '../types/friendRequest';
 import { joinTeamChat, leaveTeamChat } from '../redux/chatSlice';
 import { Chat } from '../types/Chat';
+import Swal from 'sweetalert2';
 
 export const useRequestEvents = (id: number) => {
   const dispatch = useAppDispatch();
@@ -93,7 +94,20 @@ export const useRequestEvents = (id: number) => {
         dispatch(leaveTeamChat(team.chat?.id as number));
       }
     });
-    ioSocket.on('answerTeamRequest', (request: { req: TeamRequest | Membership; accept: boolean }) => {
+    ioSocket.on('answerTeamRequest', (request: { req: TeamRequest | Membership; accept: boolean; unvalid?: boolean }) => {
+      if (request.unvalid) {
+        console.log('123');
+        dispatch(removeTeamRequest(request.req as TeamRequest));
+        Swal.fire({
+          icon: 'info',
+          title: 'Запрос не действителен',
+          text: 'Похоже кто-то другой уже принял заявку на эту роль 😢',
+          timerProgressBar: true,
+          timer: 5000,
+          confirmButtonText: 'Понятно',
+        });
+      }
+
       if (request.accept) {
         const acceptedReq = request.req as Membership;
         dispatch(joinTeam(acceptedReq));

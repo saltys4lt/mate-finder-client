@@ -10,11 +10,7 @@ import { useSpring, animated } from '@react-spring/web';
 import CommonInput from '../components/UI/CommonInput';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import { CircularProgress, FormControlLabel, Radio, RadioGroup } from '@mui/material';
-import Select, { SingleValue } from 'react-select';
-import { CustomOption, CustomSingleValue, customStyles } from '../components/UI/GameSelect';
-import Games from '../consts/Games';
-import Option from '../types/Option';
-import { checkUserGameProfile } from '../util/checkUserGameProfile';
+
 import cs2CreationBg from '../assets/images/cs-creation-bg.webp';
 import editIcon from '../assets/images/edit.png';
 import uploadTeamAvatar from '../api/uploadTeamAvatar';
@@ -769,7 +765,7 @@ const TeamCreationPage = () => {
                           onChange={(e) => changePlayersRoles(e)}
                           value={role.name}
                           type='checkbox'
-                          disabled={isDisabledRole(role, ownerRole, invitedFriends, isEditMode ? true : false, team, isReqsToTeamExist)}
+                          disabled={isDisabledRole(role, ownerRole, isEditMode ? true : false, team, isReqsToTeamExist)}
                         />
                         <RoleLabel className={rolePlayersState(role.name)} htmlFor={(index + 10).toString()}>
                           <img src={rolesIcons.get(role.id)} alt='' />
@@ -831,8 +827,8 @@ const TeamCreationPage = () => {
                           </InvitedFriendsButton>
                           <ErrorOutlineContainer>
                             <ErrorOutline />
-                            <GameExplenation style={{ top: '-5em', right: '-12em' }}>
-                              Список всех приглашенных вами игроков.
+                            <GameExplenation style={{ top: '-8em', right: '-12em' }}>
+                              Список всех приглашенных вами игроков. Приглашения будут отменены после подтверждения редактирования.
                             </GameExplenation>
                           </ErrorOutlineContainer>
                         </>

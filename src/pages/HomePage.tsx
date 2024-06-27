@@ -23,11 +23,11 @@ const HomePage = () => {
 
   const [news, setNews] = useState<Article[] | null>(null);
   const [mainArticle, setMainArticle] = useState<MainArticle | null>(null);
-  const [otherArticles, setOtherArticles] = useState<MainArticle[] | null>(null);
+
   const navigate = useNavigate();
   useEffect(() => {
     (async () => {
-      fetchNews({ setMainArticle, setNews, setOtherArticles });
+      fetchNews({ setMainArticle, setNews });
     })();
   }, []);
 

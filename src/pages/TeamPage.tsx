@@ -81,7 +81,7 @@ const TeamPage = () => {
     return () => {
       source.cancel();
     };
-  }, [teams]);
+  }, [teams, user.requestsToTeam, user.memberOf]);
 
   useEffect(() => {
     if (currentTeam && currentTeam.name !== name) {
@@ -362,6 +362,7 @@ const TeamPage = () => {
               {urlTextCopied && <CopyUrlText>Ссылка скопирована!</CopyUrlText>}
               {user.id === currentTeam.userId ? (
                 <CommonButton
+                  disabled={currentTeam.members.length + 1 === 5}
                   onClick={() => {
                     dispatch(changeFriendsInviteModalState(true));
                   }}
