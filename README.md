@@ -22,7 +22,7 @@ Finding teammates to play in cs2.
 - search for players or teams 
 - friend functions
 
-Project is a dump of components with no structure, ## touch at your own risk 
+Project is a dump of components with no structure, (touch at your own risk) 
 
 
 
