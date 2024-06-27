@@ -206,9 +206,11 @@ const Cs2ItemButton = styled(CommonButton)`
   }
 `;
 const PlayerAvatar = styled.img`
-  width: 100px;
-
   height: 100px;
+  min-width: 100px;
+  max-width: 100px;
+
+  max-height: 100px;
   object-fit: cover;
   border-radius: 50%;
   &:hover {

@@ -45,9 +45,9 @@ const RequestsList = () => {
   }, [receivedRequests, sentRequests, requestsToTeam]);
 
   const listAnimation = useSpring({
-    width: isActive ? '450' : '50px', // Замените на ваши значения
-    height: isActive ? '400px' : '50px', // Замените на ваши значения
-    config: { tension: 210, friction: 20 }, // Настройка анимации
+    width: isActive ? '450' : '50px',
+    height: isActive ? '400px' : '50px',
+    config: { tension: 210, friction: 20 },
   });
   return receivedRequests.length > 0 || sentRequests.length > 0 || requestsToTeam.length > 0 ? (
     <>

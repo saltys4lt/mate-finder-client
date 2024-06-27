@@ -20,15 +20,15 @@ import Cs2Data from '../types/Cs2Data';
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#ffffff', // белый цвет
+      main: '#ffffff',
     },
   },
   components: {
     MuiPaginationItem: {
       styleOverrides: {
         root: {
-          color: '#ffffff', // Цвет номеров страниц
-          borderColor: '#ffffff', // Цвет обводки
+          color: '#ffffff',
+          borderColor: '#ffffff',
         },
       },
     },
@@ -55,14 +55,10 @@ const PlayersPage = () => {
   useEffect(() => {
     if (Object.keys(queryParams).length) {
       if (!queryParams.page || Number(queryParams.page) > pages || (Number(queryParams.page) < 1 && players)) {
-        console.log(1);
         setSearchParams({ ...queryParams, page: '1' });
       } else if (queryParams.category !== 'all' && queryParams.category !== 'recs') {
-        console.log(2);
-
         setSearchParams({ ...queryParams, category: 'all' });
       } else {
-        console.log('da');
         if (queryParams.category === 'recs') {
           setPlayersFilter({
             ...queryParams,
@@ -74,7 +70,6 @@ const PlayersPage = () => {
             maps: searchParams.getAll('maps'),
           });
         } else {
-          console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@');
           setPlayersFilter({
             ...(queryParams as PlayersCs2Filters),
             roles: searchParams.getAll('roles'),
@@ -148,7 +143,10 @@ const PlayersPage = () => {
   };
 
   const handleChangePage = (page: number) => {
-    if (page.toString() !== queryParams.page) setSearchParams({ ...queryParams, page: page.toString() });
+    if (page.toString() !== queryParams.page) {
+      setSearchParams({ ...queryParams, page: page.toString() });
+      window.scrollTo(0, 0);
+    }
   };
   return (
     <Main>

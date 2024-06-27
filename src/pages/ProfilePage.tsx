@@ -59,7 +59,7 @@ import { capitalizeWord } from '../util/capitalizeWord';
 import { formatDateWithTime } from '../util/formatDate';
 import { SteamAuth } from '../api/steamAuth';
 import FriendslistModal from '../components/FriendslistModal';
-import { setGameCreationActive, setGameCreationActiveAsync } from '../redux/userSlice';
+import { setGameCreationActiveAsync } from '../redux/userSlice';
 import isDefaultAvatar from '../util/isDefaultAvatar';
 import Team from '../types/Team';
 const ProfilePage = () => {

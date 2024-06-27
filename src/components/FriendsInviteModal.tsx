@@ -445,11 +445,6 @@ const InvitedPlayerAvatar = styled.img`
   object-fit: cover;
 `;
 
-const InvitedPlayerLvl = styled(InvitedPlayerAvatar)`
-  height: 30px;
-  width: 30px;
-`;
-
 const RoleLabelContainer = styled.div`
   display: flex;
   align-items: center;

@@ -168,8 +168,9 @@ const PlayersTable = () => {
       }
       const age: number = getYears(dayjs(newPlayer.birthday));
 
-      dispatch(createPlayer({ ...newPlayer, age } as AdminPlayer));
-      dispatch(fetchPlayers());
+      dispatch(createPlayer({ ...newPlayer, age } as AdminPlayer)).then(() => {
+        dispatch(fetchPlayers());
+      });
     }
 
     setNewPlayer(null);
@@ -209,7 +210,6 @@ const PlayersTable = () => {
   };
 
   const finishEditingPlayer = () => {
-    console.log(editPlayer);
     if (editPlayer) {
       if (editPlayer?.nickname.length < 3) {
         Swal.fire({
@@ -248,7 +248,7 @@ const PlayersTable = () => {
       if (validateEmail(editPlayer.email)) {
         Swal.fire({
           icon: 'error',
-          title: 'Ошибка в пароле',
+          title: 'Ошибка в почте',
           text: `Неправильный формат`,
         });
         return;
@@ -264,8 +264,9 @@ const PlayersTable = () => {
         return;
       }
       const age: number = getYears(dayjs(editPlayer.birthday));
-      dispatch(updatePlayer({ ...editPlayer, age } as AdminPlayer));
-      dispatch(fetchPlayers());
+      dispatch(updatePlayer({ ...editPlayer, age } as AdminPlayer)).then(() => {
+        dispatch(fetchPlayers());
+      });
     }
 
     setEditPlayer(null);

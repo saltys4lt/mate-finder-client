@@ -1,4 +1,4 @@
-import React, { useState, FC, useEffect, ChangeEvent } from 'react';
+import { useState, FC, useEffect, ChangeEvent } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState, useAppDispatch } from '../redux';
 import Team from '../types/Team';

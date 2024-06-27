@@ -6,7 +6,7 @@ const baseUrl = import.meta.env.VITE_BASE_URL;
 interface params {
   setNews: (news: Article[]) => void;
   setMainArticle: (mainArticle: MainArticle) => void;
-  setOtherArticles: (аrticles: MainArticle[]) => void;
+  setOtherArticles?: (аrticles: MainArticle[]) => void;
 }
 
 export const fetchNews = async ({ setMainArticle, setNews, setOtherArticles }: params) => {
@@ -16,6 +16,6 @@ export const fetchNews = async ({ setMainArticle, setNews, setOtherArticles }: p
   if (data) {
     setNews(data.news);
     setMainArticle(data.mainArticle);
-    setOtherArticles(data.otherArticles);
+    if (setOtherArticles) setOtherArticles(data.otherArticles);
   }
 };

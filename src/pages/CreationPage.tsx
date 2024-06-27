@@ -49,7 +49,7 @@ const CreationPage = () => {
     fetchMaps(setMaps);
     return () => {
       Cookies.remove('rme');
-      dispatch(setGameCreationActive(null));
+      if (!Cookies.get('_gc')) dispatch(setGameCreationActive(null));
     };
   }, []);
 
