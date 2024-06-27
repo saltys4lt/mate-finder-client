@@ -15,7 +15,7 @@ Finding teammates to play in cs2.
 - determination to open even one project file
 
 ## Description
-###The application has features: 
+### The application has features: 
 - steam authentication ( separate nodeJS server )
 - chat (also websocket server)
 - create teams 
